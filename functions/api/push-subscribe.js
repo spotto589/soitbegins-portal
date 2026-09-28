@@ -1,5 +1,5 @@
 import { BOARD_COOKIE_NAME, getCookie, verifyToken, TRADEABLE_COLLECTIONS } from '../_shared.js';
-import { pushSubId, getPushSubs, putPushSubs, sendWebPush } from '../_webpush.js';
+import { pushSubId, getPushSubs, putPushSubs, sendWebPush, cleanWatch } from '../_webpush.js';
 
 // Phone/desktop push sign-up for the installable site (2026-09-25).
 // POST { subscription, collections }  -> save/refresh this device
@@ -19,7 +19,9 @@ function cleanCollections(cols) {
     if (!TRADEABLE_COLLECTIONS[key]) return;
     const t = {};
     TYPES.forEach(type => { if (cols[key] && cols[key][type] === true) t[type] = true; });
-    if (Object.keys(t).length) out[key] = t;
+    if (!Object.keys(t).length) return;
+    if (cols[key].watchOnly === true) { t.watchOnly = true; t.watch = cleanWatch(cols[key].watch); }
+    out[key] = t;
   });
   return out;
 }

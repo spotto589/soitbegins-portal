@@ -101,6 +101,12 @@ export async function putPushSubs(kv, subs) {
   await kv.put(PUSH_SUBS_KEY, JSON.stringify(subs));
 }
 
+// WATCHL!ST 0NLY lists (2026-09-28): the starred NFT ids for one collection.
+const NFT_ID_RE = /^[0-9A-Fa-f]{64}$/;
+export function cleanWatch(list) {
+  return Array.isArray(list) ? list.filter(id => typeof id === 'string' && NFT_ID_RE.test(id)).map(id => id.toUpperCase()).slice(0, 50) : [];
+}
+
 // Notification text for one ledger-watcher event.
 const VERBS = { listing: 'L!STED F0R', sale: 'S0LD F0R', offer: 'G0T AN 0FFER 0F', delist: 'WAS DEL!STED', transfer: 'WAS TRANSFERRED', mint: 'WAS M!NTED', burn: 'WAS BURNED' };
 export function eventNotification(e, collectionLabel, tokenLabel) {
@@ -132,7 +138,13 @@ export async function pushEventsToDevices(kv, freshByCollection, privateJwkJson,
     Object.keys(freshByCollection).forEach(key => {
       const on = d.collections && d.collections[key];
       if (!on) return;
-      freshByCollection[key].forEach(e => { if (on[e.type]) matching.push(e); });
+      // WATCHL!ST 0NLY: just the NFTs this device's owner has starred.
+      const watch = on.watchOnly ? (on.watch || []) : null;
+      freshByCollection[key].forEach(e => {
+        if (!on[e.type]) return;
+        if (watch && watch.indexOf(String(e.nftId || '').toUpperCase()) === -1) return;
+        matching.push(e);
+      });
     });
     if (!matching.length) continue;
     const payloads = matching.length <= 3

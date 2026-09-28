@@ -2548,6 +2548,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-box-grid .flock-account-box:nth-child(5){ --sys-size:280%; --sys-pos:95% 60%; }
   .profile-box-grid .flock-account-box:nth-child(6){ --sys-size:230%; --sys-pos:40% 5%; }
   .profile-box-grid .flock-account-box:nth-child(7){ --sys-size:320%; --sys-pos:70% 40%; }
+  .profile-box-grid .flock-account-box:nth-child(8){ --sys-size:250%; --sys-pos:12% 48%; }
+  .profile-box-grid .flock-account-box:nth-child(9){ --sys-size:270%; --sys-pos:82% 95%; }
   .profile-box-grid .flock-account-box-clickable::before{ background:rgba(61,243,236,0.45); }
   .profile-box-grid .flock-account-box-clickable:hover{ border-color:transparent; --sys-tint:rgba(61,243,236,0.05); --sys-top:rgba(61,243,236,0.9); --sys-bot:rgba(255,51,204,0.75); }
   .profile-box-grid .flock-account-box-clickable:hover::before{ background:var(--cyan); }
@@ -2747,96 +2749,275 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-box-grid.profiles-hub-grid .flock-account-box:nth-child(1){ --sys-size:240%; --sys-pos:75% 85%; }
   .profile-box-grid.profiles-hub-grid .flock-account-box:nth-child(2){ --sys-size:290%; --sys-pos:15% 55%; }
   .profile-box-grid.profiles-hub-grid .flock-account-box:nth-child(3){ --sys-size:200%; --sys-pos:60% 8%; }
-  /* MESSAGES — real wallet-to-wallet D1-backed messaging (see
-     functions/api/messages-*.js), wired straight into !NB0X instead of
-     living as its own /messages page any more. Needs the MESSAGES_DB D1
-     binding added in the Cloudflare Pages dashboard before it works in
-     prod (see HANDOFF.md) — every call below fails clean with a real
-     ERR0R message (not a silent hang) until that's done. */
-  .profile-messages-newbtn{ margin-bottom:1rem; }
-  .profile-messages-list{ display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem; }
-  .profile-msg-row{
-    position:relative;
-    display:flex; align-items:center; gap:0.75rem;
-    padding:0.7em 0.9em;
-    border:1px solid var(--border-mid);
-    border-radius:var(--radius);
-    cursor:pointer;
-    transition:border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
-  }
-  .profile-msg-row:hover{ border-color:var(--cyan-dim); background:rgba(61,243,236,0.06); transform:translateX(2px); }
-  /* UNREAD — reported live wanting this to look "exciting," not just a
-     slightly different border colour: a real pulsing magenta glow plus a
-     tinted background, so a new message actually announces itself in the
-     list instead of blending in until you read the small print. */
-  .profile-msg-row.unread{
-    border-color:var(--magenta);
-    background:rgba(255,51,204,0.07);
-    animation:profile-msg-row-pulse 1.8s ease-in-out infinite;
-  }
-  @keyframes profile-msg-row-pulse{
-    0%, 100%{ box-shadow:0 0 0 rgba(255,51,204,0); }
-    50%{ box-shadow:0 0 14px var(--magenta-glow); }
-  }
-  .profile-msg-row-text{ flex:1 1 auto; min-width:0; }
-  .profile-msg-row-wallet{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:#fff; }
-  .profile-msg-row-wallet .wallet-tag{ gap:0.45em; }
-  .profile-msg-row-wallet .wallet-avatar{ width:1.5em; height:1.5em; min-width:1.5em; }
-  .profile-msg-row.unread .profile-msg-row-wallet{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
-  .profile-msg-row-preview{ font-family:var(--font-mono); font-size:12px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.25rem; }
-  .profile-msg-row.unread .profile-msg-row-preview{ color:var(--white); }
-  .profile-msg-row-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:0.35rem; flex:0 0 auto; }
-  .profile-msg-row-time{ font-family:var(--font-mono); font-size:10px; color:var(--grey-dim); }
-  .profile-msg-row-unread{
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:1.6em; height:1.6em; padding:0 0.35em;
-    border-radius:999px; background:var(--magenta); color:#000;
-    font-size:11px; font-weight:700;
-    box-shadow:0 0 8px var(--magenta-glow);
-    animation:profile-msg-badge-bounce 1.8s ease-in-out infinite;
-  }
-  @keyframes profile-msg-badge-bounce{
-    0%, 100%{ transform:scale(1); }
-    50%{ transform:scale(1.15); }
-  }
-  .profile-msg-new-prompt{ display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; }
-  .profile-msg-new-prompt .profile-search-input{ flex:1 1 220px; margin-bottom:0; }
-  .profile-msg-thread-list{ display:flex; flex-direction:column; gap:0.6rem; max-height:320px; overflow-y:auto; margin-bottom:1rem; padding:0.25rem; }
-  .profile-msg-bubble{
-    position:relative;
-    max-width:75%;
-    padding:0.65em 2em 0.65em 0.9em;
-    border-radius:var(--radius);
+  /* MESSAGE !NB0X — chat app (rebuilt 2026-09-28). Site rule: black
+     boxes, white text, borders glowing in the collection colour; mine =
+     cyan, theirs = collection accent, unread = magenta. Two columns on
+     wide screens, one at a time on phones (.show-main). */
+  #profileTabPanelMessages.chat-panel{ display:flex; flex-direction:column; overflow:hidden; }
+  #profileTabPanelMessages[style*="none"]{ display:none !important; }
+  .chat-app{
+    --chat-acc:rgba(var(--collection-accent-rgb), 0.75);
+    flex:1 1 auto; min-height:0;
+    display:grid; grid-template-columns:minmax(250px, 320px) minmax(0, 1fr);
+    border:1px solid var(--chat-acc);
+    box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.35);
+    background:#000;
+    margin-top:0.25rem;
     font-family:var(--font-mono);
-    font-size:13px;
-    word-break:break-word;
-    border:1px solid var(--border-mid);
-    animation:offer-confirm-pop 0.2s ease;
   }
-  .profile-msg-bubble-mine{ align-self:flex-end; background:rgba(61,243,236,0.1); border-color:var(--cyan-dim); }
-  .profile-msg-bubble-theirs{ align-self:flex-start; background:rgba(255,255,255,0.05); padding-right:0.9em; }
-  .profile-msg-bubble-time{ font-size:10px; color:var(--grey-dim); margin-top:0.3rem; }
-  .profile-msg-bubble.deleting{ opacity:0.35; pointer-events:none; }
-  /* DELETE — Y0UR 0WN bubbles only (see the JS's own fromMe check), a
-     quiet × that only really announces itself on hover so a dense thread
-     doesn't read as a wall of delete buttons. */
-  .profile-msg-bubble-delete{
-    position:absolute;
-    top:0.35em; right:0.4em;
-    width:1.4em; height:1.4em;
-    display:flex; align-items:center; justify-content:center;
-    background:transparent;
-    border:none;
-    color:var(--grey-dim);
-    font-size:14px;
-    line-height:1;
-    cursor:pointer;
-    border-radius:50%;
-    transition:color 0.15s ease, background 0.15s ease;
+  .chat-side{ display:flex; flex-direction:column; min-height:0; border-right:1px solid rgba(var(--collection-accent-rgb), 0.45); background:#000; }
+  .chat-side-tabs{ display:grid; grid-template-columns:repeat(3, 1fr); border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.45); }
+  .chat-side-tab{
+    background:#000; border:none; border-bottom:2px solid transparent; color:rgba(255,255,255,0.65);
+    font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.1em; padding:0.85em 0.25em; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:0.4em;
   }
-  .profile-msg-bubble-delete:hover{ color:#fff; background:var(--red); }
-  .profile-msg-compose{ display:flex; gap:0.5rem; }
-  .profile-msg-compose .profile-search-input{ margin-bottom:0; }
+  .chat-side-tab:hover{ color:#fff; }
+  .chat-side-tab.active{ color:#fff; border-bottom-color:var(--cyan); text-shadow:0 0 8px var(--cyan-glow); }
+  .chat-tab-count:empty{ display:none; }
+  .chat-tab-count{ min-width:1.5em; height:1.5em; padding:0 0.35em; border-radius:999px; background:var(--magenta); color:#000; font-size:10px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 8px var(--magenta-glow); text-shadow:none; }
+  .chat-side-tools{ display:flex; gap:0.4rem; padding:0.6rem; }
+  .chat-search-input, .chat-field{
+    flex:1 1 auto; min-width:0; background:#000; color:#fff;
+    border:1px solid rgba(255,255,255,0.35); border-radius:999px;
+    font-family:inherit; font-size:13px; letter-spacing:0.06em; padding:0.6em 1em;
+  }
+  .chat-search-input:focus, .chat-field:focus{ outline:none; border-color:var(--cyan); box-shadow:0 0 8px var(--cyan-glow); }
+  .chat-search-input::placeholder, .chat-field::placeholder{ color:rgba(255,255,255,0.45); }
+  select.chat-field{ border-radius:14px; }
+  .chat-new-btn, .chat-pill-btn{
+    flex:0 0 auto; background:#000; color:var(--cyan); border:1px solid var(--cyan); border-radius:999px;
+    font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.08em; padding:0.6em 1em; cursor:pointer; white-space:nowrap;
+    transition:background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+  }
+  .chat-new-btn:hover, .chat-pill-btn:hover{ background:var(--cyan); color:#000; box-shadow:0 0 12px var(--cyan-glow); }
+  .chat-pill-btn:disabled{ opacity:0.5; cursor:default; }
+  .chat-pill-main{ background:var(--cyan); color:#000; }
+  .chat-side-list{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 0.4rem 0.6rem; }
+  .chat-side-subhead{ font-size:11px; letter-spacing:0.14em; color:rgba(255,255,255,0.55); padding:1rem 0.5rem 0.4rem; }
+  .chat-row{
+    position:relative; display:flex; align-items:center; gap:0.7rem;
+    padding:0.6rem 0.55rem; border:1px solid transparent; border-radius:12px; cursor:pointer;
+    transition:background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+  }
+  .chat-row:hover{ background:rgba(255,255,255,0.05); transform:translateX(2px); }
+  .chat-row.active{ border-color:var(--cyan); background:rgba(61,243,236,0.07); box-shadow:inset 3px 0 0 var(--cyan); }
+  .chat-row.unread .chat-row-name{ color:var(--magenta); text-shadow:0 0 6px var(--magenta-glow); }
+  .chat-row.unread .chat-row-preview{ color:#fff; }
+  .chat-row-text{ flex:1 1 auto; min-width:0; }
+  .chat-row-name{ font-size:13px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:0.03em; }
+  .chat-row-count{ font-size:10px; color:rgba(255,255,255,0.5); font-weight:400; }
+  .chat-row-preview{ font-size:12px; color:rgba(255,255,255,0.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.15rem; }
+  .chat-row-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem; flex:0 0 auto; }
+  .chat-row-time{ font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:0.05em; }
+  .chat-row-unread{
+    min-width:1.6em; height:1.6em; padding:0 0.35em; border-radius:999px; background:var(--magenta); color:#000;
+    font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center;
+    box-shadow:0 0 8px var(--magenta-glow); animation:profile-msg-badge-bounce 1.8s ease-in-out infinite;
+  }
+  @keyframes profile-msg-badge-bounce{ 0%, 100%{ transform:scale(1); } 50%{ transform:scale(1.15); } }
+  .chat-contact-actions{ display:flex; gap:0.3rem; flex:0 0 auto; }
+  .chat-mini-btn{ background:#000; border:1px solid rgba(255,255,255,0.3); color:#fff; border-radius:999px; font-family:inherit; font-size:12px; min-width:2em; height:2em; padding:0 0.55em; cursor:pointer; }
+  .chat-mini-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .chat-mini-danger:hover{ border-color:var(--red); color:var(--red); }
+  /* Avatars — profile picture, else initials. */
+  .chat-av{
+    flex:0 0 auto; width:40px; height:40px; border-radius:50%; overflow:hidden;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.8); box-shadow:0 0 6px rgba(var(--collection-accent-rgb), 0.35);
+    color:#fff; font-size:13px; font-weight:700; letter-spacing:0.02em;
+  }
+  .chat-av img{ width:100%; height:100%; object-fit:cover; }
+  .chat-av-group{ border-radius:12px; border-color:var(--cyan); color:var(--cyan); font-size:18px; }
+  .chat-av-lg{ width:44px; height:44px; }
+  .chat-av-sm{ width:28px; height:28px; font-size:10px; }
+  .chat-av-spacer{ flex:0 0 28px; }
+  /* Right pane */
+  .chat-main{ min-width:0; min-height:0; display:flex; flex-direction:column; background:#000; position:relative; }
+  .chat-convo, .chat-form{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+  .chat-convo-head{
+    flex:0 0 auto; display:flex; align-items:center; gap:0.75rem;
+    padding:0.65rem 0.9rem; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.45);
+    background:linear-gradient(90deg, rgba(var(--collection-accent-rgb), 0.12), transparent 70%), #000;
+  }
+  .chat-back-btn{ display:none; background:#000; border:1px solid rgba(255,255,255,0.35); color:#fff; border-radius:50%; width:2.1em; height:2.1em; font-size:18px; line-height:1; cursor:pointer; flex:0 0 auto; }
+  .chat-form .chat-back-btn{ display:inline-block; }
+  .chat-head-text{ flex:1 1 auto; min-width:0; }
+  .chat-head-name{ font-size:16px; font-weight:700; color:#fff; letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chat-head-sub{ font-size:11px; color:rgba(255,255,255,0.6); letter-spacing:0.06em; margin-top:0.15rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chat-head-actions{ display:flex; gap:0.35rem; flex-wrap:wrap; justify-content:flex-end; }
+  .chat-head-btn{ background:#000; border:1px solid rgba(255,255,255,0.35); color:#fff; border-radius:999px; font-family:inherit; font-size:11px; font-weight:700; letter-spacing:0.08em; padding:0.45em 0.8em; cursor:pointer; }
+  .chat-head-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .chat-head-btn.on{ border-color:var(--yellow, #f5c518); color:var(--yellow, #f5c518); }
+  .chat-head-danger:hover{ border-color:var(--red); color:var(--red); }
+  .chat-drawer{ flex:0 0 auto; max-height:40%; overflow-y:auto; padding:0.6rem 0.9rem; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.35); background:#000; }
+  .chat-drawer-title{ font-size:11px; letter-spacing:0.12em; color:rgba(255,255,255,0.6); margin-bottom:0.5rem; }
+  .chat-member-row{ display:flex; align-items:center; gap:0.55rem; padding:0.3rem 0; cursor:pointer; font-size:13px; color:#fff; }
+  .chat-member-row:hover .chat-member-name{ color:var(--cyan); }
+  .chat-tag{ font-size:9px; letter-spacing:0.12em; border:1px solid var(--cyan); color:var(--cyan); border-radius:999px; padding:0.15em 0.6em; }
+  /* The stream */
+  .chat-stream{
+    flex:1 1 auto; min-height:0; overflow-y:auto; padding:0.9rem 0.9rem 0.5rem;
+    display:flex; flex-direction:column; gap:2px;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(var(--collection-accent-rgb), 0.08), transparent 45%),
+      radial-gradient(circle at 90% 100%, rgba(61,243,236,0.06), transparent 40%), #000;
+  }
+  .chat-day{ align-self:center; margin:0.8rem 0 0.5rem; font-size:10px; letter-spacing:0.18em; color:rgba(255,255,255,0.7); }
+  .chat-day span{ border:1px solid rgba(255,255,255,0.2); border-radius:999px; padding:0.3em 0.9em; background:#000; }
+  .chat-msg{ display:flex; align-items:flex-end; gap:0.45rem; max-width:78%; animation:chat-pop 0.22s cubic-bezier(.2,1.4,.4,1); }
+  .chat-msg.mine{ align-self:flex-end; flex-direction:row-reverse; }
+  .chat-msg.theirs{ align-self:flex-start; }
+  .chat-msg.tail{ margin-bottom:0.45rem; }
+  .chat-msg.deleting{ opacity:0.35; pointer-events:none; }
+  @keyframes chat-pop{ from{ opacity:0; transform:translateY(6px) scale(0.96); } to{ opacity:1; transform:none; } }
+  .chat-bubble{
+    position:relative; min-width:0; padding:0.55em 0.85em; border-radius:16px;
+    font-size:14px; line-height:1.4; color:#fff; background:#000;
+    border:1px solid rgba(var(--collection-accent-rgb), 0.75); box-shadow:0 0 8px rgba(var(--collection-accent-rgb), 0.25);
+  }
+  .chat-msg.mine .chat-bubble{ border-color:var(--cyan); box-shadow:0 0 8px rgba(61,243,236,0.25); background:linear-gradient(135deg, rgba(61,243,236,0.14), rgba(61,243,236,0.03)), #000; }
+  .chat-msg.mine.tail .chat-bubble{ border-bottom-right-radius:4px; }
+  .chat-msg.theirs.tail .chat-bubble{ border-bottom-left-radius:4px; }
+  .chat-bubble-from{ font-size:11px; font-weight:700; color:var(--cyan); margin-bottom:0.15rem; letter-spacing:0.04em; }
+  .chat-bubble-body{ white-space:pre-wrap; word-break:break-word; }
+  .chat-bubble-meta{ font-size:10px; color:rgba(255,255,255,0.55); margin-top:0.25rem; text-align:right; letter-spacing:0.05em; }
+  .chat-seen.on{ color:var(--cyan); }
+  .chat-msg-del{
+    position:absolute; top:-0.55em; left:-0.55em; width:1.5em; height:1.5em; border-radius:50%;
+    background:#000; border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:12px; line-height:1; cursor:pointer;
+    opacity:0; transition:opacity 0.15s ease;
+  }
+  .chat-msg:hover .chat-msg-del{ opacity:1; }
+  .chat-msg-del:hover{ background:var(--red); border-color:var(--red); }
+  .chat-status{ flex:0 0 auto; padding:0.4rem 0.9rem; font-size:12px; color:var(--red); letter-spacing:0.05em; }
+  /* Composer */
+  .chat-compose{ flex:0 0 auto; border-top:1px solid rgba(var(--collection-accent-rgb), 0.45); padding:0.45rem 0.7rem 0.7rem; background:#000; }
+  .chat-emoji-bar{ display:flex; gap:0.15rem; overflow-x:auto; padding-bottom:0.35rem; scrollbar-width:none; }
+  .chat-emoji-bar::-webkit-scrollbar{ display:none; }
+  .chat-emoji{ background:none; border:none; font-size:18px; padding:0.15em 0.3em; cursor:pointer; border-radius:8px; transition:transform 0.12s ease, background 0.12s ease; }
+  .chat-emoji:hover{ transform:scale(1.25) rotate(-6deg); background:rgba(255,255,255,0.06); }
+  .chat-compose-row{ display:flex; gap:0.5rem; align-items:flex-end; }
+  .chat-input{
+    flex:1 1 auto; min-width:0; resize:none; max-height:140px;
+    background:#000; color:#fff; border:1px solid rgba(255,255,255,0.4); border-radius:18px;
+    font-family:inherit; font-size:14px; line-height:1.4; padding:0.6em 1em;
+  }
+  .chat-input:focus{ outline:none; border-color:var(--cyan); box-shadow:0 0 10px var(--cyan-glow); }
+  .chat-send-btn{
+    flex:0 0 auto; background:var(--cyan); color:#000; border:none; border-radius:999px;
+    font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0.08em; padding:0.75em 1.1em; cursor:pointer;
+    box-shadow:0 0 12px var(--cyan-glow); transition:transform 0.1s ease;
+  }
+  .chat-send-btn:active{ transform:scale(0.94); }
+  .chat-send-btn:disabled{ opacity:0.5; }
+  /* Empty / builder */
+  .chat-empty-note{ font-size:12px; color:rgba(255,255,255,0.6); letter-spacing:0.06em; padding:1rem 0.5rem; text-align:center; line-height:1.6; }
+  .chat-say-hi{ margin:auto; font-size:14px; color:#fff; }
+  .chat-welcome{ margin:auto; text-align:center; padding:2rem 1rem; }
+  .chat-welcome-glyph{ font-size:46px; color:var(--cyan); text-shadow:0 0 18px var(--cyan-glow); animation:chat-float 3s ease-in-out infinite; }
+  @keyframes chat-float{ 0%, 100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+  .chat-welcome-title{ font-size:20px; font-weight:700; color:#fff; letter-spacing:0.08em; margin-top:0.5rem; }
+  .chat-welcome-sub{ font-size:12px; color:rgba(255,255,255,0.6); letter-spacing:0.08em; margin:0.4rem 0 1.1rem; }
+  .chat-welcome-btns{ display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; }
+  .chat-form-body{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:0.9rem; display:flex; flex-direction:column; gap:0.55rem; }
+  .chat-label{ font-size:11px; letter-spacing:0.14em; color:rgba(255,255,255,0.6); margin-top:0.4rem; }
+  .chat-inline-form{ display:flex; gap:0.45rem; }
+  .chat-form-btns{ display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.4rem; }
+  .chat-people{ display:flex; flex-wrap:wrap; gap:0.4rem; }
+  .chat-search-hits{ display:flex; flex-wrap:wrap; gap:0.4rem; }
+  .chat-search-hits:empty{ display:none; }
+  .chat-person{
+    display:inline-flex; align-items:center; gap:0.45rem; background:#000; color:#fff;
+    border:1px solid rgba(255,255,255,0.3); border-radius:999px; padding:0.25em 0.8em 0.25em 0.25em;
+    font-family:inherit; font-size:12px; cursor:pointer;
+  }
+  .chat-person:hover{ border-color:var(--cyan); }
+  .chat-person.on{ border-color:var(--cyan); background:rgba(61,243,236,0.12); box-shadow:0 0 8px var(--cyan-glow); }
+  .chat-person.on::after{ content:'✓'; color:var(--cyan); font-weight:700; }
+  .chat-chip-pick{ display:flex; flex-wrap:wrap; gap:0.4rem; }
+  .chat-chip{ background:#000; color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:999px; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.05em; padding:0.45em 0.9em; cursor:pointer; }
+  .chat-chip small{ font-weight:400; color:rgba(255,255,255,0.6); }
+  .chat-chip.on{ border-color:var(--cyan); color:var(--cyan); background:rgba(61,243,236,0.1); }
+  .chat-kind-row{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.45rem; }
+  .chat-kind{
+    display:flex; flex-direction:column; gap:0.25rem; text-align:left; background:#000; color:#fff;
+    border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:14px; padding:0.7em 0.8em; cursor:pointer; font-family:inherit;
+  }
+  .chat-kind b{ font-size:12px; letter-spacing:0.08em; }
+  .chat-kind span{ font-size:10px; color:rgba(255,255,255,0.6); letter-spacing:0.06em; }
+  .chat-kind.on{ border-color:var(--cyan); box-shadow:0 0 10px var(--cyan-glow); background:rgba(61,243,236,0.07); }
+  .chat-kind.locked{ opacity:0.45; cursor:not-allowed; }
+  .chat-check-results{ display:flex; flex-direction:column; gap:0.25rem; }
+  .chat-check-row{ font-size:12px; letter-spacing:0.04em; padding:0.35em 0.7em; border-radius:10px; border:1px solid; }
+  .chat-check-row.ok{ color:var(--green); border-color:rgba(61,220,132,0.5); }
+  .chat-check-row.bad{ color:var(--red); border-color:rgba(232,56,79,0.5); }
+  /* Phone: one pane at a time. */
+  @media (max-width:760px){
+    .chat-app{ grid-template-columns:minmax(0, 1fr); }
+    .chat-app .chat-main{ display:none; }
+    .chat-app.show-main .chat-side{ display:none; }
+    .chat-app.show-main .chat-main{ display:flex; }
+    .chat-back-btn{ display:inline-block; }
+    .chat-head-actions .chat-head-btn{ padding:0.4em 0.6em; font-size:10px; }
+    .chat-msg{ max-width:88%; }
+    .chat-kind-row{ grid-template-columns:minmax(0, 1fr); }
+    .chat-av-lg{ width:36px; height:36px; }
+  }
+  /* N0T!F!CAT!0NS pile (2026-09-28) */
+  #profileTabPanelNotifications.notif-panel{ display:flex; flex-direction:column; overflow:hidden; }
+  #profileTabPanelNotifications[style*="none"]{ display:none !important; }
+  .notif-toolbar{ flex:0 0 auto; display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:space-between; align-items:center; margin:0.25rem 0 0.6rem; }
+  .notif-chips, .notif-actions{ display:flex; flex-wrap:wrap; gap:0.35rem; }
+  .notif-chip, .notif-action-btn{
+    background:#000; color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:999px;
+    font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.08em; padding:0.45em 0.85em; cursor:pointer;
+  }
+  .notif-chip:hover, .notif-action-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .notif-chip.on{ border-color:var(--cyan); color:#000; background:var(--cyan); box-shadow:0 0 10px var(--cyan-glow); }
+  .notif-chip-n{ opacity:0.75; font-weight:400; }
+  .notif-action-danger:hover{ border-color:var(--red); color:var(--red); }
+  .notif-list{
+    flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem;
+    border:1px solid rgba(var(--collection-accent-rgb), 0.75); box-shadow:0 0 8px rgba(var(--collection-accent-rgb), 0.35);
+    background:#000; padding:0.5rem;
+  }
+  .notif-row{
+    position:relative; display:flex; align-items:center; gap:0.75rem; padding:0.6rem 2.4rem 0.6rem 0.65rem;
+    border:1px solid rgba(255,255,255,0.12); border-left:3px solid rgba(255,255,255,0.3); border-radius:12px;
+    background:#000; color:#fff; text-decoration:none; cursor:pointer; transition:background 0.12s ease, border-color 0.12s ease;
+  }
+  .notif-row:hover{ background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.3); }
+  .notif-row.nr-message{ border-left-color:var(--cyan); }
+  .notif-row.nr-offer{ border-left-color:var(--yellow, #f5c518); }
+  .notif-row.nr-sale{ border-left-color:var(--green); }
+  .notif-row.nr-listing{ border-left-color:rgba(var(--collection-accent-rgb), 1); }
+  .notif-row.unread{ background:rgba(255,51,204,0.06); }
+  .notif-row.unread .notif-row-title{ color:#fff; }
+  .notif-thumb{ width:40px; height:40px; border-radius:10px; object-fit:cover; flex:0 0 auto; }
+  .notif-thumb-icon{ display:inline-flex; align-items:center; justify-content:center; font-size:20px; border:1px solid rgba(255,255,255,0.2); }
+  .notif-row-text{ flex:1 1 auto; min-width:0; }
+  .notif-row-title{ font-size:13px; font-weight:700; letter-spacing:0.03em; color:rgba(255,255,255,0.85); }
+  .notif-row-sub{ font-size:12px; color:rgba(255,255,255,0.7); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.15rem; }
+  .notif-row-meta{ font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:0.06em; margin-top:0.2rem; }
+  .notif-dot{ width:9px; height:9px; border-radius:50%; background:var(--magenta); box-shadow:0 0 8px var(--magenta-glow); flex:0 0 auto; }
+  .notif-row-x{
+    position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); width:1.6em; height:1.6em; border-radius:50%;
+    background:#000; border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:13px; line-height:1; cursor:pointer; opacity:0.55;
+  }
+  .notif-row-x:hover{ opacity:1; border-color:var(--red); color:var(--red); }
+  .notif-empty{ margin:auto; text-align:center; font-size:12px; color:rgba(255,255,255,0.65); letter-spacing:0.08em; line-height:1.7; padding:2rem 1rem; }
+  .notif-empty-glyph{ font-size:40px; margin-bottom:0.5rem; animation:chat-float 3s ease-in-out infinite; }
+  @media (max-width:640px){
+    .notif-toolbar{ flex-direction:column; align-items:stretch; }
+    .notif-chips{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+    .notif-chip{ flex:0 0 auto; }
+  }
+  .notify-row-watch small{ font-size:11px; font-weight:400; opacity:0.7; margin-left:0.4em; }
+  .notify-row-watch{ border-color:rgba(245,197,24,0.55) !important; }
+  .notify-toast.nt-clickable .nt-icon{ font-size:22px; flex:0 0 auto; }
+  .notify-toast.nt-message{ border-left-color:var(--cyan); }
+  .notify-toast.nt-offer{ border-left-color:var(--yellow, #f5c518); }
   .profile-coins-section{ margin-bottom:1.5rem; }
   .profile-coins-banner{
     display:flex;
@@ -12059,6 +12240,13 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 4.5l6.5 5 6.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">MESSAGE !NB0X</span><span class="profile-tab-badge" id="profileTabMessagesBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
           </div>
+          <!-- N0T!F!CAT!0NS (2026-09-28) — everything that popped up (activity
+               on switched-on collections, new messages, new offers) piles up
+               here; see renderNotifPanel in the JS. -->
+          <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="notifications">
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4.5 12.5V8a4.5 4.5 0 0 1 9 0v4.5l1.5 1.5H3l1.5-1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.3 15.5a1.8 1.8 0 0 0 3.4 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">N0T!F!CAT!0NS</span><span class="profile-tab-badge" id="profileTabNotifBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
+            <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
+          </div>
           <div class="sw-panel flock-account-box flock-account-box-clickable" role="button" tabindex="0" data-profilebox="offers">
             <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 2.5h6a1.5 1.5 0 0 1 1.5 1.5v6L9 16.5 1.5 9 8 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="12" cy="6" r="1.2" stroke="currentColor" stroke-width="1.3"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">0FFERS</span><span class="profile-tab-badge" id="profileTabOffersBadge" style="display:none;"></span><span class="flock-account-box-arrow">›</span></div>
             <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
@@ -12087,6 +12275,12 @@ const SWAP_HTML = `<!DOCTYPE html>
                "not yet" treatment as before. -->
           <div class="sw-panel flock-account-box flock-account-box-soon">
             <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">TRANSACT!0N H!ST0RY</span><span class="db-soon">C0M!NG S00N</span></div>
+          </div>
+          <!-- PREM!UM (2026-09-28) — paid for with CR0WN rewards earned from
+               trading here. Not built yet; the chat side already reads it
+               (isPremium in functions/_chat.js: group chats with anyone). -->
+          <div class="sw-panel flock-account-box flock-account-box-soon">
+            <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 1.5l2 4.5 4.8.5-3.6 3.2 1 4.8L9 12l-4.2 2.5 1-4.8L2.2 6.5 7 6l2-4.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6.5 16.5h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">PREM!UM</span><span class="db-soon">C0M!NG S00N</span></div>
           </div>
         </div>
         <!-- Real-data footer readout, reference-flavoured but never
@@ -12216,28 +12410,46 @@ const SWAP_HTML = `<!DOCTYPE html>
            done. Was folded into the 0FFERS box/panel for a while (see
            profileTabPanelOffers's own comment on why) — split back into
            its own destination now that messaging actually works. -->
-      <div class="profile-tab-panel" id="profileTabPanelMessages" style="display:none;">
-        <div class="panel-title">MESSAGE !NB0X</div>
-        <div id="profileMessagesListView">
-          <button type="button" class="action-btn profile-messages-newbtn" id="profileMessagesNewBtn">+ NEW MESSAGE</button>
-          <div class="profile-msg-new-prompt" id="profileMessagesNewPrompt" style="display:none;">
-            <input type="text" class="profile-search-input" id="profileMessagesNewWalletInput" placeholder="REC!P!ENT WALLET ADDRESS (r...)" autocomplete="off">
-            <button type="button" class="action-btn" id="profileMessagesNewStartBtn">START</button>
-            <button type="button" class="secondary-btn" id="profileMessagesNewCancelBtn">CANCEL</button>
-          </div>
-          <div class="profile-messages-list" id="profileMessagesList"></div>
-        </div>
-        <div id="profileMessagesThreadView" style="display:none;">
-          <button type="button" class="profile-holdings-viewmore" id="profileMessagesThreadBack">← BACK T0 MESSAGES</button>
-          <div class="panel-title" id="profileMessagesThreadTitle"></div>
-          <div class="profile-msg-thread-list" id="profileMessagesThreadList"></div>
-          <div class="profile-msg-compose">
-            <input type="text" class="profile-search-input" id="profileMessagesComposeInput" placeholder="TYPE A MESSAGE..." maxlength="1000" autocomplete="off">
-            <button type="button" class="action-btn" id="profileMessagesComposeSend">SEND</button>
-          </div>
-          <div class="th-empty" id="profileMessagesThreadStatus" style="display:none;"></div>
+      <div class="profile-tab-panel chat-panel" id="profileTabPanelMessages" style="display:none;">
+        <!-- Rebuilt 2026-09-28 as a real chat app: CHATS (1-to-1), GR0UPS
+             (holder-only group chats — see functions/_chat.js for the
+             rules) and C0NTACTS (saved address book). Left column = the
+             lists, right = whichever conversation/builder is open; on a
+             phone it's one at a time (.show-main). Everything inside
+             #chatMain is drawn by the chat JS (openMessageThread,
+             openGroupThread, openChatNewDm, openChatNewGroup...). -->
+        <div class="chat-app" id="chatApp">
+          <aside class="chat-side">
+            <div class="chat-side-tabs" id="chatSideTabs">
+              <button type="button" class="chat-side-tab active" data-chattab="chats">CHATS<span class="chat-tab-count" id="chatTabCountChats"></span></button>
+              <button type="button" class="chat-side-tab" data-chattab="groups">GR0UPS<span class="chat-tab-count" id="chatTabCountGroups"></span></button>
+              <button type="button" class="chat-side-tab" data-chattab="contacts">C0NTACTS</button>
+            </div>
+            <div class="chat-side-tools">
+              <input type="text" class="chat-search-input" id="chatSearchInput" placeholder="SEARCH" autocomplete="off">
+              <button type="button" class="chat-new-btn" id="chatNewBtn">+ NEW</button>
+            </div>
+            <div class="chat-side-list" id="chatSideList"></div>
+          </aside>
+          <section class="chat-main" id="chatMain"></section>
         </div>
         <button type="button" class="profile-holdings-viewmore" id="profileMessagesBack">← BACK</button>
+      </div>
+      <!-- N0T!F!CAT!0NS (2026-09-28) — the pile. Filter chips + NEWEST/0LDEST,
+           that's all the sorting (user: "make it very simple"). Stored per
+           wallet on this device (skyllaNotifLog:<wallet>). -->
+      <div class="profile-tab-panel notif-panel" id="profileTabPanelNotifications" style="display:none;">
+        <div class="notif-toolbar">
+          <div class="notif-chips" id="notifChips"></div>
+          <div class="notif-actions">
+            <button type="button" class="notif-action-btn" id="notifSortBtn">NEWEST F!RST</button>
+            <button type="button" class="notif-action-btn" id="notifReadAllBtn">MARK ALL READ</button>
+            <button type="button" class="notif-action-btn" id="notifSettingsBtn">⚙ SETT!NGS</button>
+            <button type="button" class="notif-action-btn notif-action-danger" id="notifClearBtn">CLEAR</button>
+          </div>
+        </div>
+        <div class="notif-list" id="notifList"></div>
+        <button type="button" class="profile-holdings-viewmore" id="profileNotifBack">← BACK</button>
       </div>
       <!-- 0FFERS — its own real full page again (reported live as wanting
            it split back out of MESSAGE !NB0X, which it had been merged
@@ -14651,8 +14863,8 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileTabPanelMyNfts','myNftsPicker','myNftsPickerGrid','myNftsGrid','myNftsGridBackBtn','myNftsGridStatus','myNftsGridItems','myNftsBackBtn',
    'myNftsSearchInput','myNftsSearchClearBtn','myNftsEditionToggle','myNftsSortSelect','myNftsTraitCatSelect','myNftsTraitValSelect','myNftsTraitAddBtn','myNftsTraitChips',
    'profileTabPanelProfiles','profilesSubNav','profilesHubBanner','profilesEditView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
-   'profileMessagesListView','profileMessagesNewBtn','profileMessagesNewPrompt','profileMessagesNewWalletInput','profileMessagesNewStartBtn','profileMessagesNewCancelBtn','profileMessagesList',
-   'profileMessagesThreadView','profileMessagesThreadBack','profileMessagesThreadTitle','profileMessagesThreadList','profileMessagesComposeInput','profileMessagesComposeSend','profileMessagesThreadStatus',
+   'chatApp','chatSideTabs','chatTabCountChats','chatTabCountGroups','chatSearchInput','chatNewBtn','chatSideList','chatMain',
+   'profileTabNotifBadge','profileTabPanelNotifications','notifChips','notifSortBtn','notifReadAllBtn','notifSettingsBtn','notifClearBtn','notifList','profileNotifBack',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
    'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartLabel','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','sweepSub','sweepAvail','sweepN','sweepMinus','sweepPlus','sweepMax',
    'coinModal','coinChartModes','coinCloseBtn','coinTitle','coinImg','coinPrice','coinPriceSub','coinChange','coinChart','coinChartRanges','coinChartChange','coinChartPlot','coinStats','coinLinks','coinSwapBtn',
@@ -15126,6 +15338,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.dbControlsSticky.style.display = showSortFilterChrome ? '' : 'none';
     el.bottomControlsBar.style.display = showSortFilterChrome ? 'flex' : 'none';
     document.body.classList.toggle('has-bottom-bar', showSortFilterChrome);
+    // Scroll is restored after this, so check now and again just after.
+    if (showSortFilterChrome && dbToolsToggleEl !== undefined){ queueBottomBarCheck(); setTimeout(queueBottomBarCheck, 400); }
     if (!showSortFilterChrome){
       closeSortFlyout();
       closeTraitsFlyout();
@@ -16673,6 +16887,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function setWatchlist(list){
     try { localStorage.setItem(watchlistKey(), JSON.stringify(list)); } catch (e){}
+    syncNotifyWatchLists();
   }
   function isWatchlisted(nftId){
     return getWatchlist().some(function(w){ return w.nftId === nftId; });
@@ -17766,6 +17981,20 @@ const SWAP_HTML = `<!DOCTYPE html>
   var dbControlsStickyObserver = new IntersectionObserver(updateBottomBarReveal, { threshold: 0 });
   dbControlsStickyObserver.observe(el.dbControlsSticky);
   if (dbToolsToggleEl) dbControlsStickyObserver.observe(dbToolsToggleEl);
+  // Coming back from an NFT's full view put you straight back where you
+  // were, already past the controls, so the observer never saw them leave
+  // and the bar stayed hidden (reported live 2026-09-28). Re-check on
+  // scroll (at most every 60ms) and whenever the grid is shown again.
+  var bottomBarCheckQueued = false;
+  function queueBottomBarCheck(){
+    if (bottomBarCheckQueued) return;
+    bottomBarCheckQueued = true;
+    setTimeout(function(){
+      bottomBarCheckQueued = false;
+      if (el.bottomControlsBar.style.display !== 'none') updateBottomBarReveal();
+    }, 60);
+  }
+  window.addEventListener('scroll', queueBottomBarCheck, { passive: true });
 
   // ---- Trait stack (stackable AND filters) ----
   // Pick a category from the dropdown; every value for that category then
@@ -18580,6 +18809,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   // "set it horizontally showing all the details of the offer" per the
   // explicit request. Just the highest offer per Pigeon, same as the
   // card's own myPigeonOffersHtml.
+  function waitingOfferRows(){
+    var rows = [];
+    (offersReceivedData || []).forEach(function(item){
+      var real = item.offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer !== MY_WALLET; });
+      var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
+      real.slice().sort(function(a, b){ return topOffer([a, b]) === a ? -1 : 1; }).forEach(function(o){ rows.push({ item: item, top: o, img: img }); });
+    });
+    return rows;
+  }
+  function updateOffersBadge(n){
+    el.profileTabOffersBadge.textContent = n || '';
+    el.profileTabOffersBadge.style.display = n > 0 ? '' : 'none';
+  }
   function renderMyOffersList(){
     if (offersReceivedData === null){
       el.myOffersList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
@@ -18590,13 +18832,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // separate "own offer" section for it either any more, reported live
     // as not needing that; it already shows (and can be cancelled) in
     // OUTGOING OFFERS below like every other offer this wallet has made.
-    var rows = offersReceivedData.map(function(item){
-      var real = item.offers.filter(function(o){ return !declinedOfferIds[o.offerId] && o.buyer !== MY_WALLET; });
-      if (!real.length) return null;
-      var top = topOffer(real);
-      var img = item.image ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">' : 'IMAGE';
-      return { item: item, top: top, img: img };
-    }).filter(Boolean);
+    // Every offer waiting on you, one row each (2026-09-28: the 0FFERS
+    // badge showed every offer — your own and declined ones included —
+    // while this list showed one per NFT, so the two never matched).
+    var rows = waitingOfferRows();
+    updateOffersBadge(rows.length);
     if (!rows.length){
       el.myOffersList.innerHTML = '<div class="th-empty">N0 0FFERS RECE!VED R!GHT N0W.</div>';
       return;
@@ -22402,14 +22642,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         if (item.collection === state.collection) offersByNftId[item.nftId] = item.offers;
         totalOffers += item.offers.length;
       });
-      offersReceivedTotal = totalOffers;
+      offersReceivedTotal = waitingOfferRows().length;
       updateFlockTabLabel();
       renderMyPigeonsList();
-      // The 0FFERS box's own real count (reported live wanting "a pending
-      // number if the address has them") — hidden entirely rather than
-      // showing "0FFERS :: 0" when there's genuinely nothing pending.
-      el.profileTabOffersBadge.textContent = totalOffers || '';
-      el.profileTabOffersBadge.style.display = totalOffers > 0 ? '' : 'none';
+      // The 0FFERS box's count is set by renderMyOffersList below (offers
+      // actually waiting — see waitingOfferRows). New ones also land in
+      // Σκύλλα://N0T!F!CAT!0NS.
+      notifFromOffers(offersReceivedData);
       // Also refresh the DATABASE grid when SH0W MY P!GE0NS is what's
       // showing (ownedPigeonActionHtml reads offersByNftId there too), and
       // the dedicated 0FFERS RECE!VED view if that's what's open.
@@ -24442,6 +24681,29 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (d && d.ok && d.prefs){ notifyPrefs = d.prefs; lsSet(NOTIFY_PREFS_LS, notifyPrefs); }
     }).catch(function(){});
   }
+  function notifyTypesOf(c){
+    return NOTIFY_OPTIONS.map(function(o){ return o.type; }).filter(function(t){ return c && c[t]; });
+  }
+  // Starred NFT ids (upper-case) for one collection — see getWatchlist.
+  function watchedIdsFor(key){
+    return getWatchlist().filter(function(w){ return (w.collection || 'pigeons') === key && w.nftId; }).map(function(w){ return String(w.nftId).toUpperCase(); });
+  }
+  // Keeps each WATCHL!ST 0NLY collection's list in step with the stars
+  // (called from setWatchlist); the phone-push copy lives server-side.
+  var notifyWatchSyncTimer = null;
+  function syncNotifyWatchLists(){
+    if (!notifyPrefs || !notifyPrefs.collections) return;
+    var changed = false;
+    Object.keys(notifyPrefs.collections).forEach(function(key){
+      var c = notifyPrefs.collections[key];
+      if (!c || !c.watchOnly) return;
+      var ids = watchedIdsFor(key);
+      if (JSON.stringify(ids) !== JSON.stringify(c.watch || [])){ c.watch = ids; changed = true; }
+    });
+    if (!changed) return;
+    if (notifyWatchSyncTimer) clearTimeout(notifyWatchSyncTimer);
+    notifyWatchSyncTimer = setTimeout(saveNotifyPrefs, 800);
+  }
   function saveNotifyPrefs(){
     lsSet(NOTIFY_PREFS_LS, notifyPrefs);
     if (MY_WALLET){
@@ -24548,7 +24810,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     var on = (notifyPrefs.collections && notifyPrefs.collections[key]) || {};
     if (meta.thumb){ el.notifyCoinThumb.src = meta.thumb; el.notifyCoinThumb.style.display = ''; } else el.notifyCoinThumb.style.display = 'none';
     el.notifyEyebrow.textContent = meta.label || key;
-    el.notifyToggles.innerHTML = NOTIFY_OPTIONS.map(function(o){
+    // WATCHL!ST 0NLY (2026-09-28) on top: when on, the switches below only
+    // fire for NFTs you've starred in this collection.
+    var watchedHere = watchedIdsFor(key).length;
+    el.notifyToggles.innerHTML = '<div class="notify-row notify-row-watch' + (on.watchOnly ? ' on' : '') + '" data-type="watchOnly"><span>★ WATCHL!ST 0NLY <small>' + watchedHere + ' STARRED HERE</small></span><span class="notify-switch"></span></div>' +
+      NOTIFY_OPTIONS.map(function(o){
       // Title only (reported live 2026-09-25: no descriptions, make it fit).
       return '<div class="notify-row' + (on[o.type] ? ' on' : '') + '" data-type="' + o.type + '"><span>' + o.label + '</span><span class="notify-switch"></span></div>';
     }).join('');
@@ -24568,11 +24834,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     var key = state.collection, type = row.getAttribute('data-type');
     notifyPrefs.collections = notifyPrefs.collections || {};
     var c = notifyPrefs.collections[key] = notifyPrefs.collections[key] || {};
-    if (c[type]) delete c[type]; else c[type] = true;
-    if (!Object.keys(c).length) delete notifyPrefs.collections[key];
+    if (type === 'watchOnly'){
+      if (c.watchOnly){ delete c.watchOnly; delete c.watch; }
+      else { c.watchOnly = true; c.watch = watchedIdsFor(key); }
+    } else if (c[type]) delete c[type]; else c[type] = true;
+    if (!notifyTypesOf(c).length && !c.watchOnly) delete notifyPrefs.collections[key];
     // Start from now — no flood of older activity the moment it's switched on.
     if (!notifySeen[key]){ notifySeen[key] = Math.floor(Date.now() / 1000); lsSet(NOTIFY_SEEN_LS, notifySeen); }
     row.classList.toggle('on', !!c[type]);
+    if (type === 'watchOnly' && c.watchOnly && !c.watch.length) el.notifyNote.textContent = 'N0TH!NG STARRED !N TH!S C0LLECT!0N YET — STAR NFTS ☆ 0N DATABASE F!RST.';
     saveNotifyPrefs();
     pollNotifications();
   });
@@ -24633,8 +24903,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (document.hidden) return;
     var cols = (notifyPrefs && notifyPrefs.collections) || {};
     Object.keys(cols).forEach(function(key){
-      var types = Object.keys(cols[key] || {});
+      var types = notifyTypesOf(cols[key] || {});
       if (!types.length) return;
+      var watch = cols[key].watchOnly ? watchedIdsFor(key) : null;
       if (!notifySeen[key]){ notifySeen[key] = Math.floor(Date.now() / 1000); lsSet(NOTIFY_SEEN_LS, notifySeen); return; }
       fetch('/api/pigeons?events=1&collection=' + encodeURIComponent(key) + '&since=' + notifySeen[key] + '&types=' + types.join(','))
         .then(function(r){ return r.json(); })
@@ -24643,12 +24914,218 @@ const SWAP_HTML = `<!DOCTYPE html>
           if (!items.length) return;
           notifySeen[key] = Math.max.apply(null, items.map(function(x){ return x.time; }).concat([notifySeen[key]]));
           lsSet(NOTIFY_SEEN_LS, notifySeen);
+          if (watch) items = items.filter(function(ev){ return watch.indexOf(String(ev.nftId || '').toUpperCase()) !== -1; });
+          if (!items.length) return;
+          // Everything piles up in Σκύλλα://N0T!F!CAT!0NS; up to 5 pop up.
+          notifFromEvents(items, key);
           items.slice(0, 5).reverse().forEach(function(ev){ showNotifyToast(ev, key); });
         }).catch(function(){});
     });
   }
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) pollNotifications(); });
   pollNotifications();
+  // ---- N0T!F!CAT!0NS PILE (2026-09-28) — the Σκύλλα://SYSTEM box. Every
+  // activity pop-up (pollNotifications), new message (notifFromInbox) and
+  // new offer on your NFTs (notifFromOffers) is kept here, newest first,
+  // per wallet on this device, until cleared. Sorting is deliberately
+  // simple: one row of filter chips + NEWEST/0LDEST. ----
+  var NOTIF_MAX = 300;
+  var NOTIF_FILTERS = [
+    { f: 'all', label: 'ALL' }, { f: 'unread', label: 'UNREAD' }, { f: 'message', label: 'MESSAGES' },
+    { f: 'offer', label: '0FFERS' }, { f: 'sale', label: 'SALES' }, { f: 'listing', label: 'L!ST!NGS' }, { f: 'other', label: '0THER' }
+  ];
+  var NOTIF_ICONS = { message: '✉', offer: '🤝', sale: '💰', listing: '🏷', other: '⚡' };
+  var notifView = { filter: 'all', oldestFirst: false };
+  var notifLog = null;
+  function notifKey(){ return 'skyllaNotifLog:' + (MY_WALLET || 'guest'); }
+  function notifLoad(){ if (notifLog === null) notifLog = lsGet(notifKey(), []); if (!Array.isArray(notifLog)) notifLog = []; return notifLog; }
+  function notifSave(){ lsSet(notifKey(), notifLog.slice(0, NOTIF_MAX)); }
+  function notifUnread(){ return notifLoad().filter(function(n){ return !n.read; }).length; }
+  function updateNotifBadge(){
+    var n = notifUnread();
+    el.profileTabNotifBadge.textContent = n ? (n > 99 ? '99+' : n) : '';
+    el.profileTabNotifBadge.style.display = n > 0 ? '' : 'none';
+  }
+  // Adds entries it hasn't seen (by id). Returns the ones actually new.
+  function notifAdd(entries){
+    var log = notifLoad();
+    var have = {};
+    log.forEach(function(n){ have[n.id] = true; });
+    var fresh = entries.filter(function(e){ return e && e.id && !have[e.id] && (have[e.id] = true); });
+    if (!fresh.length) return [];
+    notifLog = fresh.concat(log).sort(function(a, b){ return b.time - a.time; }).slice(0, NOTIF_MAX);
+    notifSave();
+    updateNotifBadge();
+    if (el.profileTabPanelNotifications.style.display !== 'none') renderNotifPanel();
+    return fresh;
+  }
+  function notifFromEvents(items, key){
+    var meta = COLLECTION_META[key] || {};
+    return notifAdd(items.map(function(e){
+      var price = notifyPriceText(e, key);
+      var cat = e.type === 'sale' || e.type === 'listing' || e.type === 'offer' ? e.type : 'other';
+      return {
+        id: 'ev:' + (e.hash || e.time) + ':' + e.type + ':' + e.nftId,
+        cat: cat, time: e.time, read: false, collection: key,
+        title: (meta.itemLabel || key) + (e.number ? ' #' + e.number : '') + ' ' + NOTIFY_VERBS[e.type] + (price ? ' ' + price : ''),
+        href: nftHrefFor({ number: e.number, collectionKey: key }) || null
+      };
+    }));
+  }
+  // One entry per conversation's newest unread message.
+  function notifFromInbox(dms, groups){
+    var entries = [];
+    dms.forEach(function(r){
+      if (!r.unreadCount || r.lastFromMe) return;
+      entries.push({ id: 'dm:' + r.wallet + ':' + r.lastAt, cat: 'message', time: r.lastAt, read: false,
+        title: chatName(r.wallet) + (r.unreadCount > 1 ? ' SENT ' + r.unreadCount + ' MESSAGES' : ' SENT Y0U A MESSAGE'),
+        sub: r.lastMessage, open: { kind: 'dm', wallet: r.wallet } });
+    });
+    groups.forEach(function(g){
+      if (!g.unreadCount || g.lastFromMe || !g.lastMessage) return;
+      entries.push({ id: 'gr:' + g.id + ':' + g.lastAt, cat: 'message', time: g.lastAt, read: false,
+        title: 'NEW !N ' + g.name, sub: (g.lastSender ? chatName(g.lastSender) + ': ' : '') + g.lastMessage, open: { kind: 'group', id: g.id } });
+    });
+    var fresh = notifAdd(entries);
+    // Pop-up for ones that arrive while the site's open (not the first
+    // load's backlog, and not for a chat you're looking at).
+    if (chat.seededInbox) fresh.forEach(function(n){
+      var looking = el.profileTabPanelMessages.style.display !== 'none' && chat.open && n.open &&
+        ((n.open.kind === 'dm' && chat.open.wallet === n.open.wallet) || (n.open.kind === 'group' && chat.open.id === n.open.id));
+      if (!looking) notifToast(n);
+    });
+    chat.seededInbox = true;
+  }
+  function notifFromOffers(items){
+    var entries = [];
+    items.forEach(function(item){
+      var meta = COLLECTION_META[item.collection] || COLLECTION_META.pigeons;
+      (item.offers || []).forEach(function(o){
+        if (o.buyer === MY_WALLET || declinedOfferIds[o.offerId]) return;
+        entries.push({ id: 'offer:' + o.offerId, cat: 'offer', time: Math.floor(Date.now() / 1000), read: false,
+          title: 'NEW 0FFER 0N ' + meta.itemLabel + (item.number !== null && item.number !== undefined ? ' #' + item.number : ''),
+          sub: fmtOfferCompact(o, item.collection) + ' FR0M ' + chatName(o.buyer), open: { kind: 'offers' } });
+      });
+    });
+    return notifAdd(entries);
+  }
+  function notifToast(n){
+    var t = document.createElement('div');
+    t.className = 'notify-toast nt-' + n.cat + ' nt-clickable';
+    t.innerHTML = '<span class="nt-icon">' + (NOTIF_ICONS[n.cat] || '⚡') + '</span><span>' + escapeHtml(n.title) +
+      (n.sub ? '<span class="nt-sub">' + escapeHtml(n.sub.length > 80 ? n.sub.slice(0, 80) + '…' : n.sub) + '</span>' : '') + '</span>' +
+      '<button type="button" class="nt-x" title="CLEAR" aria-label="CLEAR">&times;</button>';
+    t.addEventListener('click', function(e){
+      if (e.target.closest('.nt-x')) return;
+      if (t.parentNode) t.parentNode.removeChild(t);
+      syncNotifyClearAll();
+      notifOpen(n);
+    });
+    el.notifyToasts.appendChild(t);
+    var toasts = el.notifyToasts.querySelectorAll('.notify-toast');
+    for (var i = 0; i < toasts.length - 4; i++) toasts[i].parentNode.removeChild(toasts[i]);
+    syncNotifyClearAll();
+    setTimeout(function(){ if (t.parentNode){ t.parentNode.removeChild(t); syncNotifyClearAll(); } }, 15000);
+  }
+  // Opening a chat reads its message notifications too.
+  function notifMarkConvoRead(kind, key){
+    var changed = false;
+    notifLoad().forEach(function(n){
+      if (!n.read && n.open && n.open.kind === kind && (kind === 'dm' ? n.open.wallet === key : n.open.id === key)){ n.read = true; changed = true; }
+    });
+    if (!changed) return;
+    notifSave();
+    updateNotifBadge();
+  }
+  function notifMarkRead(id){
+    notifLoad().forEach(function(n){ if (n.id === id) n.read = true; });
+    notifSave();
+    updateNotifBadge();
+  }
+  // Takes you to whatever the notification is about.
+  function notifOpen(n){
+    notifMarkRead(n.id);
+    if (n.open && (n.open.kind === 'dm' || n.open.kind === 'group' || n.open.kind === 'offers')){
+      if (el.screenProfile && el.screenProfile.style.display !== 'none' && typeof closeWalletProfile === 'function') closeWalletProfile();
+      showTab('mypigeons', true);
+      if (n.open.kind === 'offers'){ switchProfileTab('offers'); return; }
+      switchProfileTab('messages');
+      if (n.open.kind === 'dm') openMessageThread(n.open.wallet); else openGroupThread(n.open.id);
+      return;
+    }
+    if (n.href) window.location.href = n.href;
+  }
+  function renderNotifPanel(){
+    var log = notifLoad();
+    var counts = { all: log.length, unread: 0, message: 0, offer: 0, sale: 0, listing: 0, other: 0 };
+    log.forEach(function(n){ if (!n.read) counts.unread++; counts[n.cat] = (counts[n.cat] || 0) + 1; });
+    el.notifChips.innerHTML = NOTIF_FILTERS.map(function(f){
+      return '<button type="button" class="notif-chip' + (notifView.filter === f.f ? ' on' : '') + '" data-filter="' + f.f + '">' + f.label +
+        (counts[f.f] ? ' <span class="notif-chip-n">' + counts[f.f] + '</span>' : '') + '</button>';
+    }).join('');
+    el.notifSortBtn.textContent = notifView.oldestFirst ? '0LDEST F!RST' : 'NEWEST F!RST';
+    var rows = log.filter(function(n){
+      if (notifView.filter === 'all') return true;
+      if (notifView.filter === 'unread') return !n.read;
+      return n.cat === notifView.filter;
+    });
+    if (notifView.oldestFirst) rows = rows.slice().reverse();
+    if (!rows.length){
+      el.notifList.innerHTML = '<div class="notif-empty"><div class="notif-empty-glyph">🔔</div>' +
+        (log.length ? 'N0TH!NG HERE F0R TH!S F!LTER.' : 'N0 N0T!F!CAT!0NS YET.<br>SW!TCH 0N ALERTS F0R A C0LLECT!0N W!TH ⚙ SETT!NGS — NEW MESSAGES AND 0FFERS SH0W UP HERE AUT0MAT!CALLY.') + '</div>';
+      return;
+    }
+    el.notifList.innerHTML = rows.map(function(n){
+      var meta = n.collection ? (COLLECTION_META[n.collection] || {}) : null;
+      var thumb = meta && meta.thumb ? '<img class="notif-thumb" src="' + escapeHtml(meta.thumb) + '" alt="">' : '<span class="notif-thumb notif-thumb-icon">' + (NOTIF_ICONS[n.cat] || '⚡') + '</span>';
+      var tag = n.href ? 'a' : 'div';
+      return '<' + tag + ' class="notif-row nr-' + n.cat + (n.read ? '' : ' unread') + '" data-id="' + escapeHtml(n.id) + '"' + (n.href ? ' href="' + escapeHtml(n.href) + '"' : '') + '>' +
+        thumb +
+        '<div class="notif-row-text"><div class="notif-row-title">' + escapeHtml(n.title) + '</div>' +
+        (n.sub ? '<div class="notif-row-sub">' + escapeHtml(n.sub) + '</div>' : '') +
+        '<div class="notif-row-meta">' + (NOTIF_ICONS[n.cat] || '') + ' ' + (meta && meta.label ? escapeHtml(meta.label) + ' · ' : '') + escapeHtml(relativeTimeText(new Date(n.time * 1000).toISOString())) + '</div></div>' +
+        (n.read ? '' : '<span class="notif-dot"></span>') +
+        '<button type="button" class="notif-row-x" title="REM0VE">&times;</button>' +
+      '</' + tag + '>';
+    }).join('');
+  }
+  el.notifChips.addEventListener('click', function(e){
+    var b = e.target.closest('.notif-chip');
+    if (!b) return;
+    notifView.filter = b.getAttribute('data-filter');
+    renderNotifPanel();
+  });
+  el.notifSortBtn.addEventListener('click', function(){ notifView.oldestFirst = !notifView.oldestFirst; renderNotifPanel(); });
+  el.notifReadAllBtn.addEventListener('click', function(){
+    notifLoad().forEach(function(n){ n.read = true; });
+    notifSave(); updateNotifBadge(); renderNotifPanel();
+  });
+  el.notifClearBtn.addEventListener('click', function(){
+    if (!notifLoad().length || !confirm('CLEAR ALL N0T!F!CAT!0NS?')) return;
+    notifLog = [];
+    notifSave(); updateNotifBadge(); renderNotifPanel();
+  });
+  el.notifSettingsBtn.addEventListener('click', function(){
+    renderNotifyModal();
+    el.notifyModal.style.display = 'flex';
+  });
+  el.notifList.addEventListener('click', function(e){
+    var row = e.target.closest('.notif-row');
+    if (!row) return;
+    var id = row.getAttribute('data-id');
+    if (e.target.closest('.notif-row-x')){
+      e.preventDefault();
+      notifLog = notifLoad().filter(function(n){ return n.id !== id; });
+      notifSave(); updateNotifBadge(); renderNotifPanel();
+      return;
+    }
+    var n = notifLoad().filter(function(x){ return x.id === id; })[0];
+    if (!n) return;
+    if (n.href){ notifMarkRead(id); return; } // the link itself navigates
+    e.preventDefault();
+    notifOpen(n);
+  });
+  updateNotifBadge();
   el.salesModal.addEventListener('click', function(e){
     if (e.target === el.salesModal) el.salesModal.style.display = 'none';
   });
@@ -26344,6 +26821,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       wallets.forEach(function(w){ profileCache[w] = profiles[w] || null; });
       applyResolvedProfiles(wallets);
       applySignatureBanners(wallets);
+      chatOnProfilesResolved();
     }).catch(function(){
       // Left out of profileCache entirely (not even cached as null) — a
       // later queueProfileResolve for the same wallet retries instead of
@@ -28184,6 +28662,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var SCYLLA_TAB_TITLES = {
     profiles: 'PR0F!LES',
     messages: 'MESSAGE !NB0X',
+    notifications: 'N0T!F!CAT!0NS',
     offers: '0FFERS',
     mynfts: 'MY NFTS',
     watchlist: 'WATCHL!ST',
@@ -28200,6 +28679,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.scyllaSystemHeaderTitle.classList.remove('scylla-header-clickable');
     el.scyllaSystemHeaderTitle.textContent = 'Σκύλλα://' + (SCYLLA_TAB_TITLES[tab] || 'SYSTEM');
     el.profileTabPanelMessages.style.display = tab === 'messages' ? '' : 'none';
+    el.profileTabPanelNotifications.style.display = tab === 'notifications' ? '' : 'none';
+    if (tab === 'notifications') renderNotifPanel();
+    if (tab !== 'messages') chatStopPoll();
     el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
     el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
     el.profileTabPanelMyNfts.style.display = tab === 'mynfts' ? '' : 'none';
@@ -28220,7 +28702,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // instant you click in, replaced entirely by the real collection
     // picker (myNftsPicker) instead of sitting above it.
     // WATCHL!ST too (reported live: it should replace the screen like every other tab).
-    var fullPage = tab === 'profiles' || tab === 'messages' || tab === 'offers' || tab === 'mynfts' || tab === 'watchlist';
+    var fullPage = tab === 'profiles' || tab === 'messages' || tab === 'notifications' || tab === 'offers' || tab === 'mynfts' || tab === 'watchlist';
     el.profileBoxGrid.style.display = fullPage ? 'none' : '';
     // Reported live: the S!GNAL N0DE/SESS!0N ACT!VE readout (decorative
     // flavour text, hardcoded to P!GE0NS regardless of collection) reads as
@@ -28331,7 +28813,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   (function mountScyllaBackButtons(){
     var slot = document.getElementById('scyllaBackSlot');
     if (!slot) return;
-    var pairs = [['profilesBackBtn', 'profileTabPanelProfiles'], ['profileMessagesBack', 'profileTabPanelMessages'], ['profileOffersBack', 'profileTabPanelOffers'], ['myNftsBackBtn', 'profileTabPanelMyNfts'], ['profileWatchlistBack', 'profileTabPanelWatchlist']];
+    var pairs = [['profilesBackBtn', 'profileTabPanelProfiles'], ['profileMessagesBack', 'profileTabPanelMessages'], ['profileNotifBack', 'profileTabPanelNotifications'], ['profileOffersBack', 'profileTabPanelOffers'], ['myNftsBackBtn', 'profileTabPanelMyNfts'], ['profileWatchlistBack', 'profileTabPanelWatchlist']];
     var mounted = [];
     pairs.forEach(function(pair){
       var btn = document.getElementById(pair[0]), panel = document.getElementById(pair[1]);
@@ -28444,173 +28926,828 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   el.profileMessagesBack.addEventListener('click', function(){ switchProfileTab(null); });
   el.profileOffersBack.addEventListener('click', function(){ switchProfileTab(null); });
-  // ---- MESSAGES — real wallet-to-wallet D1-backed messaging (functions/
-  // api/messages-inbox.js/-thread.js/-send.js). The XRPL address format
-  // the send/thread endpoints themselves check against — kept here too so
-  // a bad address never even reaches the network as an obviously-doomed
-  // request. ----
+  // ---- MESSAGE !NB0X (rebuilt 2026-09-28) — CHATS (1-to-1, functions/api/
+  // messages-*.js), GR0UPS (chat-groups/-group-thread/-group-send.js) and
+  // C0NTACTS (chat-contacts.js), all D1. Group rules live server-side in
+  // functions/_chat.js: same collection, same trait, or anyone (PREM!UM).
+  // The open conversation polls every 4s while it's on screen; the lists
+  // (and the box's unread badge) refresh every 45s. Nothing here runs
+  // synchronously at page init except function declarations — the first
+  // loadMessagesInbox call happens before these vars are assigned, so all
+  // state is touched only inside fetch callbacks. ----
   var MSG_WALLET_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
-  var currentMessageThreadWallet = null;
+  var CHAT_EMOJI = ['🔥', '💎', '🚀', '👀', '😂', '🐦', '👑', '🤝', '✅', '❤️'];
+  var chat = {
+    tab: 'chats', search: '',
+    dms: null, groups: null, contacts: null, premium: false,
+    open: null,          // { kind:'dm', wallet } | { kind:'group', id } | { kind:'newdm' } | { kind:'newgroup' } | { kind:'addcontact' }
+    items: [], lastId: 0, seenUpTo: 0, group: null, members: [],
+    pollTimer: null, sending: false, options: null, draftMembers: [], seededInbox: false
+  };
+  var currentMessageThreadWallet = null; // kept for older callers
+  function chatJson(url, body){
+    var opts = body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined;
+    return fetch(url, opts).then(function(r){ return r.json(); });
+  }
   function messagesErrorText(err){
     if (err === 'server_misconfigured') return 'MESSAG!NG !SN T SET UP YET 0N TH!S SERVER.';
     if (err === 'no_session' || err === 'invalid_session') return 'S!GN !N T0 USE MESSAG!NG.';
     if (err === 'rate_limited') return 'T00 MANY MESSAGES — WA!T A M0MENT.';
     if (err === 'message_too_long') return 'MESSAGE T00 L0NG.';
     if (err === 'invalid_to_wallet' || err === 'invalid_wallet') return 'N0T A VAL!D WALLET ADDRESS.';
-    if (err === 'cannot_message_self') return 'CAN T MESSAGE Y0UR 0WN WALLET.';
+    if (err === 'cannot_message_self' || err === 'cannot_add_self') return 'THAT S Y0UR 0WN WALLET.';
+    if (err === 'premium_only') return 'GR0UPS W!TH ANY0NE ARE PREM!UM 0NLY.';
+    if (err === 'you_no_holding') return 'Y0U D0N T H0LD TH!S C0LLECT!0N Y0URSELF.';
+    if (err === 'you_no_trait') return 'Y0U D0N T H0LD TH!S TRA!T Y0URSELF.';
+    if (err === 'you_check_failed' || err === 'check_failed') return 'C0ULDN T CHECK H0LD!NGS — TRY AGA!N.';
+    if (err === 'no_eligible_members') return 'N0NE 0F THEM H0LD WHAT TH!S GR0UP NEEDS.';
+    if (err === 'too_many_groups') return 'Y0U ALREADY 0WN THE MAX!MUM NUMBER 0F GR0UPS.';
+    if (err === 'group_full') return 'TH!S GR0UP !S FULL.';
+    if (err === 'name_required') return 'G!VE THE GR0UP A NAME.';
+    if (err === 'owner_only') return '0NLY THE GR0UP CREAT0R CAN D0 THAT.';
+    if (err === 'too_many_contacts') return 'C0NTACT B00K !S FULL.';
     return 'ERR0R — TRY AGA!N.';
   }
-  function renderMessagesList(items){
-    el.profileMessagesList.innerHTML = !items.length ? '<div class="th-empty">N0 MESSAGES YET.</div>' : items.map(function(row){
-      var preview = (row.lastFromMe ? 'Y0U: ' : '') + row.lastMessage;
-      // walletTagHtml (real username + avatar once resolved, same as
-      // every other wallet mention on the site) instead of a plain short
-      // address — reported live wanting this to read as "talking to
-      // people," not a raw address list.
-      return '<div class="profile-msg-row' + (row.unreadCount > 0 ? ' unread' : '') + '" data-wallet="' + escapeHtml(row.wallet) + '">' +
-        '<div class="profile-msg-row-text">' +
-          '<div class="profile-msg-row-wallet">' + walletTagHtml(row.wallet, row.walletShort) + '</div>' +
-          '<div class="profile-msg-row-preview">' + escapeHtml(preview) + '</div>' +
-        '</div>' +
-        '<div class="profile-msg-row-meta">' +
-          '<div class="profile-msg-row-time">' + relativeTimeText(new Date(row.lastAt * 1000)) + '</div>' +
-          (row.unreadCount > 0 ? '<div class="profile-msg-row-unread">' + row.unreadCount + '</div>' : '') +
-        '</div>' +
-      '</div>';
-    }).join('');
+  var CHAT_REASON_TEXT = { no_holding: 'D0ESN T H0LD TH!S C0LLECT!0N', no_trait: 'D0ESN T H0LD TH!S TRA!T', check_failed: 'C0ULDN T CHECK — TRY AGA!N', premium_only: 'PREM!UM 0NLY' };
+
+  // ---- names + avatars ----
+  function chatContactOf(wallet){
+    return (chat.contacts || []).filter(function(c){ return c.wallet === wallet; })[0] || null;
+  }
+  function chatName(wallet){
+    var c = chatContactOf(wallet);
+    if (c && c.nickname) return c.nickname;
+    var p = profileCache[wallet];
+    return (p && p.username) ? p.username : shortAddr(wallet);
+  }
+  function chatAvatarHtml(wallet, extraClass){
+    queueProfileResolve(wallet);
+    var p = profileCache[wallet];
+    var inner = (p && p.pfpImage) ? '<img src="' + escapeHtml(p.pfpImage) + '" alt="">' : escapeHtml(chatName(wallet).replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '?');
+    return '<span class="chat-av' + (extraClass ? ' ' + extraClass : '') + '" data-wallet="' + escapeHtml(wallet) + '">' + inner + '</span>';
+  }
+  function chatGroupAvatarHtml(g){
+    var meta = (g.rule && g.rule.collection && COLLECTION_META[g.rule.collection]) || null;
+    var inner = meta && meta.thumb ? '<img src="' + escapeHtml(meta.thumb) + '" alt="">' : '✦';
+    return '<span class="chat-av chat-av-group">' + inner + '</span>';
+  }
+  function chatRuleText(rule){
+    if (!rule) return '';
+    if (rule.kind === 'open') return 'PREM!UM · 0PEN';
+    var meta = COLLECTION_META[rule.collection] || {};
+    var label = meta.label || rule.collection;
+    if (rule.kind === 'trait') return label + ' · ' + String(rule.traitType).toUpperCase() + ': ' + String(rule.traitValue).toUpperCase();
+    return label + ' H0LDERS';
+  }
+  // Profiles land after first paint — redraw whatever chat UI is showing.
+  var chatProfileRedrawTimer = null;
+  function chatOnProfilesResolved(){
+    if (!el.profileTabPanelMessages || el.profileTabPanelMessages.style.display === 'none') return;
+    if (chatProfileRedrawTimer) return;
+    chatProfileRedrawTimer = setTimeout(function(){
+      chatProfileRedrawTimer = null;
+      renderChatSide();
+      document.querySelectorAll('#chatMain .chat-av[data-wallet]').forEach(function(node){
+        var w = node.getAttribute('data-wallet'), p = profileCache[w];
+        if (p && p.pfpImage && !node.querySelector('img')) node.innerHTML = '<img src="' + escapeHtml(p.pfpImage) + '" alt="">';
+      });
+      document.querySelectorAll('#chatMain [data-chatname]').forEach(function(node){
+        node.textContent = chatName(node.getAttribute('data-chatname'));
+      });
+    }, 120);
+  }
+  function chatTimeShort(unix){
+    var d = new Date(unix * 1000), now = new Date();
+    var hm = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    if (d.toDateString() === now.toDateString()) return hm;
+    var y = new Date(now.getTime() - 86400000);
+    if (d.toDateString() === y.toDateString()) return 'YESTERDAY';
+    if (now - d < 6 * 86400000) return ['SUN', 'M0N', 'TUE', 'WED', 'THU', 'FR!', 'SAT'][d.getDay()];
+    return d.getDate() + '/' + (d.getMonth() + 1);
+  }
+  function chatDayLabel(unix){
+    var d = new Date(unix * 1000), now = new Date();
+    if (d.toDateString() === now.toDateString()) return 'T0DAY';
+    if (d.toDateString() === new Date(now.getTime() - 86400000).toDateString()) return 'YESTERDAY';
+    return d.getDate() + ' ' + ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', '0CT', 'N0V', 'DEC'][d.getMonth()] + (d.getFullYear() !== now.getFullYear() ? ' ' + d.getFullYear() : '');
+  }
+
+  // ---- lists + unread badge ----
+  function chatUnreadTotals(){
+    var dm = (chat.dms || []).reduce(function(n, r){ return n + (r.unreadCount || 0); }, 0);
+    var gr = (chat.groups || []).reduce(function(n, r){ return n + (r.unreadCount || 0); }, 0);
+    return { dm: dm, groups: gr, all: dm + gr };
+  }
+  function updateMessagesBadge(){
+    var t = chatUnreadTotals();
+    el.profileTabMessagesBadge.textContent = t.all || '';
+    el.profileTabMessagesBadge.style.display = t.all > 0 ? '' : 'none';
+    el.chatTabCountChats.textContent = t.dm || '';
+    el.chatTabCountGroups.textContent = t.groups || '';
   }
   function loadMessagesInbox(){
-    if (!MY_WALLET) return; // the endpoint requires a real session anyway
-    el.profileMessagesList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
-    fetch('/api/messages-inbox').then(function(r){ return r.json(); }).then(function(data){
-      if (!data || data.error){ el.profileMessagesList.innerHTML = '<div class="th-empty">' + messagesErrorText(data && data.error) + '</div>'; return; }
-      var items = data.items || [];
-      renderMessagesList(items);
-      // The MESSAGE !NB0X box's own real unread count (reported live,
-      // same "0FFERS box shows a pending number" treatment it never had
-      // before) — summed across every conversation's own real
-      // unreadCount (see renderMessagesList's row markup above), hidden
-      // entirely at zero rather than showing a stale/wrong number.
-      var totalUnread = items.reduce(function(sum, row){ return sum + (row.unreadCount || 0); }, 0);
-      el.profileTabMessagesBadge.textContent = totalUnread || '';
-      el.profileTabMessagesBadge.style.display = totalUnread > 0 ? '' : 'none';
-    }).catch(function(){
-      el.profileMessagesList.innerHTML = '<div class="th-empty">ERR0R L0AD!NG MESSAGES.</div>';
+    if (!MY_WALLET) return; // the endpoints require a real session anyway
+    return Promise.all([
+      chatJson('/api/messages-inbox').catch(function(){ return { error: 'network' }; }),
+      chatJson('/api/chat-groups').catch(function(){ return { error: 'network' }; }),
+      (!chat || chat.contacts === null) ? chatJson('/api/chat-contacts').catch(function(){ return { items: [] }; }) : Promise.resolve(null)
+    ]).then(function(res){
+      var inbox = res[0], groups = res[1], contacts = res[2];
+      chat.inboxError = inbox && inbox.error ? inbox.error : null;
+      if (!chat.inboxError) chat.dms = inbox.items || [];
+      if (groups && !groups.error){ chat.groups = groups.items || []; chat.premium = !!groups.premium; }
+      if (contacts && contacts.items) chat.contacts = contacts.items;
+      updateMessagesBadge();
+      notifFromInbox(chat.dms || [], chat.groups || []);
+      if (el.profileTabPanelMessages.style.display !== 'none'){
+        renderChatSide();
+        if (!chat.open) renderChatEmpty();
+      }
     });
   }
-  function renderMessageThread(items){
-    el.profileMessagesThreadList.innerHTML = !items.length ? '<div class="th-empty">N0 MESSAGES YET — SAY H!.</div>' : items.map(function(m){
-      // DELETE only ever shows on your own bubbles (messages-delete.js
-      // itself only lets you delete rows where sender = you, this just
-      // keeps the button from appearing somewhere it would always 404).
-      return '<div class="profile-msg-bubble ' + (m.fromMe ? 'profile-msg-bubble-mine' : 'profile-msg-bubble-theirs') + '" data-id="' + m.id + '">' +
-        (m.fromMe ? '<button type="button" class="profile-msg-bubble-delete" title="DELETE MESSAGE">×</button>' : '') +
-        '<div class="profile-msg-bubble-body">' + escapeHtml(m.body) + '</div>' +
-        '<div class="profile-msg-bubble-time">' + relativeTimeText(new Date(m.createdAt * 1000)) + '</div>' +
-      '</div>';
-    }).join('');
-    el.profileMessagesThreadList.scrollTop = el.profileMessagesThreadList.scrollHeight;
+  function loadChatContacts(){
+    return chatJson('/api/chat-contacts').then(function(d){
+      if (d && d.items) chat.contacts = d.items;
+      renderChatSide();
+    }).catch(function(){});
   }
-  function deleteMessage(id, bubbleEl){
-    if (!confirm('DELETE TH!S MESSAGE?')) return;
-    bubbleEl.classList.add('deleting');
-    fetch('/api/messages-delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id })
-    }).then(function(r){ return r.json(); }).then(function(data){
-      if (!data || data.error){ bubbleEl.classList.remove('deleting'); return; }
-      bubbleEl.remove();
-      // The inbox's own preview/unread badge might have been THIS exact
-      // message (the latest one in the conversation) — simplest correct
-      // fix is just re-fetching it, same as every other message-count-
-      // changing action already does (see loadMessagesInbox's own callers).
-      loadMessagesInbox();
-    }).catch(function(){
-      bubbleEl.classList.remove('deleting');
-    });
+  function chatMatches(text){
+    var q = chat.search.trim().toLowerCase();
+    return !q || String(text).toLowerCase().indexOf(q) !== -1;
   }
-  el.profileMessagesThreadList.addEventListener('click', function(e){
-    var btn = e.target.closest('.profile-msg-bubble-delete');
-    if (!btn) return;
-    var bubble = btn.closest('.profile-msg-bubble');
-    deleteMessage(Number(bubble.getAttribute('data-id')), bubble);
+  function renderChatSide(){
+    if (!el.chatSideList) return;
+    el.chatSideTabs.querySelectorAll('.chat-side-tab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-chattab') === chat.tab); });
+    el.chatNewBtn.textContent = chat.tab === 'groups' ? '+ NEW GR0UP' : chat.tab === 'contacts' ? '+ ADD C0NTACT' : '+ NEW CHAT';
+    var html = '';
+    if (chat.tab === 'chats'){
+      if (chat.inboxError && chat.dms === null) html = '<div class="chat-empty-note">' + messagesErrorText(chat.inboxError) + '</div>';
+      else if (chat.dms === null) html = '<div class="chat-empty-note">L0AD!NG...</div>';
+      else {
+        var rows = chat.dms.filter(function(r){ return chatMatches(chatName(r.wallet) + ' ' + r.wallet); });
+        html = rows.length ? rows.map(function(r){
+          var active = chat.open && chat.open.kind === 'dm' && chat.open.wallet === r.wallet;
+          return '<div class="chat-row' + (r.unreadCount > 0 ? ' unread' : '') + (active ? ' active' : '') + '" data-open="dm" data-wallet="' + escapeHtml(r.wallet) + '">' +
+            chatAvatarHtml(r.wallet) +
+            '<div class="chat-row-text"><div class="chat-row-name">' + escapeHtml(chatName(r.wallet)) + '</div>' +
+            '<div class="chat-row-preview">' + escapeHtml((r.lastFromMe ? 'Y0U: ' : '') + r.lastMessage) + '</div></div>' +
+            '<div class="chat-row-meta"><span class="chat-row-time">' + chatTimeShort(r.lastAt) + '</span>' +
+            (r.unreadCount > 0 ? '<span class="chat-row-unread">' + r.unreadCount + '</span>' : '') + '</div>' +
+          '</div>';
+        }).join('') : '<div class="chat-empty-note">' + (chat.search ? 'N0 MATCHES.' : 'N0 CHATS YET — H!T + NEW CHAT.') + '</div>';
+      }
+    } else if (chat.tab === 'groups'){
+      if (chat.groups === null) html = '<div class="chat-empty-note">L0AD!NG...</div>';
+      else {
+        var gs = chat.groups.filter(function(g){ return chatMatches(g.name + ' ' + chatRuleText(g.rule)); });
+        html = gs.length ? gs.map(function(g){
+          var active = chat.open && chat.open.kind === 'group' && chat.open.id === g.id;
+          var prev = g.lastMessage ? (g.lastFromMe ? 'Y0U: ' : chatName(g.lastSender) + ': ') + g.lastMessage : chatRuleText(g.rule);
+          return '<div class="chat-row' + (g.unreadCount > 0 ? ' unread' : '') + (active ? ' active' : '') + '" data-open="group" data-id="' + g.id + '">' +
+            chatGroupAvatarHtml(g) +
+            '<div class="chat-row-text"><div class="chat-row-name">' + escapeHtml(g.name) + ' <span class="chat-row-count">' + g.memberCount + '</span></div>' +
+            '<div class="chat-row-preview">' + escapeHtml(prev) + '</div></div>' +
+            '<div class="chat-row-meta"><span class="chat-row-time">' + chatTimeShort(g.lastAt) + '</span>' +
+            (g.unreadCount > 0 ? '<span class="chat-row-unread">' + g.unreadCount + '</span>' : '') + '</div>' +
+          '</div>';
+        }).join('') : '<div class="chat-empty-note">' + (chat.search ? 'N0 MATCHES.' : 'N0 GR0UPS YET.<br>MAKE 0NE W!TH PE0PLE WH0 H0LD THE SAME C0LLECT!0N — 0R THE SAME TRA!T — AS Y0U.') + '</div>';
+      }
+    } else {
+      if (chat.contacts === null) html = '<div class="chat-empty-note">L0AD!NG...</div>';
+      else {
+        var cs = chat.contacts.filter(function(c){ return chatMatches(chatName(c.wallet) + ' ' + (c.nickname || '') + ' ' + c.wallet); });
+        html = cs.map(function(c){
+          return '<div class="chat-row chat-contact-row" data-wallet="' + escapeHtml(c.wallet) + '">' +
+            chatAvatarHtml(c.wallet) +
+            '<div class="chat-row-text"><div class="chat-row-name">' + escapeHtml(chatName(c.wallet)) + '</div>' +
+            '<div class="chat-row-preview">' + escapeHtml(shortAddr(c.wallet)) + '</div></div>' +
+            '<div class="chat-contact-actions">' +
+              '<button type="button" class="chat-mini-btn" data-act="msg" title="MESSAGE">✉</button>' +
+              '<button type="button" class="chat-mini-btn" data-act="nick" title="N!CKNAME">✎</button>' +
+              '<button type="button" class="chat-mini-btn chat-mini-danger" data-act="remove" title="REM0VE">×</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+        if (!cs.length) html = '<div class="chat-empty-note">' + (chat.search ? 'N0 MATCHES.' : 'Y0UR C0NTACT B00K !S EMPTY.') + '</div>';
+        // People you've chatted with who aren't saved yet.
+        var saved = {};
+        chat.contacts.forEach(function(c){ saved[c.wallet] = true; });
+        var recent = (chat.dms || []).filter(function(r){ return !saved[r.wallet] && chatMatches(chatName(r.wallet) + ' ' + r.wallet); }).slice(0, 8);
+        if (recent.length){
+          html += '<div class="chat-side-subhead">PE0PLE Y0U V!E TALKED T0</div>' + recent.map(function(r){
+            return '<div class="chat-row chat-contact-row chat-contact-suggest" data-wallet="' + escapeHtml(r.wallet) + '">' +
+              chatAvatarHtml(r.wallet) +
+              '<div class="chat-row-text"><div class="chat-row-name">' + escapeHtml(chatName(r.wallet)) + '</div>' +
+              '<div class="chat-row-preview">' + escapeHtml(shortAddr(r.wallet)) + '</div></div>' +
+              '<div class="chat-contact-actions"><button type="button" class="chat-mini-btn" data-act="save" title="SAVE C0NTACT">+ SAVE</button></div>' +
+            '</div>';
+          }).join('');
+        }
+      }
+    }
+    el.chatSideList.innerHTML = html;
+  }
+  el.chatSideTabs.addEventListener('click', function(e){
+    var b = e.target.closest('.chat-side-tab');
+    if (!b) return;
+    chat.tab = b.getAttribute('data-chattab');
+    if (chat.tab === 'contacts' && chat.contacts === null) loadChatContacts();
+    renderChatSide();
   });
-  function openMessageThread(wallet){
-    currentMessageThreadWallet = wallet;
-    el.profileMessagesListView.style.display = 'none';
-    el.profileMessagesThreadView.style.display = '';
-    el.profileMessagesThreadTitle.textContent = shortAddr(wallet);
-    el.profileMessagesThreadStatus.style.display = 'none';
-    el.profileMessagesThreadList.innerHTML = '<div class="th-empty">L0AD!NG...</div>';
-    fetch('/api/messages-thread?wallet=' + encodeURIComponent(wallet)).then(function(r){ return r.json(); }).then(function(data){
-      if (currentMessageThreadWallet !== wallet) return;
-      if (!data || data.error){ el.profileMessagesThreadList.innerHTML = '<div class="th-empty">' + messagesErrorText(data && data.error) + '</div>'; return; }
-      renderMessageThread(data.items || []);
-    }).catch(function(){
-      if (currentMessageThreadWallet === wallet) el.profileMessagesThreadList.innerHTML = '<div class="th-empty">ERR0R L0AD!NG MESSAGES.</div>';
-    });
+  el.chatSearchInput.addEventListener('input', function(){ chat.search = el.chatSearchInput.value; renderChatSide(); });
+  el.chatNewBtn.addEventListener('click', function(){
+    if (chat.tab === 'groups') openChatNewGroup();
+    else if (chat.tab === 'contacts') openChatAddContact();
+    else openChatNewDm();
+  });
+  el.chatSideList.addEventListener('click', function(e){
+    var act = e.target.closest('.chat-mini-btn');
+    var row = e.target.closest('.chat-row');
+    if (!row) return;
+    var wallet = row.getAttribute('data-wallet');
+    if (act){
+      var a = act.getAttribute('data-act');
+      if (a === 'msg') openMessageThread(wallet);
+      else if (a === 'save' || a === 'nick') chatEditNickname(wallet);
+      else if (a === 'remove'){
+        if (!confirm('REM0VE ' + chatName(wallet) + ' FR0M C0NTACTS?')) return;
+        chatJson('/api/chat-contacts', { action: 'remove', wallet: wallet }).then(loadChatContacts).catch(function(){});
+      }
+      return;
+    }
+    if (row.getAttribute('data-open') === 'group') openGroupThread(Number(row.getAttribute('data-id')));
+    else if (wallet) openMessageThread(wallet);
+  });
+  function chatEditNickname(wallet){
+    var c = chatContactOf(wallet);
+    var p = profileCache[wallet];
+    var nick = prompt('N!CKNAME F0R ' + shortAddr(wallet) + ' (0PT!0NAL)', (c && c.nickname) || (p && p.username) || '');
+    if (nick === null) return Promise.resolve();
+    return chatJson('/api/chat-contacts', { action: 'save', wallet: wallet, nickname: nick }).then(function(d){
+      if (d && d.error){ alert(messagesErrorText(d.error)); return; }
+      return loadChatContacts().then(function(){ if (chat.open && chat.open.kind === 'dm' && chat.open.wallet === wallet) renderChatHeader(); });
+    }).catch(function(){});
+  }
+
+  // ---- the right-hand pane ----
+  function chatShowMain(show){ el.chatApp.classList.toggle('show-main', !!show); }
+  function chatStopPoll(){
+    if (chat && chat.pollTimer){ clearTimeout(chat.pollTimer); chat.pollTimer = null; }
+  }
+  function renderChatEmpty(){
+    var t = chatUnreadTotals();
+    el.chatMain.innerHTML = '<div class="chat-welcome">' +
+      '<div class="chat-welcome-glyph">✉</div>' +
+      '<div class="chat-welcome-title">' + (t.all ? t.all + ' UNREAD' : 'N0 NEW MESSAGES') + '</div>' +
+      '<div class="chat-welcome-sub">P!CK A CHAT 0N THE LEFT, 0R START S0METH!NG NEW.</div>' +
+      '<div class="chat-welcome-btns">' +
+        '<button type="button" class="chat-pill-btn" data-go="newdm">+ NEW CHAT</button>' +
+        '<button type="button" class="chat-pill-btn" data-go="newgroup">+ NEW GR0UP</button>' +
+        '<button type="button" class="chat-pill-btn" data-go="addcontact">+ ADD C0NTACT</button>' +
+      '</div></div>';
   }
   function closeMessageThread(){
+    chatStopPoll();
+    chat.open = null;
     currentMessageThreadWallet = null;
-    el.profileMessagesThreadView.style.display = 'none';
-    el.profileMessagesListView.style.display = '';
-    el.profileMessagesNewPrompt.style.display = 'none';
-    el.profileMessagesNewWalletInput.value = '';
+    chatShowMain(false);
+    renderChatEmpty();
+    renderChatSide();
   }
-  el.profileMessagesList.addEventListener('click', function(e){
-    var row = e.target.closest('.profile-msg-row');
-    if (row) openMessageThread(row.getAttribute('data-wallet'));
-  });
-  el.profileMessagesNewBtn.addEventListener('click', function(){
-    el.profileMessagesNewPrompt.style.display = '';
-    el.profileMessagesNewWalletInput.focus();
-  });
-  el.profileMessagesNewCancelBtn.addEventListener('click', function(){
-    el.profileMessagesNewPrompt.style.display = 'none';
-    el.profileMessagesNewWalletInput.value = '';
-  });
-  el.profileMessagesNewStartBtn.addEventListener('click', function(){
-    var wallet = el.profileMessagesNewWalletInput.value.trim();
-    if (!MSG_WALLET_RE.test(wallet)){ alert('N0T A VAL!D WALLET ADDRESS.'); return; }
-    if (wallet === MY_WALLET){ alert('CAN T MESSAGE Y0UR 0WN WALLET.'); return; }
-    el.profileMessagesNewPrompt.style.display = 'none';
-    el.profileMessagesNewWalletInput.value = '';
-    openMessageThread(wallet);
-  });
-  el.profileMessagesThreadBack.addEventListener('click', closeMessageThread);
-  function sendCurrentMessage(){
-    var text = el.profileMessagesComposeInput.value.trim();
-    var wallet = currentMessageThreadWallet;
-    if (!text || !wallet) return;
-    el.profileMessagesComposeInput.disabled = true;
-    el.profileMessagesComposeSend.disabled = true;
-    fetch('/api/messages-send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toWallet: wallet, body: text })
-    }).then(function(r){ return r.json(); }).then(function(data){
-      el.profileMessagesComposeInput.disabled = false;
-      el.profileMessagesComposeSend.disabled = false;
-      if (!data || data.error){
-        el.profileMessagesThreadStatus.style.display = '';
-        el.profileMessagesThreadStatus.textContent = messagesErrorText(data && data.error);
+  function chatConvoShellHtml(){
+    return '<div class="chat-convo">' +
+      '<header class="chat-convo-head" id="chatConvoHead"></header>' +
+      '<div class="chat-drawer" id="chatDrawer" style="display:none;"></div>' +
+      '<div class="chat-stream" id="chatStream"><div class="chat-empty-note">L0AD!NG...</div></div>' +
+      '<div class="chat-status" id="chatStatus" style="display:none;"></div>' +
+      '<div class="chat-compose">' +
+        '<div class="chat-emoji-bar">' + CHAT_EMOJI.map(function(em){ return '<button type="button" class="chat-emoji" data-emoji="' + em + '">' + em + '</button>'; }).join('') + '</div>' +
+        '<div class="chat-compose-row">' +
+          '<textarea class="chat-input" id="chatInput" rows="1" maxlength="1000" placeholder="TYPE A MESSAGE..."></textarea>' +
+          '<button type="button" class="chat-send-btn" id="chatSendBtn" title="SEND">SEND ➤</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  function renderChatHeader(){
+    var head = document.getElementById('chatConvoHead');
+    if (!head || !chat.open) return;
+    var back = '<button type="button" class="chat-back-btn" data-act="back" title="BACK">‹</button>';
+    if (chat.open.kind === 'dm'){
+      var w = chat.open.wallet, saved = !!chatContactOf(w);
+      head.innerHTML = back + chatAvatarHtml(w, 'chat-av-lg') +
+        '<div class="chat-head-text"><div class="chat-head-name" data-chatname="' + escapeHtml(w) + '">' + escapeHtml(chatName(w)) + '</div>' +
+        '<div class="chat-head-sub">' + escapeHtml(shortAddr(w)) + '</div></div>' +
+        '<div class="chat-head-actions">' +
+          '<button type="button" class="chat-head-btn' + (saved ? ' on' : '') + '" data-act="contact">' + (saved ? '★ SAVED' : '☆ SAVE') + '</button>' +
+          '<button type="button" class="chat-head-btn" data-act="profile">PR0F!LE</button>' +
+        '</div>';
+    } else if (chat.open.kind === 'group' && chat.group){
+      var g = chat.group;
+      head.innerHTML = back + chatGroupAvatarHtml(g) +
+        '<div class="chat-head-text"><div class="chat-head-name">' + escapeHtml(g.name) + '</div>' +
+        '<div class="chat-head-sub">' + escapeHtml(chatRuleText(g.rule)) + ' · ' + chat.members.length + ' MEMBER' + (chat.members.length === 1 ? '' : 'S') + '</div></div>' +
+        '<div class="chat-head-actions">' +
+          '<button type="button" class="chat-head-btn" data-act="members">MEMBERS</button>' +
+          '<button type="button" class="chat-head-btn" data-act="add">+ ADD</button>' +
+          (g.owner === MY_WALLET ? '<button type="button" class="chat-head-btn" data-act="rename">RENAME</button>' : '') +
+          '<button type="button" class="chat-head-btn chat-head-danger" data-act="leave">LEAVE</button>' +
+        '</div>';
+    }
+  }
+  function chatBubbleHtml(m, prev, next){
+    var isGroup = chat.open && chat.open.kind === 'group';
+    var mine = m.fromMe;
+    var sender = m.sender || (mine ? MY_WALLET : chat.open.wallet);
+    var html = '';
+    if (!prev || chatDayLabel(prev.createdAt) !== chatDayLabel(m.createdAt)) html += '<div class="chat-day"><span>' + chatDayLabel(m.createdAt) + '</span></div>';
+    var prevSame = prev && (prev.sender || (prev.fromMe ? MY_WALLET : '')) === (m.sender || (mine ? MY_WALLET : '')) && prev.fromMe === mine && m.createdAt - prev.createdAt < 300 && chatDayLabel(prev.createdAt) === chatDayLabel(m.createdAt);
+    var nextSame = next && next.fromMe === mine && (next.sender || '') === (m.sender || '') && next.createdAt - m.createdAt < 300 && chatDayLabel(next.createdAt) === chatDayLabel(m.createdAt);
+    var cls = 'chat-msg ' + (mine ? 'mine' : 'theirs') + (prevSame ? ' cont' : '') + (nextSame ? '' : ' tail');
+    html += '<div class="' + cls + '" data-id="' + m.id + '">';
+    if (!mine && isGroup) html += prevSame ? '<span class="chat-av-spacer"></span>' : chatAvatarHtml(sender, 'chat-av-sm');
+    html += '<div class="chat-bubble">';
+    if (!mine && isGroup && !prevSame) html += '<div class="chat-bubble-from" data-chatname="' + escapeHtml(sender) + '">' + escapeHtml(chatName(sender)) + '</div>';
+    html += '<div class="chat-bubble-body">' + escapeHtml(m.body) + '</div>';
+    if (!nextSame) html += '<div class="chat-bubble-meta">' + chatTimeShort(m.createdAt) + (mine && !isGroup ? ' <span class="chat-seen' + (m.id <= chat.seenUpTo ? ' on' : '') + '">' + (m.id <= chat.seenUpTo ? '✓✓ SEEN' : '✓ SENT') + '</span>' : '') + '</div>';
+    if (mine && !isGroup) html += '<button type="button" class="chat-msg-del" title="UNSEND">×</button>';
+    html += '</div></div>';
+    return html;
+  }
+  function renderChatStream(scrollMode){
+    var stream = document.getElementById('chatStream');
+    if (!stream) return;
+    var nearBottom = stream.scrollHeight - stream.scrollTop - stream.clientHeight < 80;
+    if (!chat.items.length){
+      stream.innerHTML = '<div class="chat-empty-note chat-say-hi">' + (chat.open.kind === 'group' ? 'N0 MESSAGES YET — KICK !T 0FF 👋' : 'N0 MESSAGES YET — SAY H! 👋') + '</div>';
+      return;
+    }
+    stream.innerHTML = chat.items.map(function(m, i){ return chatBubbleHtml(m, chat.items[i - 1], chat.items[i + 1]); }).join('');
+    if (scrollMode === 'bottom' || nearBottom) stream.scrollTop = stream.scrollHeight;
+  }
+  function chatMountConvo(){
+    el.chatMain.innerHTML = chatConvoShellHtml();
+    chatShowMain(true);
+    var input = document.getElementById('chatInput');
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); chatSend(); }
+    });
+    input.addEventListener('input', function(){
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+    });
+    if (window.matchMedia && !window.matchMedia('(max-width:760px)').matches) setTimeout(function(){ input.focus(); }, 30);
+  }
+  function openMessageThread(wallet){
+    if (!MY_WALLET) return;
+    chatStopPoll();
+    chat.open = { kind: 'dm', wallet: wallet };
+    currentMessageThreadWallet = wallet;
+    chat.items = []; chat.lastId = 0; chat.seenUpTo = 0; chat.group = null; chat.members = [];
+    if (chat.tab !== 'chats'){ chat.tab = 'chats'; }
+    notifMarkConvoRead('dm', wallet);
+    chatMountConvo();
+    renderChatHeader();
+    renderChatSide();
+    chatFetch(true);
+  }
+  function openGroupThread(id){
+    if (!MY_WALLET) return;
+    chatStopPoll();
+    chat.open = { kind: 'group', id: id };
+    currentMessageThreadWallet = null;
+    chat.items = []; chat.lastId = 0; chat.seenUpTo = 0;
+    chat.group = (chat.groups || []).filter(function(g){ return g.id === id; })[0] || null;
+    chat.members = [];
+    chat.tab = 'groups';
+    notifMarkConvoRead('group', id);
+    chatMountConvo();
+    renderChatHeader();
+    renderChatSide();
+    chatFetch(true);
+  }
+  // First call loads the latest 200; later ones (the 4s poll) only ask
+  // for messages newer than the last one on screen.
+  function chatFetch(first){
+    var open = chat.open;
+    if (!open || (open.kind !== 'dm' && open.kind !== 'group')) return;
+    var url = open.kind === 'dm'
+      ? '/api/messages-thread?wallet=' + encodeURIComponent(open.wallet) + '&after=' + chat.lastId
+      : '/api/chat-group-thread?id=' + open.id + '&after=' + chat.lastId;
+    chatJson(url).then(function(d){
+      if (chat.open !== open) return;
+      if (!d || d.error){
+        if (first){ var st = document.getElementById('chatStream'); if (st) st.innerHTML = '<div class="chat-empty-note">' + messagesErrorText(d && d.error) + '</div>'; }
         return;
       }
-      el.profileMessagesThreadStatus.style.display = 'none';
-      el.profileMessagesComposeInput.value = '';
-      if (currentMessageThreadWallet === wallet) openMessageThread(wallet);
+      var fresh = d.items || [];
+      if (open.kind === 'group'){
+        if (d.group){ chat.group = d.group; chat.group.memberCount = (d.members || []).length; }
+        if (d.members) chat.members = d.members;
+        if (first) renderChatHeader();
+      }
+      var seenChanged = open.kind === 'dm' && (d.seenUpTo || 0) !== chat.seenUpTo;
+      if (open.kind === 'dm') chat.seenUpTo = d.seenUpTo || 0;
+      if (fresh.length){
+        chat.items = chat.items.concat(fresh.filter(function(m){ return m.id > chat.lastId; }));
+        chat.lastId = chat.items.length ? chat.items[chat.items.length - 1].id : chat.lastId;
+      }
+      if (first || fresh.length || seenChanged) renderChatStream(first ? 'bottom' : null);
+      // Opening a chat reads it — refresh the lists/badge.
+      if (first || fresh.some(function(m){ return !m.fromMe; })) loadMessagesInbox();
     }).catch(function(){
-      el.profileMessagesComposeInput.disabled = false;
-      el.profileMessagesComposeSend.disabled = false;
-      el.profileMessagesThreadStatus.style.display = '';
-      el.profileMessagesThreadStatus.textContent = 'ERR0R SEND!NG — TRY AGA!N.';
+      if (first && chat.open === open){ var st = document.getElementById('chatStream'); if (st) st.innerHTML = '<div class="chat-empty-note">ERR0R L0AD!NG MESSAGES.</div>'; }
+    }).then(function(){
+      if (chat.open === open) chatSchedulePoll(open);
     });
   }
-  el.profileMessagesComposeSend.addEventListener('click', sendCurrentMessage);
-  el.profileMessagesComposeInput.addEventListener('keydown', function(e){
-    if (e.key === 'Enter') sendCurrentMessage();
+  function chatSchedulePoll(open){
+    chatStopPoll();
+    chat.pollTimer = setTimeout(function tick(){
+      if (chat.open !== open) return;
+      if (document.hidden || el.profileTabPanelMessages.style.display === 'none'){ chat.pollTimer = setTimeout(tick, 4000); return; }
+      chatFetch(false);
+    }, 4000);
+  }
+  function chatSetStatus(text){
+    var st = document.getElementById('chatStatus');
+    if (!st) return;
+    st.style.display = text ? '' : 'none';
+    st.textContent = text || '';
+  }
+  function chatSend(){
+    var input = document.getElementById('chatInput');
+    var open = chat.open;
+    if (!input || !open || chat.sending) return;
+    var text = input.value.trim();
+    if (!text) return;
+    chat.sending = true;
+    var btn = document.getElementById('chatSendBtn');
+    if (btn) btn.disabled = true;
+    var req = open.kind === 'dm'
+      ? chatJson('/api/messages-send', { toWallet: open.wallet, body: text })
+      : chatJson('/api/chat-group-send', { groupId: open.id, body: text });
+    req.then(function(d){
+      chat.sending = false;
+      if (btn) btn.disabled = false;
+      if (!d || d.error){ chatSetStatus(messagesErrorText(d && d.error)); return; }
+      chatSetStatus('');
+      input.value = '';
+      input.style.height = 'auto';
+      if (chat.open === open){ chatStopPoll(); chatFetch(false); }
+      loadMessagesInbox();
+    }).catch(function(){
+      chat.sending = false;
+      if (btn) btn.disabled = false;
+      chatSetStatus('ERR0R SEND!NG — TRY AGA!N.');
+    });
+  }
+  el.chatMain.addEventListener('click', function(e){
+    var go = e.target.closest('[data-go]');
+    if (go){
+      var g = go.getAttribute('data-go');
+      if (g === 'newdm') openChatNewDm();
+      else if (g === 'newgroup') openChatNewGroup();
+      else if (g === 'addcontact') openChatAddContact();
+      return;
+    }
+    var emoji = e.target.closest('.chat-emoji');
+    if (emoji){
+      var input = document.getElementById('chatInput');
+      if (!input) return;
+      var pos = input.selectionStart != null ? input.selectionStart : input.value.length;
+      input.value = input.value.slice(0, pos) + emoji.getAttribute('data-emoji') + input.value.slice(pos);
+      input.focus();
+      return;
+    }
+    if (e.target.closest('#chatSendBtn')){ chatSend(); return; }
+    var del = e.target.closest('.chat-msg-del');
+    if (del){
+      var msgEl = del.closest('.chat-msg');
+      var id = Number(msgEl.getAttribute('data-id'));
+      if (!confirm('UNSEND TH!S MESSAGE?')) return;
+      msgEl.classList.add('deleting');
+      chatJson('/api/messages-delete', { id: id }).then(function(d){
+        if (!d || d.error){ msgEl.classList.remove('deleting'); return; }
+        chat.items = chat.items.filter(function(m){ return m.id !== id; });
+        renderChatStream();
+        loadMessagesInbox();
+      }).catch(function(){ msgEl.classList.remove('deleting'); });
+      return;
+    }
+    var hb = e.target.closest('.chat-head-btn, .chat-back-btn');
+    if (hb) chatHeadAction(hb.getAttribute('data-act'));
+    var rm = e.target.closest('.chat-member-row[data-wallet]');
+    if (rm && !e.target.closest('button')){
+      var w = rm.getAttribute('data-wallet');
+      if (w !== MY_WALLET) openMessageThread(w);
+    }
   });
+  function chatHeadAction(act){
+    var open = chat.open;
+    if (!open) return;
+    if (act === 'back'){ closeMessageThread(); return; }
+    if (act === 'contact'){
+      if (chatContactOf(open.wallet)){
+        if (!confirm('REM0VE ' + chatName(open.wallet) + ' FR0M C0NTACTS?')) return;
+        chatJson('/api/chat-contacts', { action: 'remove', wallet: open.wallet }).then(loadChatContacts).then(renderChatHeader).catch(function(){});
+      } else chatEditNickname(open.wallet);
+      return;
+    }
+    if (act === 'profile'){
+      var w = open.wallet;
+      switchProfileTab(null);
+      openWalletProfile(w, shortAddr(w));
+      return;
+    }
+    var drawer = document.getElementById('chatDrawer');
+    if (act === 'members'){
+      if (drawer.style.display !== 'none' && drawer.getAttribute('data-mode') === 'members'){ drawer.style.display = 'none'; return; }
+      drawer.setAttribute('data-mode', 'members');
+      drawer.style.display = '';
+      drawer.innerHTML = '<div class="chat-drawer-title">MEMBERS · ' + escapeHtml(chatRuleText(chat.group && chat.group.rule)) + '</div>' +
+        chat.members.map(function(m){
+          return '<div class="chat-member-row" data-wallet="' + escapeHtml(m.wallet) + '">' + chatAvatarHtml(m.wallet, 'chat-av-sm') +
+            '<span class="chat-member-name" data-chatname="' + escapeHtml(m.wallet) + '">' + escapeHtml(chatName(m.wallet)) + '</span>' +
+            (chat.group && chat.group.owner === m.wallet ? '<span class="chat-tag">CREAT0R</span>' : '') +
+            (m.wallet === MY_WALLET ? '<span class="chat-tag">Y0U</span>' : '') + '</div>';
+        }).join('');
+      return;
+    }
+    if (act === 'add'){
+      drawer.setAttribute('data-mode', 'add');
+      drawer.style.display = '';
+      var inGroup = {};
+      chat.members.forEach(function(m){ inGroup[m.wallet] = true; });
+      var picks = (chat.contacts || []).filter(function(c){ return !inGroup[c.wallet]; });
+      drawer.innerHTML = '<div class="chat-drawer-title">ADD PE0PLE · THEY MUST BE ' + escapeHtml(chatRuleText(chat.group && chat.group.rule)) + '</div>' +
+        '<div class="chat-chip-pick" id="chatAddPicks">' + picks.map(function(c){ return '<button type="button" class="chat-chip" data-wallet="' + escapeHtml(c.wallet) + '">' + escapeHtml(chatName(c.wallet)) + '</button>'; }).join('') + '</div>' +
+        '<div class="chat-inline-form"><input type="text" class="chat-field" id="chatAddWallet" placeholder="0R PASTE A WALLET ADDRESS (r...)" autocomplete="off">' +
+        '<button type="button" class="chat-pill-btn" id="chatAddGo">ADD</button></div>' +
+        '<div class="chat-check-results" id="chatAddResults"></div>';
+      drawer.querySelector('#chatAddPicks').addEventListener('click', function(ev){
+        var chip = ev.target.closest('.chat-chip');
+        if (chip) chip.classList.toggle('on');
+      });
+      drawer.querySelector('#chatAddGo').addEventListener('click', function(){
+        var wallets = [].map.call(drawer.querySelectorAll('.chat-chip.on'), function(c){ return c.getAttribute('data-wallet'); });
+        var typed = drawer.querySelector('#chatAddWallet').value.trim();
+        if (typed){
+          if (!MSG_WALLET_RE.test(typed)){ alert('N0T A VAL!D WALLET ADDRESS.'); return; }
+          wallets.push(typed);
+        }
+        if (!wallets.length) return;
+        var out = drawer.querySelector('#chatAddResults');
+        out.innerHTML = '<div class="chat-empty-note">CHECK!NG H0LD!NGS...</div>';
+        chatJson('/api/chat-groups', { action: 'add', groupId: open.id, wallets: wallets }).then(function(d){
+          if (!d || d.error){ out.innerHTML = '<div class="chat-empty-note">' + messagesErrorText(d && d.error) + '</div>'; return; }
+          out.innerHTML = chatCheckResultsHtml(d.results || []);
+          if ((d.results || []).some(function(r){ return r.ok; })){ chatStopPoll(); chat.lastId = 0; chat.items = []; chatFetch(true); }
+        }).catch(function(){ out.innerHTML = '<div class="chat-empty-note">ERR0R — TRY AGA!N.</div>'; });
+      });
+      return;
+    }
+    if (act === 'rename'){
+      var name = prompt('NEW GR0UP NAME', chat.group ? chat.group.name : '');
+      if (!name) return;
+      chatJson('/api/chat-groups', { action: 'rename', groupId: open.id, name: name }).then(function(d){
+        if (d && d.error){ alert(messagesErrorText(d.error)); return; }
+        if (chat.group) chat.group.name = name.trim().slice(0, 32);
+        renderChatHeader();
+        loadMessagesInbox();
+      }).catch(function(){});
+      return;
+    }
+    if (act === 'leave'){
+      if (!confirm('LEAVE ' + (chat.group ? chat.group.name : 'TH!S GR0UP') + '?')) return;
+      chatJson('/api/chat-groups', { action: 'leave', groupId: open.id }).then(function(){
+        closeMessageThread();
+        loadMessagesInbox();
+      }).catch(function(){});
+    }
+  }
+  function chatCheckResultsHtml(results){
+    return results.map(function(r){
+      return '<div class="chat-check-row ' + (r.ok ? 'ok' : 'bad') + '">' + (r.ok ? '✓ ' : '✗ ') + escapeHtml(chatName(r.wallet)) +
+        (r.ok ? '' : ' — ' + (CHAT_REASON_TEXT[r.reason] || 'N0T ALL0WED')) + '</div>';
+    }).join('');
+  }
+
+  // ---- NEW CHAT / ADD C0NTACT / NEW GR0UP builders (right pane) ----
+  function chatFormShell(title, bodyHtml){
+    chatStopPoll();
+    el.chatMain.innerHTML = '<div class="chat-form">' +
+      '<header class="chat-convo-head"><button type="button" class="chat-back-btn" data-act="back" title="BACK">‹</button><div class="chat-head-text"><div class="chat-head-name">' + title + '</div></div></header>' +
+      '<div class="chat-form-body">' + bodyHtml + '</div></div>';
+    chatShowMain(true);
+  }
+  function chatPeoplePickHtml(){
+    var seen = {}, people = [];
+    (chat.contacts || []).forEach(function(c){ if (!seen[c.wallet]){ seen[c.wallet] = 1; people.push(c.wallet); } });
+    (chat.dms || []).forEach(function(r){ if (!seen[r.wallet]){ seen[r.wallet] = 1; people.push(r.wallet); } });
+    return people.length ? people.map(function(w){
+      return '<button type="button" class="chat-person" data-wallet="' + escapeHtml(w) + '">' + chatAvatarHtml(w, 'chat-av-sm') + '<span>' + escapeHtml(chatName(w)) + '</span></button>';
+    }).join('') : '<div class="chat-empty-note">N0 C0NTACTS YET.</div>';
+  }
+  function openChatNewDm(){
+    chat.open = { kind: 'newdm' };
+    chatFormShell('NEW CHAT',
+      '<label class="chat-label">T0</label>' +
+      '<div class="chat-inline-form"><input type="text" class="chat-field" id="chatNewDmInput" placeholder="USERNAME 0R WALLET ADDRESS (r...)" autocomplete="off">' +
+      '<button type="button" class="chat-pill-btn" id="chatNewDmGo">START ➤</button></div>' +
+      '<div class="chat-search-hits" id="chatNewDmHits"></div>' +
+      '<label class="chat-label">C0NTACTS + RECENT</label><div class="chat-people">' + chatPeoplePickHtml() + '</div>');
+    var input = document.getElementById('chatNewDmInput');
+    var hits = document.getElementById('chatNewDmHits');
+    var reqId = 0;
+    input.focus();
+    input.addEventListener('input', function(){
+      var q = input.value.trim(), my = ++reqId;
+      if (!q || MSG_WALLET_RE.test(q)){ hits.innerHTML = ''; return; }
+      setTimeout(function(){
+        if (my !== reqId) return;
+        api({ profileSearch: 1, query: q }).then(function(data){
+          if (my !== reqId) return;
+          var res = ((data && data.results) || []).filter(function(r){ return r.wallet !== MY_WALLET; }).slice(0, 6);
+          hits.innerHTML = res.map(function(r){
+            if (!profileCache[r.wallet] && (r.username || r.pfpImage)) profileCache[r.wallet] = { username: r.username || null, pfpImage: r.pfpImage || null };
+            return '<button type="button" class="chat-person" data-wallet="' + escapeHtml(r.wallet) + '">' + chatAvatarHtml(r.wallet, 'chat-av-sm') + '<span>' + escapeHtml(r.username || shortAddr(r.wallet)) + '</span></button>';
+          }).join('') || '<div class="chat-empty-note">N0 PR0F!LES MATCH.</div>';
+        }).catch(function(){});
+      }, 250);
+    });
+    function go(){
+      var w = input.value.trim();
+      if (!MSG_WALLET_RE.test(w)){ alert('PASTE A FULL WALLET ADDRESS, 0R P!CK S0ME0NE BEL0W.'); return; }
+      if (w === MY_WALLET){ alert(messagesErrorText('cannot_message_self')); return; }
+      openMessageThread(w);
+    }
+    input.addEventListener('keydown', function(e){ if (e.key === 'Enter') go(); });
+    document.getElementById('chatNewDmGo').addEventListener('click', go);
+    el.chatMain.querySelectorAll('.chat-search-hits, .chat-people').forEach(function(box){
+      box.addEventListener('click', function(e){
+        var p = e.target.closest('.chat-person');
+        if (p) openMessageThread(p.getAttribute('data-wallet'));
+      });
+    });
+  }
+  function openChatAddContact(){
+    chat.open = { kind: 'addcontact' };
+    chatFormShell('ADD C0NTACT',
+      '<label class="chat-label">WALLET ADDRESS</label><input type="text" class="chat-field" id="chatContactWallet" placeholder="r..." autocomplete="off">' +
+      '<label class="chat-label">N!CKNAME (0PT!0NAL)</label><input type="text" class="chat-field" id="chatContactNick" maxlength="32" placeholder="WHAT Y0U CALL THEM" autocomplete="off">' +
+      '<button type="button" class="chat-pill-btn chat-pill-main" id="chatContactSave">SAVE C0NTACT</button>' +
+      '<div class="chat-status" id="chatContactStatus" style="display:none;"></div>');
+    document.getElementById('chatContactWallet').focus();
+    document.getElementById('chatContactSave').addEventListener('click', function(){
+      var w = document.getElementById('chatContactWallet').value.trim();
+      var st = document.getElementById('chatContactStatus');
+      if (!MSG_WALLET_RE.test(w)){ st.style.display = ''; st.textContent = 'N0T A VAL!D WALLET ADDRESS.'; return; }
+      chatJson('/api/chat-contacts', { action: 'save', wallet: w, nickname: document.getElementById('chatContactNick').value }).then(function(d){
+        if (d && d.error){ st.style.display = ''; st.textContent = messagesErrorText(d.error); return; }
+        chat.tab = 'contacts';
+        loadChatContacts().then(function(){ openMessageThread(w); });
+      }).catch(function(){ st.style.display = ''; st.textContent = 'ERR0R — TRY AGA!N.'; });
+    });
+  }
+  // Builder: name → who can join (collection / trait / anyone) → people.
+  // CHECK asks the server who passes before anything is created.
+  var chatDraft = null;
+  function openChatNewGroup(){
+    chat.open = { kind: 'newgroup' };
+    chatDraft = { name: '', kind: 'collection', collection: null, traitType: '', traitValue: '', picked: {}, extra: [] };
+    chatFormShell('NEW GR0UP', '<div class="chat-empty-note">L0AD!NG Y0UR H0LD!NGS...</div>');
+    var p = chat.options ? Promise.resolve(chat.options) : chatJson('/api/chat-groups?options=1').then(function(d){
+      if (d && !d.error){ chat.options = d.collections || []; chat.premium = !!d.premium; }
+      else chat.options = null;
+      return chat.options;
+    });
+    p.then(function(opts){
+      if (!chat.open || chat.open.kind !== 'newgroup') return;
+      if (!opts){ chatFormShell('NEW GR0UP', '<div class="chat-empty-note">C0ULDN T L0AD Y0UR H0LD!NGS — TRY AGA!N.</div>'); return; }
+      if (opts.length) chatDraft.collection = opts[0].key;
+      renderChatGroupBuilder();
+    }).catch(function(){ chatFormShell('NEW GR0UP', '<div class="chat-empty-note">C0ULDN T L0AD Y0UR H0LD!NGS — TRY AGA!N.</div>'); });
+  }
+  function chatDraftRule(){
+    if (chatDraft.kind === 'open') return { kind: 'open' };
+    if (chatDraft.kind === 'trait') return { kind: 'trait', collection: chatDraft.collection, traitType: chatDraft.traitType, traitValue: chatDraft.traitValue };
+    return { kind: 'collection', collection: chatDraft.collection };
+  }
+  function renderChatGroupBuilder(){
+    var opts = chat.options || [];
+    var coll = opts.filter(function(o){ return o.key === chatDraft.collection; })[0] || null;
+    var traitTypes = {};
+    (coll ? coll.traits : []).forEach(function(t){ (traitTypes[t.type] = traitTypes[t.type] || []).push(t); });
+    if (chatDraft.kind === 'trait' && !traitTypes[chatDraft.traitType]){ chatDraft.traitType = Object.keys(traitTypes)[0] || ''; chatDraft.traitValue = ''; }
+    var vals = traitTypes[chatDraft.traitType] || [];
+    if (chatDraft.kind === 'trait' && !vals.some(function(v){ return v.value === chatDraft.traitValue; })) chatDraft.traitValue = vals.length ? vals[0].value : '';
+    var noHoldings = !opts.length;
+    var kinds = [
+      { k: 'collection', label: 'SAME C0LLECT!0N', sub: 'EVERY0NE H0LDS AN NFT FR0M !T', lock: noHoldings },
+      { k: 'trait', label: 'SAME TRA!T', sub: 'EVERY0NE H0LDS AN NFT W!TH !T', lock: noHoldings },
+      { k: 'open', label: 'ANY0NE', sub: chat.premium ? 'PREM!UM' : '🔒 PREM!UM 0NLY', lock: !chat.premium }
+    ];
+    var html = '<label class="chat-label">GR0UP NAME</label>' +
+      '<input type="text" class="chat-field" id="chatGroupName" maxlength="32" placeholder="E.G. P!GE0N PARL!AMENT" value="' + escapeHtml(chatDraft.name) + '" autocomplete="off">' +
+      '<label class="chat-label">WH0 CAN BE !N !T</label>' +
+      '<div class="chat-kind-row">' + kinds.map(function(k){
+        return '<button type="button" class="chat-kind' + (chatDraft.kind === k.k ? ' on' : '') + (k.lock ? ' locked' : '') + '" data-kind="' + k.k + '"' + (k.lock ? ' disabled' : '') + '><b>' + k.label + '</b><span>' + k.sub + '</span></button>';
+      }).join('') + '</div>';
+    if (noHoldings && !chat.premium) html += '<div class="chat-empty-note">Y0U NEED T0 H0LD AN NFT FR0M 0NE 0F THE C0LLECT!0NS T0 START A GR0UP.</div>';
+    if (chatDraft.kind !== 'open' && opts.length){
+      html += '<label class="chat-label">C0LLECT!0N</label><div class="chat-chip-pick" id="chatGroupColls">' + opts.map(function(o){
+        return '<button type="button" class="chat-chip' + (o.key === chatDraft.collection ? ' on' : '') + '" data-coll="' + escapeHtml(o.key) + '">' + escapeHtml(o.label) + ' <small>×' + o.count + '</small></button>';
+      }).join('') + '</div>';
+    }
+    if (chatDraft.kind === 'trait' && coll){
+      html += '<label class="chat-label">TRA!T (FR0M Y0UR 0WN NFTS)</label><div class="chat-inline-form">' +
+        '<select class="chat-field" id="chatGroupTraitType">' + Object.keys(traitTypes).map(function(t){ return '<option value="' + escapeHtml(t) + '"' + (t === chatDraft.traitType ? ' selected' : '') + '>' + escapeHtml(t.toUpperCase()) + '</option>'; }).join('') + '</select>' +
+        '<select class="chat-field" id="chatGroupTraitValue">' + vals.map(function(v){ return '<option value="' + escapeHtml(v.value) + '"' + (v.value === chatDraft.traitValue ? ' selected' : '') + '>' + escapeHtml(String(v.value).toUpperCase()) + '</option>'; }).join('') + '</select></div>';
+    }
+    html += '<label class="chat-label">PE0PLE</label><div class="chat-people chat-people-pick" id="chatGroupPeople">' + chatPeoplePickHtml() + '</div>' +
+      '<div class="chat-inline-form"><input type="text" class="chat-field" id="chatGroupExtra" placeholder="0R PASTE A WALLET ADDRESS (r...)" autocomplete="off"><button type="button" class="chat-pill-btn" id="chatGroupExtraAdd">ADD</button></div>' +
+      '<div class="chat-chip-pick" id="chatGroupExtras">' + chatDraft.extra.map(function(w){ return '<button type="button" class="chat-chip on" data-extra="' + escapeHtml(w) + '">' + escapeHtml(shortAddr(w)) + ' ×</button>'; }).join('') + '</div>' +
+      '<div class="chat-form-btns"><button type="button" class="chat-pill-btn" id="chatGroupCheck">CHECK WH0 QUAL!F!ES</button>' +
+      '<button type="button" class="chat-pill-btn chat-pill-main" id="chatGroupCreate">CREATE GR0UP</button></div>' +
+      '<div class="chat-check-results" id="chatGroupResults"></div>';
+    chatFormShell('NEW GR0UP', html);
+    el.chatMain.querySelectorAll('#chatGroupPeople .chat-person').forEach(function(b){
+      if (chatDraft.picked[b.getAttribute('data-wallet')]) b.classList.add('on');
+    });
+    var nameEl = document.getElementById('chatGroupName');
+    nameEl.addEventListener('input', function(){ chatDraft.name = nameEl.value; });
+    el.chatMain.querySelector('.chat-kind-row').addEventListener('click', function(e){
+      var b = e.target.closest('.chat-kind');
+      if (!b || b.disabled) return;
+      chatDraft.kind = b.getAttribute('data-kind');
+      renderChatGroupBuilder();
+    });
+    var collsEl = document.getElementById('chatGroupColls');
+    if (collsEl) collsEl.addEventListener('click', function(e){
+      var b = e.target.closest('.chat-chip');
+      if (!b) return;
+      chatDraft.collection = b.getAttribute('data-coll');
+      renderChatGroupBuilder();
+    });
+    var tt = document.getElementById('chatGroupTraitType'), tv = document.getElementById('chatGroupTraitValue');
+    if (tt) tt.addEventListener('change', function(){ chatDraft.traitType = tt.value; chatDraft.traitValue = ''; renderChatGroupBuilder(); });
+    if (tv) tv.addEventListener('change', function(){ chatDraft.traitValue = tv.value; });
+    document.getElementById('chatGroupPeople').addEventListener('click', function(e){
+      var b = e.target.closest('.chat-person');
+      if (!b) return;
+      var w = b.getAttribute('data-wallet');
+      if (chatDraft.picked[w]) delete chatDraft.picked[w]; else chatDraft.picked[w] = true;
+      b.classList.toggle('on', !!chatDraft.picked[w]);
+    });
+    document.getElementById('chatGroupExtraAdd').addEventListener('click', function(){
+      var w = document.getElementById('chatGroupExtra').value.trim();
+      if (!MSG_WALLET_RE.test(w)){ alert('N0T A VAL!D WALLET ADDRESS.'); return; }
+      if (w !== MY_WALLET && chatDraft.extra.indexOf(w) === -1) chatDraft.extra.push(w);
+      renderChatGroupBuilder();
+    });
+    document.getElementById('chatGroupExtras').addEventListener('click', function(e){
+      var b = e.target.closest('[data-extra]');
+      if (!b) return;
+      chatDraft.extra = chatDraft.extra.filter(function(w){ return w !== b.getAttribute('data-extra'); });
+      renderChatGroupBuilder();
+    });
+    function members(){ return Object.keys(chatDraft.picked).concat(chatDraft.extra); }
+    var out = document.getElementById('chatGroupResults');
+    document.getElementById('chatGroupCheck').addEventListener('click', function(){
+      if (!members().length){ out.innerHTML = '<div class="chat-empty-note">P!CK S0ME PE0PLE F!RST.</div>'; return; }
+      out.innerHTML = '<div class="chat-empty-note">CHECK!NG H0LD!NGS...</div>';
+      chatJson('/api/chat-groups', { action: 'check', rule: chatDraftRule(), wallets: members() }).then(function(d){
+        out.innerHTML = d && d.results ? chatCheckResultsHtml(d.results) : '<div class="chat-empty-note">' + messagesErrorText(d && d.error) + '</div>';
+      }).catch(function(){ out.innerHTML = '<div class="chat-empty-note">ERR0R — TRY AGA!N.</div>'; });
+    });
+    document.getElementById('chatGroupCreate').addEventListener('click', function(){
+      var btn = this;
+      if (!chatDraft.name.trim()){ out.innerHTML = '<div class="chat-empty-note">' + messagesErrorText('name_required') + '</div>'; nameEl.focus(); return; }
+      if (!members().length){ out.innerHTML = '<div class="chat-empty-note">P!CK S0ME PE0PLE F!RST.</div>'; return; }
+      btn.disabled = true;
+      out.innerHTML = '<div class="chat-empty-note">CHECK!NG H0LD!NGS + CREAT!NG...</div>';
+      chatJson('/api/chat-groups', { action: 'create', name: chatDraft.name, rule: chatDraftRule(), members: members() }).then(function(d){
+        btn.disabled = false;
+        if (!d || d.error){
+          out.innerHTML = (d && d.results ? chatCheckResultsHtml(d.results) : '') + '<div class="chat-empty-note">' + messagesErrorText(d && d.error) + '</div>';
+          return;
+        }
+        chat.tab = 'groups';
+        var refused = (d.results || []).filter(function(r){ return !r.ok; });
+        loadMessagesInbox().then(function(){
+          openGroupThread(d.groupId);
+          if (refused.length) chatSetStatus('N0T ADDED: ' + refused.map(function(r){ return chatName(r.wallet) + ' (' + (CHAT_REASON_TEXT[r.reason] || 'N0T ALL0WED') + ')'; }).join(', '));
+        });
+      }).catch(function(){ btn.disabled = false; out.innerHTML = '<div class="chat-empty-note">ERR0R — TRY AGA!N.</div>'; });
+    });
+  }
+  // Lists/badge stay fresh while the site is open (45s, only when visible).
+  setInterval(function(){ if (MY_WALLET && !document.hidden) loadMessagesInbox(); }, 45000);
+  // Offers waiting (the 0FFERS badge + new-offer notifications) every 2
+  // min — skipped while your own NFTs are on DATABASE, since a refresh
+  // re-draws that grid.
+  setInterval(function(){ if (MY_WALLET && !document.hidden && !isOwnWalletScope()) loadOffersReceived(); }, 120000);
   function loadProfilePanel(){
     // Always starts open on a fresh visit to PR0F!LE, even if it was
     // collapsed last time this session — reported live as wanting MY

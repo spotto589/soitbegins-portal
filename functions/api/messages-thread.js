@@ -26,13 +26,17 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({ error: 'invalid_wallet' }), { status: 400 });
   }
 
-  const { results } = await env.MESSAGES_DB.prepare(`
+  // The NEWEST 200 (shown oldest first). ?after=<id> = only newer ones —
+  // an open chat polls with it (2026-09-28).
+  const after = Math.max(0, Number(url.searchParams.get('after')) || 0);
+  const { results: newestFirst } = await env.MESSAGES_DB.prepare(`
     SELECT id, sender, recipient, body, created_at, read_at
     FROM messages
-    WHERE (sender = ?1 AND recipient = ?2) OR (sender = ?2 AND recipient = ?1)
-    ORDER BY created_at ASC
+    WHERE ((sender = ?1 AND recipient = ?2) OR (sender = ?2 AND recipient = ?1)) AND id > ?4
+    ORDER BY id DESC
     LIMIT ?3
-  `).bind(me, wallet, THREAD_LIMIT).all();
+  `).bind(me, wallet, THREAD_LIMIT, after).all();
+  const results = (newestFirst || []).reverse();
 
   const now = Math.floor(Date.now() / 1000);
   // Mark their messages to me as read now that this thread's actually
@@ -53,7 +57,13 @@ export async function onRequestGet(context) {
     read: row.read_at !== null
   }));
 
-  return new Response(JSON.stringify({ wallet, items }), {
+  // Newest of MY messages they've opened — lets an open chat tick its
+  // SEEN marks without re-fetching old messages.
+  const seenUpTo = await env.MESSAGES_DB.prepare(
+    'SELECT MAX(id) AS n FROM messages WHERE sender = ?1 AND recipient = ?2 AND read_at IS NOT NULL'
+  ).bind(me, wallet).first('n');
+
+  return new Response(JSON.stringify({ wallet, items, seenUpTo: seenUpTo || 0 }), {
     headers: { 'Content-Type': 'application/json' }
   });
 }

@@ -1,9 +1,10 @@
 import { BOARD_COOKIE_NAME, getCookie, verifyToken, safeKvPut, TRADEABLE_COLLECTIONS } from '../_shared.js';
+import { cleanWatch } from '../_webpush.js';
 
 // Per-wallet notification settings (2026-09-25): which collections, and
 // which kinds of activity (from the ledger watcher's event feed, see
 // functions/_ledgerwatch.js), should pop up for this wallet.
-// Shape: { collections: { <key>: { listing: true, sale: true, ... } } }
+// Shape: { collections: { <key>: { listing: true, sale: true, ..., watchOnly?: true, watch?: [nftIds] } } }
 export const NOTIFY_TYPES = ['listing', 'sale', 'offer', 'delist', 'transfer', 'mint', 'burn'];
 const PREFS_PREFIX = 'pswap:notify:v1:';
 
@@ -38,7 +39,10 @@ export async function onRequestPost(context) {
     if (!TRADEABLE_COLLECTIONS[key]) return;
     const t = {};
     NOTIFY_TYPES.forEach(type => { if (cols[key] && cols[key][type] === true) t[type] = true; });
-    if (Object.keys(t).length) clean.collections[key] = t;
+    if (!Object.keys(t).length) return;
+    // WATCHL!ST 0NLY (2026-09-28): only events on the NFTs in watch.
+    if (cols[key].watchOnly === true) { t.watchOnly = true; t.watch = cleanWatch(cols[key].watch); }
+    clean.collections[key] = t;
   });
   await safeKvPut(env.coin, PREFS_PREFIX + wallet, JSON.stringify(clean));
   return json({ ok: true, prefs: clean });
