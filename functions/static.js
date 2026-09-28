@@ -9519,6 +9519,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   .coin-chart-change.up{ color:rgb(52,255,133); }
   .coin-chart-change.down{ color:#ff3b5c; }
   .coin-chart-plot{ position:relative; height:260px; }
+  /* Full-screen button + the chart filling the screen (see
+     enterCoinChartFullscreen — the chart is moved to <body> first). */
+  .coin-chart-fs-btn{ flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; margin-left:auto; padding:0; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:10px; background:#000; color:#fff; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .coin-chart-fs-btn:hover{ background:rgba(var(--collection-accent-rgb), 0.25); }
+  .coin-chart-fs-btn svg{ width:18px; height:18px; }
+  .coin-chart-fs-btn .cc-fs-close{ display:none; }
+  .coin-chart.cc-fs .coin-chart-fs-btn .cc-fs-open{ display:none; }
+  .coin-chart.cc-fs .coin-chart-fs-btn .cc-fs-close{ display:block; }
+  .coin-chart.cc-fs{ position:fixed; top:0; left:0; width:100vw; height:100vh; height:100dvh; z-index:6000; box-sizing:border-box; margin:0; border:none; border-radius:0; display:flex; flex-direction:column; padding:max(0.7rem, env(safe-area-inset-top)) max(0.9rem, env(safe-area-inset-right)) max(0.6rem, env(safe-area-inset-bottom)) max(0.9rem, env(safe-area-inset-left)); }
+  .coin-chart.cc-fs .coin-chart-bar{ flex:0 0 auto; flex-wrap:nowrap; }
+  .coin-chart.cc-fs .coin-chart-plot{ flex:1 1 auto; height:auto; min-height:0; }
+  .coin-chart.cc-fs .coin-chart-ranges{ flex-wrap:nowrap; }
+  body.coin-chart-fs-open{ overflow:hidden; }
+  /* Phone held upright: the chart is drawn sideways across the whole
+     screen, so turning the phone shows it full width. If the phone turns
+     the page itself, this stops matching and it simply fills the
+     landscape screen. */
+  @media (orientation: portrait) and (max-width:760px){
+    .coin-chart.cc-fs{ top:0; left:100vw; width:100vh; width:100dvh; height:100vw; transform-origin:0 0; transform:rotate(90deg); padding:max(0.7rem, env(safe-area-inset-left)) max(0.9rem, env(safe-area-inset-top)) max(0.6rem, env(safe-area-inset-right)) max(0.9rem, env(safe-area-inset-bottom)); }
+  }
   .coin-chart-msg{ height:100%; display:flex; align-items:center; justify-content:center; color:#fff; opacity:0.6; font-size:13px; font-weight:700; letter-spacing:0.1em; }
   .cc-svg{ width:100%; height:100%; display:block; overflow:visible; }
   .cc-grid{ stroke:rgba(255,255,255,0.08); stroke-width:1; }
@@ -11810,6 +11830,13 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" data-range="ALL">ALL</button>
             </div>
             <span class="coin-chart-change" id="coinChartChange"></span>
+            <!-- Full screen (reported live 2026-09-28). On a phone held
+                 upright the chart is drawn sideways, so turning the phone
+                 gives the full-width view. -->
+            <button type="button" class="coin-chart-fs-btn" id="coinChartFsBtn" title="FULL SCREEN" aria-label="FULL SCREEN" aria-pressed="false">
+              <svg class="cc-fs-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+              <svg class="cc-fs-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
           </div>
           <div class="coin-chart-plot" id="coinChartPlot"><div class="coin-chart-msg">L0AD!NG CHART...</div></div>
         </div>
@@ -23712,8 +23739,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     api({ coinStats: 1 }).then(function(c){
       if (state.collection !== key || !c || c.error) return;
       document.getElementById('statCoinPrice').textContent = c.priceXrp ? fmtCoinPrice(c.priceXrp) : '—';
-      document.getElementById('statCoinMcap').textContent = c.marketCapUsd ? fmtUsd(c.marketCapUsd) : '—';
-      document.getElementById('statCoinLiq').textContent = c.liquidityUsd ? fmtUsd(c.liquidityUsd) : '—';
+      document.getElementById('statCoinMcap').textContent = c.marketCapUsd ? fmtUsdShort(c.marketCapUsd) : '—';
+      document.getElementById('statCoinLiq').textContent = c.liquidityUsd ? fmtUsdShort(c.liquidityUsd) : '—';
       var ch = c.change24h;
       var cEl = document.getElementById('statCoinChange');
       cEl.textContent = ch === null || ch === undefined ? '—' : (ch >= 0 ? '+' : '') + ch + '%';
@@ -23723,6 +23750,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   document.getElementById('statsStripCoin').addEventListener('click', function(e){
     if (e.target.closest('[data-coin-open]')) openCoinPage();
   });
+  // $12.3K / $4.56M — market cap, ATH, liquidity, volume (reported live
+  // 2026-09-28).
+  function fmtUsdShort(n){
+    if (n === null || n === undefined || !isFinite(n)) return '—';
+    var units = [[1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
+    for (var i = 0; i < units.length; i++){
+      if (n >= units[i][0]) return '$' + Number((n / units[i][0]).toPrecision(3)) + units[i][1];
+    }
+    return fmtUsd(n);
+  }
   function fmtUsd(n){
     if (n === null || n === undefined || !isFinite(n)) return '—';
     if (n >= 1) return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: n >= 1000 ? 0 : 2 });
@@ -23821,15 +23858,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (h && h.building) wait = 'BU!LD!NG…';
     var t = s.txns24h || {};
     var html = '';
-    html += stat('MARKET CAP', s.marketCapUsd ? fmtUsd(s.marketCapUsd) : '—', 'SUPPLY × PR!CE');
-    html += stat('L!QU!D!TY', s.liquidityUsd ? fmtUsd(s.liquidityUsd) : '—', 'B0TH S!DES 0F THE P00L');
-    html += stat('24H V0LUME', s.volume24hUsd != null ? fmtUsd(s.volume24hUsd) : '—');
-    html += stat('PR!CE ATH', h && h.athXrp ? escapeHtml(fmtCoinPrice(h.athXrp.price)) : wait,
-      h && h.athXrp ? escapeHtml((h.athUsd ? fmtUsd(h.athUsd.price) + ' · ' : '') + coinDate(h.athXrp.t)) : '');
-    html += stat('MARKET CAP ATH', h && h.marketCapAthUsd ? fmtUsd(h.marketCapAthUsd) : wait, h && h.athUsd ? escapeHtml(coinDate(h.athUsd.t)) : '');
+    // Just the label and the number — no explanation line under each box
+    // (reported live 2026-09-28).
+    html += stat('MARKET CAP', s.marketCapUsd ? fmtUsdShort(s.marketCapUsd) : '—');
+    html += stat('L!QU!D!TY', s.liquidityUsd ? fmtUsdShort(s.liquidityUsd) : '—');
+    html += stat('24H V0LUME', s.volume24hUsd != null ? fmtUsdShort(s.volume24hUsd) : '—');
+    html += stat('PR!CE ATH', h && h.athXrp ? escapeHtml(fmtCoinPrice(h.athXrp.price)) : wait);
+    html += stat('MARKET CAP ATH', h && h.marketCapAthUsd ? fmtUsdShort(h.marketCapAthUsd) : wait);
     html += stat('24H BUYS / SELLS', '<span class="up">' + (t.buys || 0) + '</span> / <span class="down">' + (t.sells || 0) + '</span>');
-    html += stat('P00L', s.pool ? escapeHtml(compactPigeonsNumber(s.pool.token)) + ' + ' + escapeHtml(fmtXrp(Math.round(s.pool.xrp))) + ' XRP' : '—', s.pool ? escapeHtml(s.pool.tradingFeePct + '% TRAD!NG FEE') : '');
-    html += stat('SUPPLY', s.supply ? escapeHtml(fmtExact(s.supply, 0)) : '—', 'EXACT, FR0M THE !SSUER');
+    html += stat('P00L', s.pool ? escapeHtml(compactPigeonsNumber(s.pool.token)) + ' + ' + escapeHtml(fmtXrp(Math.round(s.pool.xrp))) + ' XRP' : '—');
+    html += stat('SUPPLY', s.supply ? escapeHtml(fmtExact(s.supply, 0)) : '—');
     html += stat('!SSUER', '<a class="coin-stat-link" href="https://bithomp.com/explorer/' + escapeHtml(meta.tokenIssuer || '') + '" target="_blank" rel="noopener">' + escapeHtml(shortAddr(meta.tokenIssuer || '')) + ' ↗</a>');
     // Where the numbers came from, and whether the chart site agrees.
     var agree = s.priceDiffPct == null ? '' : s.priceDiffPct <= 2
@@ -23896,6 +23934,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     openWalletProfile(a.getAttribute('data-wallet'), shortAddr(a.getAttribute('data-wallet')));
   });
   function closeCoinPage(){
+    exitCoinChartFullscreen();
     el.coinModal.style.display = 'none';
     coinOpenKey = null;
   }
@@ -23906,7 +23945,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // to the live price now. ----
   var coinChartRange = '7D';
   var COIN_CHART_RANGES = { '1D': ['hour', 86400], '7D': ['hour', 7 * 86400], '1M': ['day', 30 * 86400], '3M': ['day', 91 * 86400], '6M': ['day', 182 * 86400], '1Y': ['day', 365 * 86400], 'ALL': ['day', 0] };
-  function fmtCoinPrice(v){ return Number(v).toPrecision(4) + ' XRP'; }
+  // Token prices in drops (1 XRP = 1,000,000 drops) — reported live
+  // 2026-09-28: "0.00000656 XRP" reads worse than "6.56 DR0PS".
+  var DROPS_PER_XRP = 1000000;
+  function fmtDrops(xrp){
+    var d = Number(xrp) * DROPS_PER_XRP;
+    if (!isFinite(d)) return '—';
+    return d >= 1000 ? Math.round(d).toLocaleString() : String(Number(d.toPrecision(4)));
+  }
+  function fmtCoinPrice(v){ return fmtDrops(v) + ' DR0PS'; }
   function coinWindowPoints(range){
     var cfg = COIN_CHART_RANGES[range];
     var src = (cfg[0] === 'hour' ? coinHistData.hours : coinHistData.days) || [];
@@ -23935,7 +23982,11 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.coinChartChange.textContent = '';
       return;
     }
-    var W = 700, H = 260, L = 8, R = 78, T = 12, B = 26;
+    // viewBox matches the box's own shape (normal, full screen, sideways)
+    // so the line and labels are never stretched.
+    var pw = el.coinChartPlot.clientWidth, ph = el.coinChartPlot.clientHeight;
+    var H = 260, W = pw && ph ? Math.round(Math.max(360, Math.min(1800, H * pw / ph))) : 700;
+    var L = 8, R = 78, T = 12, B = 26;
     var closes = list.map(function(c){ return Number(c[4]); });
     var lo = Math.min.apply(null, closes), hi = Math.max.apply(null, closes);
     if (hi === lo){ hi = hi * 1.01; lo = lo * 0.99; }
@@ -23950,7 +24001,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     for (var g = 0; g < 4; g++){
       var gv = lo + (hi - lo) * (g + 0.5) / 4, gy = y(gv);
       grid += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy.toFixed(1) + '" y2="' + gy.toFixed(1) + '" class="cc-grid"/>';
-      labels += '<text x="' + (W - R + 8) + '" y="' + (gy + 4).toFixed(1) + '" class="cc-axis">' + Number(gv).toPrecision(3) + '</text>';
+      labels += '<text x="' + (W - R + 8) + '" y="' + (gy + 4).toFixed(1) + '" class="cc-axis">' + escapeHtml(fmtDrops(gv)) + '</text>';
     }
     var hourly = COIN_CHART_RANGES[coinChartRange][0] === 'hour' && coinChartRange === '1D';
     var yearly = coinChartRange === '1Y' || coinChartRange === 'ALL';
@@ -23981,7 +24032,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     var cross = svg.querySelector('#ccCross'), hdot = svg.querySelector('#ccHoverDot'), tip = el.coinChartPlot.querySelector('#ccTip');
     function onMove(ev){
       var rect = svg.getBoundingClientRect();
-      var cx = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left) / rect.width * W;
+      var p = ev.touches ? ev.touches[0] : ev;
+      // Drawn sideways (full screen on an upright phone): the chart's
+      // left-to-right runs down the screen.
+      var frac = coinChartSideways() ? (p.clientY - rect.top) / rect.height : (p.clientX - rect.left) / rect.width;
+      var cx = frac * W;
       var best = 0;
       for (var i = 1; i < pts.length; i++) if (Math.abs(pts[i][0] - cx) < Math.abs(pts[best][0] - cx)) best = i;
       var pt = pts[best];
@@ -23989,8 +24044,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       hdot.setAttribute('cx', pt[0]); hdot.setAttribute('cy', pt[1]); hdot.style.display = '';
       tip.innerHTML = '<b>' + escapeHtml(fmtCoinPrice(closes[best])) + '</b><span>' + escapeHtml(new Date(list[best][0] * 1000).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</span>';
       tip.style.display = '';
-      var px = pt[0] / W * rect.width;
-      tip.style.left = Math.min(Math.max(px, 70), rect.width - 70) + 'px';
+      var sw = svg.clientWidth || rect.width;
+      var px = pt[0] / W * sw;
+      tip.style.left = Math.min(Math.max(px, 70), sw - 70) + 'px';
     }
     function onLeave(){ cross.style.display = 'none'; hdot.style.display = 'none'; tip.style.display = 'none'; }
     var hit = svg.querySelector('#ccHit');
@@ -24002,6 +24058,63 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.coinChartRanges.addEventListener('click', function(e){
     var b = e.target.closest('button');
     if (b) loadCoinChart(b.getAttribute('data-range'));
+  });
+  // ---- Chart full screen (reported live 2026-09-28). The chart moves to
+  // <body> so nothing in the pop-up can clip it, and fills the screen.
+  // On a phone held upright it's drawn sideways (CSS), so turning the
+  // phone gives the full-width view; where the browser allows it
+  // (Android), real full screen + a landscape lock do the turning. ----
+  var coinChartFsBtn = document.getElementById('coinChartFsBtn');
+  var coinChartHome = null;
+  function coinChartIsFullscreen(){ return el.coinChart.classList.contains('cc-fs'); }
+  function coinChartSideways(){
+    return coinChartIsFullscreen() && window.matchMedia('(orientation: portrait) and (max-width:760px)').matches;
+  }
+  function redrawCoinChart(){ if (coinHistData) loadCoinChart(coinChartRange); }
+  function enterCoinChartFullscreen(){
+    if (coinChartIsFullscreen()) return;
+    coinChartHome = document.createComment('coin-chart');
+    el.coinChart.parentNode.insertBefore(coinChartHome, el.coinChart);
+    document.body.appendChild(el.coinChart);
+    el.coinChart.classList.add('cc-fs');
+    document.body.classList.add('coin-chart-fs-open');
+    coinChartFsBtn.setAttribute('aria-pressed', 'true');
+    coinChartFsBtn.title = 'EX!T FULL SCREEN';
+    var docEl = document.documentElement;
+    if (docEl.requestFullscreen && !isIosDevice()){
+      docEl.requestFullscreen().then(function(){
+        if (screen.orientation && screen.orientation.lock) return screen.orientation.lock('landscape');
+      }).catch(function(){}).then(redrawCoinChart);
+    }
+    redrawCoinChart();
+  }
+  function exitCoinChartFullscreen(){
+    if (!coinChartIsFullscreen()) return;
+    el.coinChart.classList.remove('cc-fs');
+    document.body.classList.remove('coin-chart-fs-open');
+    if (coinChartHome && coinChartHome.parentNode){
+      coinChartHome.parentNode.insertBefore(el.coinChart, coinChartHome);
+      coinChartHome.parentNode.removeChild(coinChartHome);
+    }
+    coinChartHome = null;
+    coinChartFsBtn.setAttribute('aria-pressed', 'false');
+    coinChartFsBtn.title = 'FULL SCREEN';
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function(){});
+    redrawCoinChart();
+  }
+  coinChartFsBtn.addEventListener('click', function(){
+    if (coinChartIsFullscreen()) exitCoinChartFullscreen(); else enterCoinChartFullscreen();
+  });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && coinChartIsFullscreen()) exitCoinChartFullscreen(); });
+  // The browser's own full screen closed (Android back gesture, Esc).
+  document.addEventListener('fullscreenchange', function(){ if (!document.fullscreenElement && coinChartIsFullscreen()) exitCoinChartFullscreen(); });
+  // Turning the phone / resizing: redraw to the new shape.
+  var coinChartResizeTimer = null;
+  window.addEventListener('resize', function(){
+    if (el.coinModal.style.display !== 'flex') return;
+    clearTimeout(coinChartResizeTimer);
+    coinChartResizeTimer = setTimeout(redrawCoinChart, 150);
   });
   el.pigeonsBarDexBtn.addEventListener('click', function(e){
     if (e.ctrlKey || e.metaKey) return;
