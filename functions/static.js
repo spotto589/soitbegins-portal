@@ -11132,6 +11132,89 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:700px) and (max-height:640px){
     #buySwapModal .buyswap-thumb{ display:none !important; }
   }
+  /* ---- Mobile pass (reported live 2026-09-28): trustline banner buttons
+     all one size, and SALES H!ST0RY / T0P 123 H0LDERS redesigned for
+     phones. Last in the stylesheet so it wins. ---- */
+  @media (max-width:700px){
+    /* Banner: coin picture + BALANCE on top, then 🔄 SWAP | 🎒 SATCHEL as
+       a full-width row the same size as 🪙 C0!N / 🖼️ MY NFTS / ⭐ WATCHL!ST
+       and 🧮 CALC / 🏆 H0LDERS / 📜 SALES below it. The info box's
+       children join the banner's own grid (display:contents) so the two
+       buttons can span the full width instead of sitting beside the coin. */
+    #pigeonsMergedPanel .pigeons-bar-balance{ display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)); grid-template-rows:auto auto; column-gap:0.4rem; row-gap:0.4rem; align-items:center !important; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info{ display:contents !important; }
+    #pigeonsMergedPanel .pigeons-bar-thumb-wrap{ grid-column:1; grid-row:1 / span 2; justify-self:start; align-self:center; }
+    #pigeonsMergedPanel .pigeons-bar-thumb-wrap .pigeons-bar-thumb{ width:64px !important; height:64px !important; flex:0 0 64px !important; }
+    #pigeonsMergedPanel .bar-bell, #pigeonsMergedPanel #openNotifyBtn.bar-bell{ width:24px; height:24px; font-size:11px; top:-6px; right:-6px; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info > :is(.pigeons-bar-balance-label, .pigeons-bar-balance-value, .pigeons-bar-balance-login){ grid-column:1 / -1 !important; padding-left:calc(64px + 0.8rem); box-sizing:border-box; min-width:0; }
+    #pigeonsMergedPanel .pigeons-bar-balance-label{ grid-row:1; align-self:end; }
+    #pigeonsMergedPanel :is(.pigeons-bar-balance-value, .pigeons-bar-balance-login){ grid-row:2; align-self:start; }
+    #pigeonsMergedPanel .pigeons-bar-balance .pigeons-bar-balance-info .pigeons-bar-balance-buy{ grid-row:3; }
+    #pigeonsMergedPanel #pigeonsBalanceBuyBtn{ grid-column:1; }
+    #pigeonsMergedPanel #openCartBtn{ grid-column:2; }
+    #pigeonsMergedPanel #pigeonsBalanceBuyBtn[style*="none"] + #openCartBtn{ grid-column:1 / -1; }
+    /* Same box as the rows below it: 38px tall, 12px text, green edge. */
+    #pigeonsMergedPanel :is(#pigeonsBalanceBuyBtn, #openCartBtn, #pigeonsBarLoggedIn .pigeons-bar-balance-buy, .pigeons-calc-toggle-btn){ height:38px !important; min-height:0 !important; margin:0 !important; padding:0 0.3em !important; font-size:12px !important; letter-spacing:0.08em; gap:0.3em; display:flex !important; align-items:center; justify-content:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-sizing:border-box; }
+    #pigeonsMergedPanel #pigeonsBalanceBuyBtn[style*="none"], #pigeonsMergedPanel #pigeonsBarDexBtn[style*="none"]{ display:none !important; }
+    #pigeonsMergedPanel #pigeonsBarLoggedIn .pigeons-bar-identity-actions{ display:grid !important; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); }
+
+    /* SALES H!ST0RY + T0P 123 H0LDERS — a sheet that fills the phone
+       under the top bar, its own list scrolling inside it. */
+    #salesModal, #topHoldersModal{ align-items:flex-start !important; padding:calc(var(--top-bar-h, 40px) + 0.5rem) 0.5rem 0.5rem !important; }
+    #salesModal .sales-modal-panel.sales-styled, #topHoldersModal .top-holders-modal-panel{ width:100% !important; max-width:none !important; height:calc(100vh - var(--top-bar-h, 40px) - 1rem); height:calc(100dvh - var(--top-bar-h, 40px) - 1rem); max-height:none !important; display:flex !important; flex-direction:column; overflow:hidden !important; padding:0.9rem 0.75rem 0.5rem !important; box-sizing:border-box; border-radius:14px; }
+
+    /* SALES H!ST0RY header: small coin + title on one line, the three
+       figures as one joined strip, XRP | $TOKEN as a two-way switch. */
+    #salesModal .sales-styled-close{ top:0.7rem !important; right:0.7rem !important; width:34px; height:34px; font-size:18px; }
+    #salesModal .sales-styled .buyswap-thumb{ width:40px !important; height:40px !important; margin:0 auto 0.35rem !important; border-radius:10px; }
+    #salesModal .sales-styled .history-title{ font-size:20px !important; letter-spacing:0.08em; margin:0 2.4rem 0.7rem; line-height:1.2; }
+    #salesModal .sales-stats-row{ display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0 !important; margin:0 0 0.6rem !important; border:1px solid rgba(var(--collection-accent-rgb), 0.35); border-radius:var(--radius); background:#000; overflow:hidden; flex:0 0 auto; }
+    #salesModal .sales-stats-row .buyswap-balance-tile{ border:none !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; padding:0.5em 0.3em !important; min-width:0; display:flex; flex-direction:column; align-items:center; gap:0.2rem; }
+    #salesModal .sales-stats-row .buyswap-balance-tile + .buyswap-balance-tile{ border-left:1px solid rgba(var(--collection-accent-rgb), 0.35) !important; }
+    #salesModal .sales-stats-row .buyswap-balance-label{ font-size:9.5px !important; letter-spacing:0.1em; line-height:1.2; margin:0 !important; opacity:0.8; }
+    #salesModal .sales-stats-row .buyswap-balance-value{ font-size:14px !important; line-height:1.2; overflow-wrap:anywhere; }
+    #salesModal .sale-currency-toggle{ display:grid !important; grid-template-columns:1fr 1fr; gap:0.4rem !important; margin:0 0 0.6rem !important; flex:0 0 auto; }
+    #salesModal .sale-currency-btn{ min-width:0 !important; width:100%; height:38px; padding:0 0.4em !important; font-size:13px !important; border-radius:var(--radius) !important; }
+    #salesModal .sales-scrollbox{ flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -0.2rem !important; padding:0 0.2rem 0.4rem; border-top:none !important; }
+
+    /* One sale per row: picture | P!GE0N #N over seller → buyer | price
+       over time. Everything on one line each, nothing wraps. */
+    #salesModal .sale-row{ display:grid !important; grid-template-columns:52px minmax(0, max-content) minmax(0, 1fr) auto !important; grid-template-areas:"thumb num num price" "thumb from to time" !important; column-gap:0.45rem !important; row-gap:0.15rem !important; align-items:center !important; padding:0.45rem 0.6rem 0.45rem 0.45rem !important; margin:0 0 0.4rem !important; border-left:3px solid var(--green); border-radius:0 var(--radius) var(--radius) 0; font-size:13px; }
+    #salesModal .sale-thumb-wrap{ display:contents !important; }
+    #salesModal .sale-thumb{ grid-area:thumb; width:52px !important; height:52px !important; border-radius:8px; overflow:hidden; background:#111; }
+    #salesModal .sale-num-box{ grid-area:num; border:none !important; padding:0 !important; font-size:14px !important; font-weight:700; letter-spacing:0.05em; overflow:hidden; text-overflow:ellipsis; align-self:end; }
+    #salesModal .sale-price-cell{ grid-area:price; align-self:end !important; display:flex; flex-direction:row; align-items:baseline; justify-content:flex-end; gap:0.35rem; text-align:right; }
+    #salesModal .sale-price{ font-size:15px !important; line-height:1.2; }
+    #salesModal .sale-via{ font-size:9px !important; letter-spacing:0.06em; opacity:0.7; white-space:nowrap; }
+    #salesModal :is(.sale-from, .sale-to){ align-self:start; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; overflow-wrap:normal; text-align:left !important; opacity:0.85; }
+    #salesModal :is(.sale-from, .sale-to), #salesModal :is(.sale-from, .sale-to) .wallet-tag{ font-size:12px !important; }
+    #salesModal .sale-from{ grid-area:from; }
+    #salesModal .sale-to{ grid-area:to; }
+    #salesModal .sale-to{ padding-left:0.1rem; }
+    #salesModal .sale-to::before{ content:'→ '; color:var(--green); opacity:0.9; }
+    #salesModal .sale-time{ grid-area:time; align-self:start; font-size:11px !important; letter-spacing:0.04em; white-space:nowrap; justify-content:flex-end; gap:0.3rem; opacity:0.75; }
+    #salesModal .sale-tx-link{ font-size:12px; }
+
+    /* T0P 123 H0LDERS: rank | picture | name + address | count + %. Gold,
+       silver and bronze keep their colour and edge but stay the same size
+       as every other row, so the whole list reads as one table. */
+    #topHoldersModal .simple-picker-header{ flex:0 0 auto; margin-bottom:0.7rem !important; min-height:34px; }
+    #topHoldersModal .th-page-title{ font-size:20px !important; letter-spacing:0.08em; padding:0 2.4rem; }
+    #topHoldersModal .simple-picker-close{ width:34px; height:34px; font-size:18px; }
+    #topHoldersModal #thFullListWrap{ flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    #topHoldersModal .th2-row, #topHoldersModal .th-row-medal.th2-row{ grid-template-columns:30px 44px minmax(0, 1fr) auto !important; column-gap:0.55rem !important; row-gap:0 !important; align-items:center; padding:0.5rem 0.55rem !important; margin:0 0 0.35rem !important; font-size:15px !important; border:1px solid var(--border-dim); border-left-width:3px; border-radius:0 var(--radius) var(--radius) 0; background:rgba(255,255,255,0.02); box-shadow:none; }
+    #topHoldersModal .th-row-medal.th2-row{ border-color:rgba(var(--medal), 0.55); background:rgba(var(--medal), 0.07); }
+    #topHoldersModal .th2-rank{ font-size:14px; text-align:center; white-space:nowrap; }
+    #topHoldersModal .th2-avatar, #topHoldersModal .th-row-medal .th2-avatar{ width:44px !important; height:44px !important; border-radius:10px; }
+    #topHoldersModal .th2-id{ gap:0.1rem; }
+    #topHoldersModal .th2-name{ font-size:14px; }
+    #topHoldersModal .th2-quote{ display:none; }
+    #topHoldersModal .th2-addr{ font-size:11px; }
+    #topHoldersModal .th2-row .th-count{ grid-column:auto !important; display:flex; flex-direction:column; align-items:flex-end; justify-content:center; gap:0.1rem; text-align:right; }
+    #topHoldersModal .th-count-amt, #topHoldersModal .th-count-pct{ min-width:0 !important; text-align:right; }
+    #topHoldersModal .th-count-amt{ font-size:13px; }
+    #topHoldersModal .th-count-pct{ font-size:11px; opacity:0.85; }
+  }
 </style>
 </head>
 <body>
@@ -11301,8 +11384,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="pigeons-bar-left-body">
             <span class="pigeons-bar-sublabel" id="pigeonsLoggedInTrustline"></span>
             <div class="pigeons-bar-identity-actions">
-              <a class="pigeons-bar-balance-buy" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;">V!EW 0N DEXSCREENER</a>
-              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn"><span class="lbl-full">V!EW MY P!GE0NS</span><span class="lbl-short">&#128038; MY NFTS</span></button>
+              <a class="pigeons-bar-balance-buy" id="pigeonsBarDexBtn" href="https://dexscreener.com/xrpl/504947454f4e5300000000000000000000000000.rfqvvt7x5fynwk87eczgp2t8rqxmqcqsf_xrp" target="_blank" rel="noopener" style="display:none;"><span class="lbl-full">V!EW 0N DEXSCREENER</span><span class="lbl-short">&#129689; C0!N</span></a>
+              <button class="pigeons-bar-balance-buy" id="showMyPigeonsBtn"><span class="lbl-full">V!EW MY P!GE0NS</span><span class="lbl-short">&#128444;&#65039; MY NFTS</span></button>
               <!-- WATCHL!ST for THIS collection specifically (reported live)
                    — unlike V!EW NFTs above (which reopens the MA!NFRAME
                    picker to pick a collection first), this one already knows
@@ -11331,7 +11414,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
               <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">L0G!N T0 V!EW BALANCE</button>
             </div>
-            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;">SWAP $P!GE0NS</button>
+            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;"><span class="lbl-full">SWAP $P!GE0NS</span><span class="lbl-short">&#128260; SWAP</span></button>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
             <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#127890; <span id="openCartLabel">SATCHEL</span> <span id="openCartCount"></span></button>
           </div>
@@ -22971,7 +23054,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.ciIssuerAddr.setAttribute('data-full', '');
       el.ciIssuerAddr.textContent = 'N/A';
     }
-    el.pigeonsBalanceBuyBtn.textContent = 'SWAP ' + meta.tokenLabel;
+    el.pigeonsBalanceBuyBtn.innerHTML = '<span class="lbl-full">SWAP ' + escapeHtml(meta.tokenLabel) + '</span><span class="lbl-short">&#128260; SWAP</span>';
     el.pigeonsCalcBuyBtn.textContent = 'SWAP ' + meta.tokenLabel;
     el.pigeonsCalcPigeonsUnit.textContent = meta.tokenLabel;
     el.salesCurrencyPigeonsBtn.textContent = meta.tokenLabel;
@@ -23544,7 +23627,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (data && data.dexUrl){
         el.pigeonsDexLink.href = data.dexUrl;
         el.pigeonsBarDexBtn.href = data.dexUrl;
-        el.pigeonsBarDexBtn.textContent = COLLECTION_META[state.collection].tokenLabel + ' C0!N';
+        el.pigeonsBarDexBtn.innerHTML = '<span class="lbl-full">' + escapeHtml(COLLECTION_META[state.collection].tokenLabel) + ' C0!N</span><span class="lbl-short">&#129689; C0!N</span>';
         coinPageDexUrl = data.dexUrl;
         el.pigeonsDexLink.style.display = '';
         el.pigeonsBarDexBtn.style.display = MY_WALLET ? '' : 'none';
