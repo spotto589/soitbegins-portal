@@ -17715,15 +17715,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   // is what distinguishes "scrolled past it" from "haven't reached it",
   // isIntersecting alone can't. threshold:0 + no rootMargin: fires the
   // instant any part of it crosses the viewport edge either way.
-  var dbControlsStickyObserver = new IntersectionObserver(function(entries){
-    var entry = entries[0];
-    var scrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+  // On phones #dbControlsSticky can be folded away behind SEARCH &
+  // F!LTERS (display:none — an observer never sees a hidden element
+  // leave the screen), so the trigger is whichever of the two is
+  // actually showing: the controls when open, the SEARCH & F!LTERS
+  // button when folded.
+  var dbToolsToggleEl = document.getElementById('dbToolsToggle');
+  function updateBottomBarReveal(){
+    var target = el.dbControlsSticky.offsetParent !== null ? el.dbControlsSticky : dbToolsToggleEl;
+    if (!target || target.offsetParent === null) return;
+    var scrolledPast = target.getBoundingClientRect().bottom < 0;
     el.bottomControlsBar.classList.toggle('bottom-controls-bar-revealed', scrolledPast);
     // Same trigger hides #globalTopBar (reported live) — the fixed top
     // and bottom bars never both sit on screen at once this way.
     el.globalTopBar.classList.toggle('global-top-bar-hidden', scrolledPast);
-  }, { threshold: 0 });
+  }
+  var dbControlsStickyObserver = new IntersectionObserver(updateBottomBarReveal, { threshold: 0 });
   dbControlsStickyObserver.observe(el.dbControlsSticky);
+  if (dbToolsToggleEl) dbControlsStickyObserver.observe(dbToolsToggleEl);
 
   // ---- Trait stack (stackable AND filters) ----
   // Pick a category from the dropdown; every value for that category then
@@ -26131,6 +26140,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   dbToolsToggle.addEventListener('click', function(){
     var open = el.resultsBlock.classList.toggle('db-tools-open');
     dbToolsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    updateBottomBarReveal();
   });
   el.detailBackBtnBottom.addEventListener('click', goBackFromDetail);
   // Copies a real, working /<collection>/<number> link (see nftHrefFor and
