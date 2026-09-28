@@ -9711,13 +9711,18 @@ const SWAP_HTML = `<!DOCTYPE html>
      big picture with name / drops price / 1 XRP rate / socials beside it,
      the close button in the corner. */
   #coinModal .coin-close{ position:absolute; top:0.9rem; right:0.9rem; transform:none; z-index:3; margin:0; }
-  #coinModal .coin-hero{ align-items:center; gap:1.1rem; padding:0.2rem 2.4rem 0.9rem 0; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.25); }
+  #coinModal .coin-hero{ align-items:flex-start; gap:1.1rem; padding:0.2rem 2.4rem 0.9rem 0; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.25); }
   #coinModal .coin-hero-img{ width:112px; height:112px; border-width:2px; box-shadow:0 0 22px rgba(var(--collection-accent-rgb), 0.45); }
   #coinModal .coin-hero-main{ gap:0.4rem; align-items:flex-start; }
   #coinModal .coin-hero-title{ color:#fff; font-size:15px; font-weight:700; letter-spacing:0.14em; opacity:0.85; line-height:1.2; }
   #coinModal .coin-hero-price{ font-size:30px; }
   #coinModal .coin-hero-change{ align-self:flex-start; font-size:12px; }
   #coinModal .coin-links{ margin-top:0; }
+  #coinModal .coin-hero-side{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:0.55rem; }
+  #coinModal .coin-hero-side .coin-links{ justify-content:center; max-width:124px; }
+  .coin-stat-dex{ display:inline-flex; align-items:center; gap:0.35em; margin-top:0.4rem; padding:0.3em 0.75em; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:999px; background:#000; color:#fff; font-size:10.5px; font-weight:700; letter-spacing:0.08em; text-decoration:none; }
+  .coin-stat-dex img{ width:12px; height:12px; }
+  .coin-stat-dex:hover{ border-color:var(--collection-accent); color:var(--cyan); box-shadow:0 0 12px rgba(var(--collection-accent-rgb), 0.45); }
   #coinModal .coin-hero-row{ display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem; margin-top:0.15rem; }
   #coinModal .coin-holders-btn{ display:inline-flex; align-items:center; gap:0.4em; height:32px; padding:0 0.85em; background:#000; color:#fff; border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:999px; box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); font-family:inherit; font-size:11px; font-weight:700; letter-spacing:0.08em; white-space:nowrap; cursor:pointer; }
   #coinModal .coin-holders-btn .coin-action-ico{ font-size:14px; }
@@ -9758,7 +9763,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .coin-hero-change.up{ color:rgb(52,255,133); }
   .coin-hero-change.down{ color:#ff3b5c; }
   .coin-hero-change:empty{ display:none; }
-  .coin-chart{ border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; padding:0.6rem 0.7rem 0.4rem; }
+  .coin-chart{ border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:var(--radius); background:#000; padding:0.6rem 0.4rem 0.4rem; }
   .coin-chart-bar{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; margin-bottom:0.4rem; }
   .coin-chart-ranges{ display:inline-flex; padding:3px; gap:2px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:999px; }
   .coin-chart-ranges button{ border:none; border-radius:999px; background:none; color:#fff; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.06em; padding:0.4em 0.9em; cursor:pointer; }
@@ -9810,8 +9815,6 @@ const SWAP_HTML = `<!DOCTYPE html>
   .coin-social-off{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
   .coin-social-off:hover{ transform:none; color:#fff; border-color:rgba(var(--collection-accent-rgb), 0.55); box-shadow:none; }
   #coinModal .coin-modal-panel{ position:relative; }
-  .coin-verify{ grid-column:1 / -1; color:#fff; opacity:0.6; font-size:10.5px; font-weight:700; letter-spacing:0.05em; line-height:1.5; text-align:center; padding-top:0.15rem; }
-  .coin-verify.warn{ color:#ffd23d; opacity:0.9; }
   .coin-stat-link{ color:inherit; text-decoration:none; }
   .coin-stat-link:hover{ color:var(--cyan); }
   .coin-social{ width:40px; height:40px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.55); color:#fff; box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); transition:transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease; }
@@ -9896,15 +9899,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     #coinModal .coin-hero-title{ padding-right:2.4rem; }
     /* Socials + T0P 10 WALLETS on one line beside the picture. */
     #coinModal .coin-hero-row{ gap:0.3rem; }
-    #coinModal .coin-links{ gap:0.3rem; }
-    #coinModal .coin-social{ width:30px; height:30px; }
+    #coinModal .coin-links{ gap:0.25rem; }
+    #coinModal .coin-hero-side .coin-links{ max-width:100px; }
+    #coinModal .coin-social{ width:28px; height:28px; }
     #coinModal .coin-social svg{ width:14px; height:14px; }
     #coinModal .coin-holders-btn{ height:30px; padding:0 0.6em; font-size:10px; letter-spacing:0.04em; gap:0.3em; }
     #coinModal .coin-holders-btn .coin-action-ico{ font-size:12px; }
     /* Shorter words on phones so it fits beside the socials. */
-    #coinModal #coinHoldersBtnLabel{ display:none; }
-    #coinModal .coin-holders-btn::after{ content:'T0P 10'; }
-    #coinModal .coin-holders-btn.is-open::after{ content:'H!DE'; }
     #coinModal .coin-stats{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     #coinModal .simple-picker-title{ font-size:19px; }
     #coinModal .coin-chart-modes button{ padding:0.4em 0.6em; font-size:11px; letter-spacing:0.04em; }
@@ -9918,6 +9919,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   .stats-page.stats-page-off{ display:none !important; }
   .stat-coin-tile .stat-value.stat-up{ color:rgb(52,255,133) !important; }
   .stat-coin-tile .stat-value.stat-down{ color:#ff3b5c !important; }
+  /* Every number in the banner green (reported live 2026-09-28). */
+  #collectionDetailsPanel .stat-value{ color:rgb(52,255,133) !important; }
+  #collectionDetailsPanel .stat-coin-tile .stat-value.stat-down{ color:#ff3b5c !important; }
   @media (min-width:701px){
     #collectionDetailsPanel{ padding:0.5rem 1rem 0.45rem; }
     #collectionDetailsPanel .stats-strip{ gap:0.5rem; }
@@ -12078,16 +12082,20 @@ const SWAP_HTML = `<!DOCTYPE html>
              left; the coin's name, its price in drops, what 1 XRP buys,
              and the socials stacked beside it. No separate title row. -->
         <div class="coin-hero">
-          <img class="coin-hero-img" id="coinImg" src="" alt="">
+          <!-- Picture at the top, socials underneath it (reported live
+               2026-09-28). -->
+          <div class="coin-hero-side">
+            <img class="coin-hero-img" id="coinImg" src="" alt="">
+            <div class="coin-links" id="coinLinks"></div>
+          </div>
           <div class="coin-hero-main">
             <span class="coin-hero-title" id="coinTitle">C0!N</span>
             <span class="coin-hero-price" id="coinPrice">…</span>
             <span class="coin-hero-change" id="coinChange"></span>
-            <!-- T0P 10 WALLETS sits to the right of the socials (reported
-                 live 2026-09-28), leaving SWAP alone at the bottom. -->
+            <!-- T0P 10 H0LDERS under the price, leaving SWAP alone at the
+                 bottom. -->
             <div class="coin-hero-row">
-              <div class="coin-links" id="coinLinks"></div>
-              <button type="button" class="coin-holders-btn" id="coinHoldersBtn"><span class="coin-action-ico">&#128081;</span><span id="coinHoldersBtnLabel">T0P 10 WALLETS</span></button>
+              <button type="button" class="coin-holders-btn" id="coinHoldersBtn"><span class="coin-action-ico">&#128081;</span><span id="coinHoldersBtnLabel">T0P 10 H0LDERS</span></button>
             </div>
           </div>
         </div>
@@ -24223,17 +24231,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     function extra(cls, label, value){ return stat(label, value).replace('class="coin-stat"', 'class="coin-stat coin-stat-extra' + cls + '"'); }
     html += extra('', 'MARKET CAP ATH', h && h.marketCapAthUsd ? usd(h.marketCapAthUsd) : wait);
     html += extra('', '24H BUYS / SELLS', '<span class="up">' + (t.buys || 0) + '</span> / <span class="down">' + (t.sells || 0) + '</span>');
-    html += extra(' coin-stat-2', 'P00L', s.pool ? escapeHtml(compactPigeonsNumber(s.pool.token)) + ' + ' + escapeHtml(fmtXrp(Math.round(s.pool.xrp))) + ' XRP' : '—');
+    // Just the coins in the pool, plus DexScreener one tap away (reported
+    // live 2026-09-28).
+    var dexBtn = coinPageDexUrl ? '<a class="coin-stat-dex" href="' + escapeHtml(coinPageDexUrl) + '" target="_blank" rel="noopener"><img src="https://dexscreener.com/favicon.ico" alt="">DEXSCREENER ↗</a>' : '';
+    html += extra(' coin-stat-2', 'P00L', s.pool ? escapeHtml(compactPigeonsNumber(s.pool.token) + ' ' + (meta.tokenLabel || '')) : '—').replace(/<[/]div>$/, dexBtn + '</div>');
     html += extra(' coin-stat-2', 'SUPPLY', s.supply ? escapeHtml(fmtExact(s.supply, 0)) : '—');
     html += extra(' coin-stat-2', '!SSUER', '<a class="coin-stat-link" href="https://bithomp.com/explorer/' + escapeHtml(meta.tokenIssuer || '') + '" target="_blank" rel="noopener">' + escapeHtml(shortAddr(meta.tokenIssuer || '')) + ' ↗</a>');
-    // Where the numbers came from, and whether the chart site agrees.
-    var agree = s.priceDiffPct == null ? '' : s.priceDiffPct <= 2
-      ? ' · MATCHES THE CHART S!TES (' + s.priceDiffPct.toFixed(1) + '%)'
-      : ' · CHART S!TES D!FFER BY ' + s.priceDiffPct.toFixed(1) + '%';
-    var src = s.priceSource === 'amm' ? '✓ PR!CE, P00L + SUPPLY READ FR0M THE XRPL' : '✓ SUPPLY READ FR0M THE XRPL';
-    var usdSrc = s.xrpUsd ? ' · XRP = $' + Number(s.xrpUsd).toFixed(4) + (s.xrpUsdSource === 'bitstamp' ? ' (B!TSTAMP)' : '') : '';
-    var histSrc = h ? (h.source === 'ledger' ? ' · H!ST0RY: EVERY P00L TRADE S!NCE ' + coinDate(h.firstTs).toUpperCase() : ' · H!ST0RY S!NCE ' + coinDate(h.firstTs).toUpperCase() + (h.building ? ' (FULL LEDGER H!ST0RY ST!LL BU!LD!NG)' : '')) : '';
-    html += '<div class="coin-verify coin-stat-extra' + (s.priceDiffPct > 2 ? ' warn' : '') + '">' + escapeHtml(src + agree + usdSrc + histSrc) + '</div>';
     html += '<button type="button" class="coin-stats-more" id="coinStatsMoreBtn" aria-expanded="' + coinStatsExpanded + '">' + (coinStatsExpanded ? 'LESS ▴' : 'M0RE ▾') + '</button>';
     el.coinStats.innerHTML = html;
     el.coinStats.classList.toggle('coin-stats-open', coinStatsExpanded);
@@ -24242,7 +24245,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // pool shown as the LP with a drop and a B!TH0MP link.
   function closeCoinHolders(){
     el.coinHolders.style.display = 'none';
-    el.coinHoldersBtnLabel.textContent = 'T0P 10 WALLETS';
+    el.coinHoldersBtnLabel.textContent = 'T0P 10 H0LDERS';
     el.coinHoldersBtn.classList.remove('is-open');
   }
   function toggleCoinHolders(){
@@ -24253,7 +24256,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.coinHolders.style.top = top + 'px';
     el.coinHolders.style.height = Math.max(240, bottom - top) + 'px';
     el.coinHolders.style.display = '';
-    el.coinHoldersBtnLabel.textContent = 'H!DE WALLETS';
+    el.coinHoldersBtnLabel.textContent = 'H!DE H0LDERS';
     el.coinHoldersBtn.classList.add('is-open');
     var key = state.collection;
     var label = COLLECTION_META[key].tokenLabel;
@@ -24268,7 +24271,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var top1 = list[0].pct || 1;
       var rank = 0;
       el.coinHolders.innerHTML =
-        '<div class="coin-holders-head"><span>T0P 10 WALLETS</span><span>' + (data.holderCount ? escapeHtml(data.holderCount.toLocaleString()) + ' H0LDERS' : '') + '</span><button type="button" class="coin-holders-x" data-holders-close="1" title="CL0SE">&times;</button></div>' +
+        '<div class="coin-holders-head"><span>T0P 10 H0LDERS</span><span>' + (data.holderCount ? escapeHtml(data.holderCount.toLocaleString()) + ' H0LDERS' : '') + '</span><button type="button" class="coin-holders-x" data-holders-close="1" title="CL0SE">&times;</button></div>' +
         list.map(function(h){
           var who = h.isLp
             ? '<span class="ch-lp">L!QU!D!TY P00L <a class="ch-lp-link" href="https://bithomp.com/explorer/' + escapeHtml(h.account) + '" target="_blank" rel="noopener" title="V!EW THE P00L 0N B!TH0MP">B!TH0MP ↗</a></span>'
@@ -24386,7 +24389,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // so the line and labels are never stretched.
     var pw = el.coinChartPlot.clientWidth, ph = el.coinChartPlot.clientHeight;
     var H = 260, W = pw && ph ? Math.round(Math.max(360, Math.min(1800, H * pw / ph))) : 700;
-    var L = 8, R = 78, T = 12, B = 26;
+    // Price labels sit inside the plot, over their grid lines, so the
+    // line runs the full width (no empty gutter on the right).
+    var L = 2, R = 2, T = 12, B = 26;
     var closes = list.map(function(c){ return coinChartValue(Number(c[4]), c[0]); });
     var lo = Math.min.apply(null, closes), hi = Math.max.apply(null, closes);
     if (hi === lo){ hi = hi * 1.01; lo = lo * 0.99; }
@@ -24401,7 +24406,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     for (var g = 0; g < 4; g++){
       var gv = lo + (hi - lo) * (g + 0.5) / 4, gy = y(gv);
       grid += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy.toFixed(1) + '" y2="' + gy.toFixed(1) + '" class="cc-grid"/>';
-      labels += '<text x="' + (W - R + 8) + '" y="' + (gy + 4).toFixed(1) + '" class="cc-axis">' + escapeHtml(fmtCoinChartValue(gv, true)) + '</text>';
+      labels += '<text x="' + (W - R - 4) + '" y="' + (gy - 5).toFixed(1) + '" class="cc-axis" text-anchor="end">' + escapeHtml(fmtCoinChartValue(gv, true)) + '</text>';
     }
     var hourly = COIN_CHART_RANGES[coinChartRange][0] === 'hour' && coinChartRange === '1D';
     var yearly = coinChartRange === '1Y' || coinChartRange === 'ALL';
