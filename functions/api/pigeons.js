@@ -630,6 +630,15 @@ export async function onRequestGet(context) {
   // public collection-stats API is the only one of the two that tracks
   // those particular figures.
   if (params.get('stats') === '1') {
+    // Edge-cached, stale-while-revalidate (2026-09-29, reported live as the
+    // banner carousel taking a while to load): the upstream marketplace
+    // reads below took ~3.5s on a cold call. Every visitor now gets the
+    // shared copy at once; one older than STATS_FRESH_S is rebuilt in the
+    // background for the next visitor.
+    const STATS_FRESH_S = 60;
+    const statsCacheKey = new Request('https://soitbegins.xyz/__cache/collection-stats/v1/' + coll.key);
+    const statsCache = typeof caches !== 'undefined' ? caches.default : null;
+    const buildStats = async () => {
     // holders (crownSnapshot) is a full Clio scan keyed to PIGEON_ISSUER/
     // PIGEON_TAXON specifically — no equivalent scan exists for a
     // non-tradeable collection yet, comes back null rather than showing
@@ -663,7 +672,7 @@ export async function onRequestGet(context) {
     const buyers24h = new Set(sales24h.map(s => s.buyer).filter(Boolean));
     const traded24h = new Set(sales24h.map(s => s.nftId).filter(Boolean));
     const volume24hXrp = sales24h.reduce((sum, s) => sum + (s.priceXrp || 0), 0);
-    return json({
+    return {
       items: coll.sizeApprox,
       // crownSnapshot.holderCount is $PIGEONS-only (see the fetch above) —
       // used to get shown as the HOLDERS tile for every OTHER tradeable
@@ -691,7 +700,23 @@ export async function onRequestGet(context) {
       traded24hCount: traded24h.size,
       buyers24hCount: buyers24h.size,
       volume24hXrp: volume24hXrp
-    });
+    };
+    };
+    const putStats = body => {
+      const res = new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=86400', 'X-Built-At': String(Date.now()) } });
+      if (statsCache) context.waitUntil(statsCache.put(statsCacheKey, res.clone()));
+      return res;
+    };
+    const statsHit = statsCache ? await statsCache.match(statsCacheKey) : null;
+    if (statsHit) {
+      const builtAt = Number(statsHit.headers.get('X-Built-At')) || 0;
+      if (Date.now() - builtAt > STATS_FRESH_S * 1000) {
+        context.waitUntil(buildStats().then(putStats).catch(() => {}));
+      }
+      return new Response(statsHit.body, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    }
+    const fresh = putStats(await buildStats());
+    return new Response(fresh.body, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
   }
 
   // Top 100 current Pigeon holders, network-wide — piggybacks on the same

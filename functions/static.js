@@ -5310,10 +5310,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* 🛒 beside a Σκύλλa BUY N0W on a card. */
   .result-card .card-buy-split{ display:flex; gap:0.45rem; }
   .result-card .card-buy-split > :first-child{ flex:1 1 auto; min-width:0; }
-  .result-card .card-buy-cart-btn{ flex:0 0 46px; height:46px; display:flex; align-items:center; justify-content:center; background:#000; border:1px solid rgba(52,255,133,0.85); border-radius:10px; box-shadow:0 0 10px rgba(52,255,133,0.28); color:#fff; font-size:18px; cursor:pointer; padding:0; }
+  /* Same height as BUY N0W beside it (reported live 2026-09-29: dead space
+     under it when the price wrapped) — stretches with the row. */
+  .result-card .card-buy-cart-btn{ flex:0 0 46px; height:auto; min-height:46px; align-self:stretch; display:flex; align-items:center; justify-content:center; background:#000; border:1px solid rgba(52,255,133,0.85); border-radius:10px; box-shadow:0 0 10px rgba(52,255,133,0.28); color:#fff; font-size:18px; cursor:pointer; padding:0; }
   .result-card .card-buy-cart-btn:hover{ background:rgba(52,255,133,0.25); }
   .result-card .card-buy-cart-btn.in-cart{ background:rgb(52,255,133); color:#000; font-weight:700; }
-  @media (max-width:600px){ .result-card .card-buy-cart-btn{ flex-basis:40px; height:40px; font-size:15px; } }
+  @media (max-width:600px){ .result-card .card-buy-cart-btn{ flex-basis:40px; min-height:40px; font-size:15px; } }
   .card-cart-toggle{ position:absolute; top:0.3rem; left:0.3rem; z-index:2; width:1.9em; height:1.9em; line-height:1.9em; padding:0; background:rgba(0,0,0,0.85); border:1px solid rgba(52,255,133,0.85); border-radius:8px; box-shadow:0 0 8px rgba(52,255,133,0.3); color:#fff; font-size:16px; font-weight:700; text-align:center; cursor:pointer; }
   .card-cart-toggle:hover{ background:rgba(52,255,133,0.25); }
   .card-cart-toggle.in-cart{ background:rgb(52,255,133); color:#000; }
@@ -11012,6 +11014,9 @@ const SWAP_HTML = `<!DOCTYPE html>
        detail screen, so nothing is actually lost. */
     .mainframe-card-dex-link{ display:none !important; }
   }
+  /* ...and on every width now (reported live 2026-09-29: remove V!EW CHART
+     from the database cards). The C0!N page has the chart. */
+  .mainframe-card-dex-link{ display:none !important; }
   /* NOT a blanket opacity on the card root — that dims the whole
      subtree as ONE compositing group, which includes the coming-soon
      tape banner nested inside .mainframe-card-art, and crushed its
@@ -11464,6 +11469,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     #pigeonsMergedPanel #openCartLabel{ display:none; }
     #pigeonsMergedPanel #openCartCount:not(:empty){ position:absolute; top:-7px; right:-7px; min-width:20px; height:20px; padding:0 5px; box-sizing:border-box; border-radius:10px; background:var(--green); color:#000; font-size:11px; font-weight:700; line-height:20px; text-align:center; text-shadow:none; }
     #pigeonsMergedPanel #pigeonsBarLoggedIn .pigeons-bar-identity-actions{ display:grid !important; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); }
+    #pigeonsMergedPanel #pigeonsBarCoinOutBtn:not([style*="none"]){ height:38px !important; min-height:0 !important; margin:0 !important; padding:0 0.3em !important; font-size:12px !important; letter-spacing:0.08em; display:flex !important; align-items:center; justify-content:center; box-sizing:border-box; }
 
     /* SALES H!ST0RY + T0P 123 H0LDERS — a sheet that fills the phone
        under the top bar, its own list scrolling inside it. */
@@ -11546,6 +11552,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     body.nft-detail-open{ overflow:visible !important; }
     body.nft-detail-open .page > *:not(#screenDetail):not(#notifyToasts):not([id$="Modal"]){ display:none !important; }
     body.nft-detail-open #screenDetail{ position:relative !important; top:auto !important; left:auto !important; right:auto !important; bottom:auto !important; overflow:visible !important; height:auto !important; min-height:calc(100vh - var(--top-bar-h, 36px)); min-height:calc(100dvh - var(--top-bar-h, 36px)); margin:calc(var(--top-bar-h, 36px) - 33px) 0 0 !important; padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px)) !important; box-sizing:border-box; }
+  }
+  /* Top bar, desktop (reported live 2026-09-29): L0G !N sat a few px
+     below "S!GNAL :: N0T F0UND" and the collection name a few px above
+     "DATABASE ::" — everything now centres on one line, and L0G !N is a
+     bit bigger. */
+  @media (min-width:701px){
+    #topTabs .global-top-scylla-text.global-top-scylla-text-loggedout{ display:flex !important; flex-direction:row; align-items:center; gap:0.75rem; }
+    #topTabs .global-top-scylla-text-loggedout #flockTabLabel{ display:flex; align-items:center; margin:0; line-height:1; }
+    #topTabs .flock-tab-login-btn{ font-size:14px; line-height:1; padding:0.55em 1.2em; letter-spacing:0.08em; }
+    #globalTopBar .tab-db-select{ align-items:center; }
+    /* SWAP now shows signed out too, so keep the trustline title on one line. */
+    #pigeonsBarLoggedOut .pigeons-bar-left-lines .pigeons-bar-text-lg{ white-space:nowrap; }
   }
 </style>
 </head>
@@ -11709,6 +11727,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             <a class="pigeons-bar-copy-btn trustline-set-link" id="setTrustlineLink" href="/api/trustline?c=pigeons&amp;back=static" rel="nofollow" title="SET TRUSTL!NE !N XAMAN">SET</a>
           </div>
           <button class="pigeons-bar-help-box" id="onboardLink"><span class="pigeons-bar-help-mark">?</span> <span class="lbl-full">New to the XRPL, NFTs, memes? Click here.</span><span class="lbl-short">NEW HERE? START HERE</span></button>
+          <!-- The C0!N page (price, chart, details) signed out too
+               (2026-09-29) — same page #pigeonsBarDexBtn opens. -->
+          <button type="button" class="pigeons-bar-balance-buy pigeons-bar-coin-out" id="pigeonsBarCoinOutBtn" style="display:none;"><span class="lbl-full">$P!GE0NS C0!N</span><span class="lbl-short">&#129689; C0!N DETA!LS</span></button>
         </div>
         <!-- Shown instead of the block above once MY_WALLET is set (real
              server-verified session, see onRequestGet/__SWAP_WALLET__) —
@@ -14082,6 +14103,8 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="detail-actions">
             <button class="secondary-btn" id="buySwapBackBtn">← BACK</button>
             <button class="action-btn" id="buySwapSignBtn" disabled title="QU0TE N0T YET AVA!LABLE">S!GN AND SWAP</button>
+            <!-- Signed out, in place of S!GN AND SWAP (2026-09-29). -->
+            <button class="action-btn" id="buySwapLoginBtn" style="display:none; white-space:nowrap;">L0G !N T0 <span style="text-transform:none;">Σκύλλα</span></button>
           </div>
         </div>
 
@@ -14919,7 +14942,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   ['searchInput','searchBtn','editionSelect','dbViewSelect','dbViewBtn','dbViewMenu','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','traitsFlyoutEyebrow','bottomControlsBar','bottomSortBtn','bottomTraitsBtn','backToTopBtn','bottomSatchelBtn','bottomSatchelCount','bottomMultiListBtn','bottomMultiListCount','bottomSweepBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','setTrustlineLink','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
-   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn',
+   'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn','pigeonsBarCoinOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
    'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
@@ -14997,7 +15020,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenListResult','listResultThumb','listResultPigeonNum','listResultPrice','listResultTxLink','listResultDoneBtn',
    'buyConfirmModal','screenBuyConfirm','buyConfPigeon','buyConfSeller','buyConfPrice','buyConfirmStatus','buyConfirmBackBtn',
    'screenBuyResult','buyResultPigeonNum','buyResultPrice','buyResultStatus','buyResultTxLink','buyResultDoneBtn',
-   'buySwapModal','buySwapDirection','buySwapPayUnit','buySwapFlipBtn','buySwapResultStatusLine','buySwapEntryState','buySwapThumb','buySwapChecking','buySwapCheckingText','buySwapQuoteSection','buySwapXrpInput','buySwapBalancesRow','buySwapXrpBalanceValue','buySwapTokenBalanceLabel','buySwapTokenBalanceValue','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn',
+   'buySwapModal','buySwapDirection','buySwapPayUnit','buySwapFlipBtn','buySwapResultStatusLine','buySwapEntryState','buySwapThumb','buySwapChecking','buySwapCheckingText','buySwapQuoteSection','buySwapXrpInput','buySwapBalancesRow','buySwapXrpBalanceValue','buySwapTokenBalanceLabel','buySwapTokenBalanceValue','buySwapInputError','buySwapReceiveValue','buySwapReceiveUnit','buySwapRate','buySwapMinReceived','buySwapSlippage','buySwapStatus','buySwapBackBtn','buySwapSignBtn','buySwapLoginBtn',
    'buySwapTrustlineWarning','buySwapTrustlineWarningTitle','buySwapIssuerAddr','buySwapCopyIssuerBtn','buySwapCopyIssuerLabel','buySwapDexLink','buySwapPayRow',
    'buySwapConfirmState','buySwapConfAccount','buySwapConfSendMax','buySwapConfAmount','buySwapConfSource','buySwapConfirmStatus','buySwapConfirmBackBtn','buySwapOpenXamanBtn',
    'buySwapResultState','buySwapResultReceived','buySwapResultTxLink','buySwapResultDoneBtn',
@@ -16973,8 +16996,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // connected wallet to reach at all. Both result-card renderers below
   // call this instead of building the button inline, so there's one
   // single place gating it.
+  // 2026-09-29: the ☆ shows signed out again, but a tap only says to log
+  // in (loginNeededToast) — nothing is saved until there's a wallet.
   function watchlistToggleHtml(p){
-    if (!MY_WALLET) return '';
+    if (!MY_WALLET) return '<button class="watchlist-toggle" data-nftid="' + escapeHtml(p.nftId) + '" title="L0G !N T0 ADD T0 WATCHL!ST">☆</button>';
     var watching = isWatchlisted(p.nftId);
     return '<button class="watchlist-toggle' + (watching ? ' watching' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="' + (watching ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST') + '">' + (watching ? '★' : '☆') + '</button>';
   }
@@ -17562,6 +17587,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var watchBtn = e.target.closest('.watchlist-toggle');
       if (watchBtn){
         e.stopPropagation();
+        if (!MY_WALLET){ loginNeededToast('L0G !N T0 ADD T0 Y0UR WATCHL!ST'); return; }
         var wp = source().filter(function(x){ return x.nftId === watchBtn.getAttribute('data-nftid'); })[0];
         if (wp){
           var nowWatching = toggleWatchlist(wp);
@@ -19696,6 +19722,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.pigeonsBarLoggedIn.style.display = 'none';
       el.pigeonsBalanceLoginWrap.style.display = '';
       el.pigeonsBalanceValue.style.display = 'none';
+      // SWAP shows signed out too (2026-09-29); the panel offers L0G !N.
+      el.pigeonsBalanceBuyBtn.style.display = (COLLECTION_META[state.collection] || {}).hasAmm ? '' : 'none';
       updateFlockTabLabel();
       return;
     }
@@ -20470,6 +20498,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   var buySwapHasTrustline = null;
   function applyBuySwapGate(){
     var gateTokenLabel = buySwapMeta().tokenLabel;
+    el.buySwapLoginBtn.style.display = MY_WALLET ? 'none' : '';
+    el.buySwapSignBtn.style.display = MY_WALLET ? '' : 'none';
     if (!MY_WALLET){
       el.buySwapChecking.style.display = 'none';
       el.buySwapQuoteSection.style.display = '';
@@ -20665,6 +20695,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }, BUYSWAP_REFRESH_MS);
   }
   el.pigeonsBalanceBuyBtn.addEventListener('click', function(){ openBuySwapPanel(state.collection); });
+  el.buySwapLoginBtn.addEventListener('click', function(){ closeBuySwapModal(); startAuthorize(); });
   // The coin thumbnail beside it opens SWAP too (reported live: it looked
   // like a button but did nothing).
   el.pigeonsBarThumb.addEventListener('click', function(){ if (!COLLECTION_META[state.collection].xrpOnly) openBuySwapPanel(state.collection); });
@@ -24100,10 +24131,13 @@ const SWAP_HTML = `<!DOCTYPE html>
         coinPageDexUrl = data.dexUrl;
         el.pigeonsDexLink.style.display = '';
         el.pigeonsBarDexBtn.style.display = MY_WALLET ? '' : 'none';
+        el.pigeonsBarCoinOutBtn.innerHTML = '<span class="lbl-full">' + escapeHtml(COLLECTION_META[state.collection].tokenLabel) + ' C0!N</span><span class="lbl-short">&#129689; C0!N DETA!LS</span>';
+        el.pigeonsBarCoinOutBtn.style.display = MY_WALLET ? 'none' : '';
         updateCarouselCoin(data);
       } else {
         el.pigeonsDexLink.style.display = 'none';
         el.pigeonsBarDexBtn.style.display = 'none';
+        el.pigeonsBarCoinOutBtn.style.display = 'none';
         updateCarouselCoin(null);
       }
     }).catch(function(){});
@@ -24564,6 +24598,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     e.preventDefault();
     openCoinPage();
   });
+  el.pigeonsBarCoinOutBtn.addEventListener('click', openCoinPage);
   el.coinCloseBtn.addEventListener('click', closeCoinPage);
   el.coinStats.addEventListener('click', function(e){
     if (!e.target.closest('#coinStatsMoreBtn')) return;
@@ -25005,6 +25040,25 @@ const SWAP_HTML = `<!DOCTYPE html>
       btn.textContent = 'CLEAR ALL';
       el.notifyToasts.insertBefore(btn, el.notifyToasts.firstChild);
     } else if (n < 2 && btn) btn.parentNode.removeChild(btn);
+  }
+  // Same pop-up look as a notification: "L0G !N T0 ..." — tapping it
+  // starts the sign-in. One at a time.
+  function loginNeededToast(msg){
+    var old = el.notifyToasts.querySelector('.nt-login');
+    if (old) old.parentNode.removeChild(old);
+    var t = document.createElement('div');
+    t.className = 'notify-toast nt-login';
+    t.setAttribute('role', 'button');
+    t.innerHTML = '<span>' + escapeHtml(msg) + '<span class="nt-sub">TAP HERE T0 L0G !N W!TH XAMAN</span></span>' +
+      '<button type="button" class="nt-x" title="CLEAR" aria-label="CLEAR">&times;</button>';
+    t.addEventListener('click', function(e){
+      if (e.target.closest('.nt-x')) return;
+      if (t.parentNode) t.parentNode.removeChild(t);
+      startAuthorize();
+    });
+    el.notifyToasts.appendChild(t);
+    syncNotifyClearAll();
+    setTimeout(function(){ if (t.parentNode){ t.parentNode.removeChild(t); syncNotifyClearAll(); } }, 6000);
   }
   el.notifyToasts.addEventListener('click', function(e){
     if (e.target.closest('.nt-clear-all')){
@@ -30696,7 +30750,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var num = typeof n === 'string' ? Number(n) : n;
     num = num || 0;
     var abs = Math.abs(num);
-    if (abs >= 1000000) return (num / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + ' M!LL!0N';
+    // 1.23M — always two decimals (reported live 2026-09-29).
+    if (abs >= 1000000) return (num / 1000000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'M';
     if (abs >= 1000) return (num / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
     return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
   }
@@ -30759,8 +30814,22 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   el.statFloorExternalTile.addEventListener('click', function(){ applySort('PRICE_ASC'); });
   var statsCarouselSetPageOff = function(){};
+  // The last numbers seen for this collection paint at once from this
+  // browser (2026-09-29, the carousel was slow to fill), then the live
+  // ones replace them.
   function loadCollectionStats(){
+    var coll = state.collection;
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem('scylla_stats:' + coll) || 'null'); } catch (e){}
+    if (saved) paintCollectionStats(saved);
     api({ stats: 1 }).then(function(data){
+      if (state.collection !== coll || !data || data.error) return;
+      try { localStorage.setItem('scylla_stats:' + coll, JSON.stringify(data)); } catch (e){}
+      paintCollectionStats(data);
+    }).catch(function(){});
+  }
+  function paintCollectionStats(data){
+    (function(){
       el.statItems.textContent = data.items !== null && data.items !== undefined ? data.items.toLocaleString() : '—';
       el.statHolders.textContent = data.holders !== null && data.holders !== undefined ? data.holders.toLocaleString() : '—';
       el.statVolume.textContent = data.totalVolumeXrp !== null && data.totalVolumeXrp !== undefined ? fmtXrp(data.totalVolumeXrp) + ' XRP' : '—';
@@ -30779,7 +30848,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       var activeStatsPage = el.statsCarousel.querySelector('.stats-page-active');
       var statsViewportEl = el.statsCarousel.querySelector('.stats-carousel-viewport');
       if (activeStatsPage && statsViewportEl) statsViewportEl.style.height = activeStatsPage.scrollHeight + 'px';
-    }).catch(function(){});
+    })();
   }
   // Auto-rotating stats strip — FLOOR PRICES, then ITEMS/HOLDERS/VOLUME/
   // LISTED, then 24H ACTIVITY, cycling on a timer so this area stays one
@@ -31247,7 +31316,8 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<div class="coin-actions">' +
           '<button type="button" class="coin-badge coin-badge-' + b + '" data-coin-reasons="' + escapeHtml(key) + '">● ' + coinsBadgeLabel(b) + (open ? ' ▴' : ' ▾') + '</button>' +
           action +
-          (MY_WALLET ? '<button type="button" class="coin-watch' + (isCoinWatched(key) ? ' watching' : '') + '" data-coin-watch="' + escapeHtml(key) + '" title="' + (isCoinWatched(key) ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST') + '">' + (isCoinWatched(key) ? '★' : '☆') + '</button>' : '') +
+          (MY_WALLET ? '<button type="button" class="coin-watch' + (isCoinWatched(key) ? ' watching' : '') + '" data-coin-watch="' + escapeHtml(key) + '" title="' + (isCoinWatched(key) ? 'REM0VE FR0M WATCHL!ST' : 'ADD T0 WATCHL!ST') + '">' + (isCoinWatched(key) ? '★' : '☆') + '</button>'
+            : '<button type="button" class="coin-watch" data-coin-watch="' + escapeHtml(key) + '" title="L0G !N T0 ADD T0 WATCHL!ST">☆</button>') +
         '</div>' +
       '</div>' +
       (coinsFlash[key] ? '<div class="coin-flash">' + escapeHtml(coinsFlash[key]) + '</div>' : '') +
@@ -31354,6 +31424,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         renderCoins();
       } else if (t.hasAttribute('data-coin-watch')){
         var wk = t.getAttribute('data-coin-watch');
+        if (!MY_WALLET){ loginNeededToast('L0G !N T0 ADD T0 Y0UR WATCHL!ST'); return; }
         var wc = ((coinsData && coinsData.coins) || []).filter(function(c){ return c.key === wk; })[0];
         if (wc) toggleCoinWatch({ key: wc.key, name: wc.name, image: wc.image || null, issuer: wc.issuer });
         renderCoins();
