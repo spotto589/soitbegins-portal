@@ -9718,6 +9718,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   #coinChart .coin-chart-ranges{ order:3; flex:1 1 100%; justify-content:space-between; }
   #coinChart .coin-chart-change{ margin-left:auto; white-space:nowrap; }
   #coinChart .coin-chart-fs-btn{ margin-left:0; }
+  /* Same layout whichever range is picked (reported live 2026-09-28: a
+     long ALL change pushed full screen onto its own line): modes | change
+     | full screen on top, the change takes whatever room is left and cuts
+     off rather than growing the bar; ranges on the row underneath. */
+  #coinChart .coin-chart-bar{ display:grid !important; grid-template-columns:auto minmax(0, 1fr) auto; column-gap:0.5rem; row-gap:0.45rem; }
+  #coinChart .coin-chart-modes{ grid-column:1; grid-row:1; }
+  #coinChart .coin-chart-change{ grid-column:2; grid-row:1; min-width:0; overflow:hidden; text-overflow:ellipsis; text-align:right; }
+  #coinChart .coin-chart-fs-btn{ grid-column:3; grid-row:1; }
+  #coinChart .coin-chart-ranges{ grid-column:1 / -1; grid-row:2; display:flex; min-width:0; }
+  #coinChart .coin-chart-ranges button{ flex:1 1 0; min-width:0; }
+  .coin-usd{ margin-left:0.3em; font-size:0.7em; opacity:0.75; letter-spacing:0.06em; }
+  .coin-hero-change.coin-hero-rate{ color:#fff; border-color:rgba(var(--collection-accent-rgb), 0.6); background:rgba(var(--collection-accent-rgb), 0.15); }
   .coin-hero-change.up{ color:rgb(52,255,133); }
   .coin-hero-change.down{ color:#ff3b5c; }
   .coin-hero-change:empty{ display:none; }
@@ -24112,11 +24124,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       coinStatsData = s;
       if (s.imageUrl) el.coinImg.src = s.imageUrl;
       el.coinPrice.textContent = s.priceXrp ? fmtCoinPrice(s.priceXrp) : '—';
-      el.coinPriceSub.textContent = s.priceUsd ? fmtUsd(s.priceUsd) : '';
-      var ch = s.change24h;
-      if (ch !== undefined && ch !== null){
-        el.coinChange.textContent = (ch >= 0 ? '+' : '') + ch + '% 24H';
-        el.coinChange.className = 'coin-hero-change ' + (ch >= 0 ? 'up' : 'down');
+      el.coinPriceSub.textContent = s.priceUsd ? fmtUsd(s.priceUsd) + ' USD' : '';
+      // 1 XRP = N $TOKEN in place of the old 24H badge (reported live
+      // 2026-09-28).
+      if (s.priceXrp > 0){
+        var perXrp = 1 / s.priceXrp;
+        el.coinChange.textContent = '1 XRP = ' + fmtExact(perXrp, perXrp >= 100 ? 0 : 2) + ' ' + meta.tokenLabel;
+        el.coinChange.className = 'coin-hero-change coin-hero-rate';
       }
       var links = [];
       (s.socials || []).forEach(function(w){
@@ -24160,11 +24174,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     var html = '';
     // Just the label and the number — no explanation line under each box
     // (reported live 2026-09-28).
-    html += stat('MARKET CAP', s.marketCapUsd ? fmtUsdShort(s.marketCapUsd) : '—');
-    html += stat('L!QU!D!TY', s.liquidityUsd ? fmtUsdShort(s.liquidityUsd) : '—');
-    html += stat('24H V0LUME', s.volume24hUsd != null ? fmtUsdShort(s.volume24hUsd) : '—');
+    // USD next to every dollar figure (reported live 2026-09-28).
+    function usd(v){ return fmtUsdShort(v) + '<span class="coin-usd">USD</span>'; }
+    html += stat('MARKET CAP', s.marketCapUsd ? usd(s.marketCapUsd) : '—');
+    html += stat('L!QU!D!TY', s.liquidityUsd ? usd(s.liquidityUsd) : '—');
+    html += stat('24H V0LUME', s.volume24hUsd != null ? usd(s.volume24hUsd) : '—');
     html += stat('PR!CE ATH', h && h.athXrp ? escapeHtml(fmtCoinPrice(h.athXrp.price)) : wait);
-    html += stat('MARKET CAP ATH', h && h.marketCapAthUsd ? fmtUsdShort(h.marketCapAthUsd) : wait);
+    html += stat('MARKET CAP ATH', h && h.marketCapAthUsd ? usd(h.marketCapAthUsd) : wait);
     html += stat('24H BUYS / SELLS', '<span class="up">' + (t.buys || 0) + '</span> / <span class="down">' + (t.sells || 0) + '</span>');
     html += stat('P00L', s.pool ? escapeHtml(compactPigeonsNumber(s.pool.token)) + ' + ' + escapeHtml(fmtXrp(Math.round(s.pool.xrp))) + ' XRP' : '—');
     html += stat('SUPPLY', s.supply ? escapeHtml(fmtExact(s.supply, 0)) : '—');
@@ -24283,8 +24299,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function fmtCoinChartValue(v, axis){
     if (coinChartMode === 'drops') return fmtDrops(v / DROPS_PER_XRP) + (axis ? '' : ' DR0PS');
-    if (coinChartMode === 'usd') return fmtUsd(v);
-    return fmtUsdShort(v) + (axis ? '' : ' MCAP');
+    if (coinChartMode === 'usd') return fmtUsd(v) + (axis ? '' : ' USD');
+    return fmtUsdShort(v) + (axis ? '' : ' USD MCAP');
   }
   function coinWindowPoints(range){
     var cfg = COIN_CHART_RANGES[range];
@@ -24364,7 +24380,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       '<div class="cc-tip" id="ccTip" style="display:none"></div>';
     var first = closes[0], lastV = closes[closes.length - 1];
     var chg = (lastV - first) / first * 100;
-    el.coinChartChange.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '% ' + coinChartRange;
+    el.coinChartChange.textContent = (chg >= 0 ? '+' : '') + (Math.abs(chg) >= 1000 ? fmtExact(chg, 0) : chg.toFixed(Math.abs(chg) >= 100 ? 1 : 2)) + '% ' + coinChartRange;
     el.coinChartChange.className = 'coin-chart-change ' + (chg >= 0 ? 'up' : 'down');
     var svg = el.coinChartPlot.querySelector('svg');
     var cross = svg.querySelector('#ccCross'), hdot = svg.querySelector('#ccHoverDot'), tip = el.coinChartPlot.querySelector('#ccTip');
