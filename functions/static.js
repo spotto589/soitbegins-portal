@@ -6603,6 +6603,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     vertical-align:middle;
   }
   .pigeons-bar-copy-btn:hover{ background:rgba(255,255,255,0.15); }
+  a.trustline-set-link{ text-decoration:none; }
+  .trustline-set-inline{ color:rgb(52,255,133); text-decoration:underline; text-underline-offset:2px; }
   /* LOGIN — green (the real, positive action here) instead of plain
      white like every other .bar-btn in this box. */
   #pigeonsLoginBtn{ color:var(--green); border-color:var(--green); text-shadow:0 0 6px var(--green-glow); }
@@ -11702,6 +11704,9 @@ const SWAP_HTML = `<!DOCTYPE html>
               <span class="pigeons-bar-sublabel pigeons-bar-text-lg">!SSUER :: <span id="ciIssuerAddr" data-full="rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf">rfQVV...QSf</span></span>
             </div>
             <button class="pigeons-bar-copy-btn" id="copyIssuerBtn" title="C0PY !SSUER ADDRESS"><span id="copyIssuerLabel">C0PY</span></button>
+            <!-- One-tap trustline (2026-09-28): /api/trustline makes the
+                 TrustSet sign request and opens Xaman. -->
+            <a class="pigeons-bar-copy-btn trustline-set-link" id="setTrustlineLink" href="/api/trustline?c=pigeons&amp;back=static" rel="nofollow" title="SET TRUSTL!NE !N XAMAN">SET</a>
           </div>
           <button class="pigeons-bar-help-box" id="onboardLink"><span class="pigeons-bar-help-mark">?</span> <span class="lbl-full">New to the XRPL, NFTs, memes? Click here.</span><span class="lbl-short">NEW HERE? START HERE</span></button>
         </div>
@@ -14913,7 +14918,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var el = {};
   ['searchInput','searchBtn','editionSelect','dbViewSelect','dbViewBtn','dbViewMenu','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','traitsFlyoutEyebrow','bottomControlsBar','bottomSortBtn','bottomTraitsBtn','backToTopBtn','bottomSatchelBtn','bottomSatchelCount','bottomMultiListBtn','bottomMultiListCount','bottomSweepBtn',
-   'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
+   'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','setTrustlineLink','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
    'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
@@ -19722,7 +19727,8 @@ const SWAP_HTML = `<!DOCTYPE html>
       // Redundant to spell out "TRUSTLINE SET" — owning pigeons or holding
       // a real $PIGEONS balance already proves that. Only worth surfacing
       // when it's NOT set, since that's the one case actually actionable.
-      el.pigeonsLoggedInTrustline.textContent = (line && line.hasTrustline === false) ? 'TRUSTL!NE N0T SET' : '';
+      el.pigeonsLoggedInTrustline.innerHTML = (line && line.hasTrustline === false)
+        ? 'TRUSTL!NE N0T SET · <a class="trustline-set-inline" href="' + escapeHtml(trustlineLinkFor(state.collection)) + '" rel="nofollow">SET !T N0W ↗</a>' : '';
     }).catch(function(){});
   }
   loadTrustlineLoginState();
@@ -21066,7 +21072,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   // mode 'offer' = the card's ADD T0 CART (not listed); otherwise BUY.
   function toggleCartItem(p, mode){
-    if (!MY_WALLET){ startAuthorize(); return; }
+    // Signed out is fine (2026-09-28): the satchel fills under the 'anon'
+    // key and moves into the wallet's own satchel after sign-in.
     if (cartRun) return; // not while SUBM!T ALL is running
     var list = getCart();
     var idx = list.findIndex(function(c){ return c.nftId === p.nftId; });
@@ -21204,7 +21211,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.cartSortBar.style.display = (buys && offers) ? '' : 'none';
     if (!running){
       el.cartBuyBtn.disabled = !rows.length;
-      el.cartBuyBtn.textContent = 'SUBM!T ALL S!GNATURES (' + rows.length + ')';
+      el.cartBuyBtn.textContent = (MY_WALLET ? 'SUBM!T ALL S!GNATURES' : 'S!GN !N T0 C0MPLETE S!GNATURES') + ' (' + rows.length + ')';
       el.cartClearBtn.style.display = rows.length ? '' : 'none';
       el.cartClearBtn.disabled = false;
     }
@@ -21253,6 +21260,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     return keys;
   }
   function renderCartBalances(){
+    el.cartBalances.style.display = MY_WALLET ? '' : 'none';
+    if (!MY_WALLET) return;
     function tile(label, value){ return '<div class="cx-bal"><span class="cx-bal-label">' + label + '</span><span class="cx-bal-value">' + value + '</span></div>'; }
     var html = tile('XRP BALANCE', cartBalances.xrp === null ? '…' : escapeHtml(fmtXrp(cartBalances.xrp)) + ' XRP');
     cartTokenCollections().forEach(function(k){
@@ -21276,13 +21285,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
   function openCart(){
-    if (!MY_WALLET){ startAuthorize(); return; }
     renderCart();
     loadCartBalances();
     el.cartModal.style.display = 'flex';
   }
   function openSweep(){
-    if (!MY_WALLET){ startAuthorize(); return; }
     var meta = COLLECTION_META[state.collection] || {};
     el.cartSweepTokenTab.textContent = meta.tokenLabel || '$T0KEN';
     el.cartSweepTokenTab.style.display = meta.xrpOnly ? 'none' : '';
@@ -21421,7 +21428,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (line){ line.className = 'cart-row-state ' + cls; line.textContent = text; }
   }
   function startCartBuy(){
-    if (!MY_WALLET){ startAuthorize(); return; }
+    if (!MY_WALLET){
+      // Reopen the satchel once the sign-in comes back (adoptAnonSatchel).
+      try { localStorage.setItem('scylla_cart_resume', '1'); } catch (e){}
+      closeCart();
+      startAuthorize();
+      return;
+    }
     var items = getCart();
     if (!items.length) return;
     // Every offer needs an amount first.
@@ -21601,6 +21614,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.cartPill.addEventListener('click', openCart);
   el.cartCloseBtn.addEventListener('click', closeCart);
   el.cartModal.addEventListener('click', function(e){ if (e.target === el.cartModal) closeCart(); });
+  // Just signed in: whatever went in the satchel while signed out moves
+  // into this wallet's own, and it reopens if S!GN !N T0 C0MPLETE sent
+  // them to sign in.
+  (function adoptAnonSatchel(){
+    if (!MY_WALLET) return;
+    var anon = [], resume = false;
+    try {
+      anon = JSON.parse(localStorage.getItem('scylla_cart:anon') || '[]');
+      resume = localStorage.getItem('scylla_cart_resume') === '1';
+      localStorage.removeItem('scylla_cart:anon');
+      localStorage.removeItem('scylla_cart_resume');
+    } catch (e){}
+    if (Array.isArray(anon) && anon.length){
+      var list = getCart();
+      var have = {};
+      list.forEach(function(c){ have[c.nftId] = true; });
+      anon.forEach(function(c){ if (c && c.nftId && !have[c.nftId] && list.length < CART_MAX) list.push(c); });
+      setCart(list);
+    }
+    if (resume && getCart().length) setTimeout(openCart, 0);
+  })();
   refreshCartBadges();
   // Back from Xaman's daily sign-in with ?satchel=<id>: put the saved
   // satchel back (merged with anything already here), then show it.
@@ -23473,11 +23507,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Called on every switchCollection so "phnix should be everywhere" stays
   // true no matter which collection you're on, and adding a future
   // collection only ever means one more COLLECTION_META entry.
+  function trustlineLinkFor(collectionKey){ return '/api/trustline?c=' + encodeURIComponent(collectionKey) + '&back=static'; }
   function updateTrustlineBannerChrome(collectionKey){
     var meta = COLLECTION_META[collectionKey];
     document.body.classList.toggle('collection-xrp-only', !!meta.xrpOnly);
     el.trustlineTitleLabel.textContent = meta.xrpOnly ? meta.label + ' :: TRADES !N XRP' : 'SET ' + meta.tokenLabel + ' TRUSTL!NE';
     el.pigeonsBarThumb.title = 'SWAP ' + meta.tokenLabel;
+    el.setTrustlineLink.style.display = meta.xrpOnly || !meta.tokenIssuer ? 'none' : '';
+    el.setTrustlineLink.href = trustlineLinkFor(collectionKey);
     var bannerIssuer = meta.tokenIssuer || meta.nftIssuer;
     if (bannerIssuer){
       el.ciIssuerAddr.setAttribute('data-full', bannerIssuer);
@@ -25215,10 +25252,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.salesModal.addEventListener('click', function(e){
     if (e.target === el.salesModal) el.salesModal.style.display = 'none';
   });
-  // Real link, destination doesn't exist yet — same "coming soon"
-  // pattern as the BURNT link, honest about what's actually built.
+  // The beginner guide (/help, functions/help.js).
   el.onboardLink.addEventListener('click', function(){
-    alert('0NB0ARD!NG SECT!0N C0M!NG S00N.');
+    window.location.href = '/help';
   });
 
   // ---- Sales history (real, collection-wide, infinite scroll) ----
