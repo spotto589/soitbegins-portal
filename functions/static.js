@@ -9707,6 +9707,26 @@ const SWAP_HTML = `<!DOCTYPE html>
   #coinModal .coin-social{ width:32px; height:32px; }
   #coinModal .coin-social svg{ width:15px; height:15px; }
   #coinModal .coin-modal-panel{ gap:0.75rem; }
+  /* Clean top (reported live 2026-09-28): no title row or USD price; a
+     big picture with name / drops price / 1 XRP rate / socials beside it,
+     the close button in the corner. */
+  #coinModal .coin-close{ position:absolute; top:0.9rem; right:0.9rem; transform:none; z-index:3; margin:0; }
+  #coinModal .coin-hero{ align-items:center; gap:1.1rem; padding:0.2rem 2.4rem 0.9rem 0; border-bottom:1px solid rgba(var(--collection-accent-rgb), 0.25); }
+  #coinModal .coin-hero-img{ width:112px; height:112px; border-width:2px; box-shadow:0 0 22px rgba(var(--collection-accent-rgb), 0.45); }
+  #coinModal .coin-hero-main{ gap:0.4rem; align-items:flex-start; }
+  #coinModal .coin-hero-title{ color:#fff; font-size:15px; font-weight:700; letter-spacing:0.14em; opacity:0.85; line-height:1.2; }
+  #coinModal .coin-hero-price{ font-size:30px; }
+  #coinModal .coin-hero-change{ align-self:flex-start; font-size:12px; }
+  #coinModal .coin-links{ margin-top:0.15rem; }
+  /* Four boxes to start, the rest behind M0RE. */
+  #coinModal .coin-stats{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+  #coinModal .coin-stat-extra{ display:none; }
+  #coinModal .coin-stats-open .coin-stat-extra{ display:block; }
+  #coinModal .coin-stat-2{ grid-column:span 2; }
+  .coin-stats-more{ grid-column:1 / -1; margin:0; padding:0.6em 0; background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:10px; color:#fff; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.12em; cursor:pointer; }
+  .coin-stats-more:hover{ border-color:var(--collection-accent); background:rgba(var(--collection-accent-rgb), 0.15); }
+  /* Just the pop-up: the top bar gets out of the way while it's open. */
+  body.coin-open #globalTopBar{ display:none !important; }
   /* DR0PS | USD | MCAP — same pill look as the range buttons. */
   .coin-chart-modes{ display:inline-flex; padding:3px; gap:2px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:999px; }
   .coin-chart-modes button{ border:none; border-radius:999px; background:none; color:#fff; font-family:inherit; font-size:12px; font-weight:700; letter-spacing:0.06em; padding:0.4em 0.9em; cursor:pointer; }
@@ -9865,8 +9885,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:600px){
     .coin-stats{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     .coin-chart-plot{ height:210px; }
-    .coin-hero-price{ font-size:21px; }
-    .coin-hero-img{ width:56px; height:56px; }
+    #coinModal .coin-hero-price{ font-size:24px; }
+    #coinModal .coin-hero-img{ width:92px; height:92px; }
+    #coinModal .coin-hero{ gap:0.9rem; padding-right:2.2rem; }
+    #coinModal .coin-stats{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     #coinModal .simple-picker-title{ font-size:19px; }
     #coinModal .coin-chart-modes button{ padding:0.4em 0.6em; font-size:11px; letter-spacing:0.04em; }
     #coinChart .coin-chart-bar{ column-gap:0.45rem; }
@@ -12034,21 +12056,16 @@ const SWAP_HTML = `<!DOCTYPE html>
          embed) + every number we have on it. -->
     <div id="coinModal" style="display:none;">
       <div class="pigeons-calc-panel coin-modal-panel">
-        <div class="simple-picker-header">
-          <span class="simple-picker-title" id="coinTitle">C0!N</span>
-          <button type="button" class="simple-picker-close" id="coinCloseBtn" title="CL0SE">&times;</button>
-        </div>
-        <!-- Compact top (reported live 2026-09-28: too much empty space):
-             small picture beside the price, drops + USD on one line, the
-             24h change next to it, socials underneath in the same block. -->
+        <button type="button" class="simple-picker-close coin-close" id="coinCloseBtn" title="CL0SE">&times;</button>
+        <!-- Clean top (reported live 2026-09-28): a big picture on the
+             left; the coin's name, its price in drops, what 1 XRP buys,
+             and the socials stacked beside it. No separate title row. -->
         <div class="coin-hero">
           <img class="coin-hero-img" id="coinImg" src="" alt="">
           <div class="coin-hero-main">
-            <div class="coin-hero-line">
-              <span class="coin-hero-price" id="coinPrice">…</span>
-              <span class="coin-hero-sub" id="coinPriceSub"></span>
-              <span class="coin-hero-change" id="coinChange"></span>
-            </div>
+            <span class="coin-hero-title" id="coinTitle">C0!N</span>
+            <span class="coin-hero-price" id="coinPrice">…</span>
+            <span class="coin-hero-change" id="coinChange"></span>
             <div class="coin-links" id="coinLinks"></div>
           </div>
         </div>
@@ -14896,7 +14913,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'profileTabNotifBadge','profileTabPanelNotifications','notifChips','notifSortBtn','notifReadAllBtn','notifSettingsBtn','notifClearBtn','notifList','profileNotifBack',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
    'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartLabel','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','sweepSub','sweepAvail','sweepN','sweepMinus','sweepPlus','sweepMax',
-   'coinModal','coinChartModes','coinCloseBtn','coinTitle','coinImg','coinPrice','coinPriceSub','coinChange','coinChart','coinChartRanges','coinChartChange','coinChartPlot','coinStats','coinLinks','coinSwapBtn',
+   'coinModal','coinChartModes','coinCloseBtn','coinTitle','coinImg','coinPrice','coinChange','coinChart','coinChartRanges','coinChartChange','coinChartPlot','coinStats','coinLinks','coinSwapBtn',
    'coinHolders','coinHoldersBtn','coinHoldersBtnLabel','coinSwapBtnLabel','extBuyModal','extBuyCloseBtn','extBuyNft','extBuyText','extBuyFees','extBuyTip','extBuyOfferBtn','extBuyGoBtn',
    'topHoldersModal','topHoldersCloseBtn','topHoldersList','openTopHoldersBtn','thFullListWrap','scyllaSystemHeaderTitle',
    'scyllaHeaderAccountActions','scyllaChangeAccountBtn','scyllaSignOutBtn',
@@ -24095,7 +24112,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Every number on this page comes from our own server: price, pool and
   // exact supply straight off the XRPL (coinStats), price history rebuilt
   // from the AMM's own transactions (coinHistory).
-  var coinStatsData = null, coinHistData = null, coinOpenKey = null;
+  var coinStatsData = null, coinHistData = null, coinOpenKey = null, coinStatsExpanded = false;
   function fmtExact(n, dp){ return Number(n).toLocaleString(undefined, { maximumFractionDigits: dp }); }
   function coinDate(t){ return new Date(t * 1000).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }); }
   function openCoinPage(){
@@ -24108,7 +24125,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.coinTitle.textContent = meta.tokenLabel + ' C0!N';
     el.coinImg.src = meta.thumb || '';
     el.coinPrice.textContent = '…';
-    el.coinPriceSub.textContent = '';
     el.coinChange.textContent = '';
     el.coinStats.innerHTML = '';
     el.coinLinks.innerHTML = '';
@@ -24118,13 +24134,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.coinChartPlot.innerHTML = '<div class="coin-chart-msg">L0AD!NG CHART...</div>';
     el.coinChartChange.textContent = '';
     el.coinModal.style.display = 'flex';
+    coinStatsExpanded = false;
+    document.body.classList.add('coin-open');
     api({ coinStats: 1 }).then(function(s){
       if (coinOpenKey !== key || el.coinModal.style.display !== 'flex') return;
       if (!s || s.error) throw new Error('stats');
       coinStatsData = s;
       if (s.imageUrl) el.coinImg.src = s.imageUrl;
       el.coinPrice.textContent = s.priceXrp ? fmtCoinPrice(s.priceXrp) : '—';
-      el.coinPriceSub.textContent = s.priceUsd ? fmtUsd(s.priceUsd) + ' USD' : '';
       // 1 XRP = N $TOKEN in place of the old 24H badge (reported live
       // 2026-09-28).
       if (s.priceXrp > 0){
@@ -24180,11 +24197,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     html += stat('L!QU!D!TY', s.liquidityUsd ? usd(s.liquidityUsd) : '—');
     html += stat('24H V0LUME', s.volume24hUsd != null ? usd(s.volume24hUsd) : '—');
     html += stat('PR!CE ATH', h && h.athXrp ? escapeHtml(fmtCoinPrice(h.athXrp.price)) : wait);
-    html += stat('MARKET CAP ATH', h && h.marketCapAthUsd ? usd(h.marketCapAthUsd) : wait);
-    html += stat('24H BUYS / SELLS', '<span class="up">' + (t.buys || 0) + '</span> / <span class="down">' + (t.sells || 0) + '</span>');
-    html += stat('P00L', s.pool ? escapeHtml(compactPigeonsNumber(s.pool.token)) + ' + ' + escapeHtml(fmtXrp(Math.round(s.pool.xrp))) + ' XRP' : '—');
-    html += stat('SUPPLY', s.supply ? escapeHtml(fmtExact(s.supply, 0)) : '—');
-    html += stat('!SSUER', '<a class="coin-stat-link" href="https://bithomp.com/explorer/' + escapeHtml(meta.tokenIssuer || '') + '" target="_blank" rel="noopener">' + escapeHtml(shortAddr(meta.tokenIssuer || '')) + ' ↗</a>');
+    // Only those four to start; the rest behind M0RE (reported live
+    // 2026-09-28).
+    function extra(cls, label, value){ return stat(label, value).replace('class="coin-stat"', 'class="coin-stat coin-stat-extra' + cls + '"'); }
+    html += extra('', 'MARKET CAP ATH', h && h.marketCapAthUsd ? usd(h.marketCapAthUsd) : wait);
+    html += extra('', '24H BUYS / SELLS', '<span class="up">' + (t.buys || 0) + '</span> / <span class="down">' + (t.sells || 0) + '</span>');
+    html += extra(' coin-stat-2', 'P00L', s.pool ? escapeHtml(compactPigeonsNumber(s.pool.token)) + ' + ' + escapeHtml(fmtXrp(Math.round(s.pool.xrp))) + ' XRP' : '—');
+    html += extra(' coin-stat-2', 'SUPPLY', s.supply ? escapeHtml(fmtExact(s.supply, 0)) : '—');
+    html += extra(' coin-stat-2', '!SSUER', '<a class="coin-stat-link" href="https://bithomp.com/explorer/' + escapeHtml(meta.tokenIssuer || '') + '" target="_blank" rel="noopener">' + escapeHtml(shortAddr(meta.tokenIssuer || '')) + ' ↗</a>');
     // Where the numbers came from, and whether the chart site agrees.
     var agree = s.priceDiffPct == null ? '' : s.priceDiffPct <= 2
       ? ' · MATCHES THE CHART S!TES (' + s.priceDiffPct.toFixed(1) + '%)'
@@ -24192,8 +24212,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     var src = s.priceSource === 'amm' ? '✓ PR!CE, P00L + SUPPLY READ FR0M THE XRPL' : '✓ SUPPLY READ FR0M THE XRPL';
     var usdSrc = s.xrpUsd ? ' · XRP = $' + Number(s.xrpUsd).toFixed(4) + (s.xrpUsdSource === 'bitstamp' ? ' (B!TSTAMP)' : '') : '';
     var histSrc = h ? (h.source === 'ledger' ? ' · H!ST0RY: EVERY P00L TRADE S!NCE ' + coinDate(h.firstTs).toUpperCase() : ' · H!ST0RY S!NCE ' + coinDate(h.firstTs).toUpperCase() + (h.building ? ' (FULL LEDGER H!ST0RY ST!LL BU!LD!NG)' : '')) : '';
-    html += '<div class="coin-verify' + (s.priceDiffPct > 2 ? ' warn' : '') + '">' + escapeHtml(src + agree + usdSrc + histSrc) + '</div>';
+    html += '<div class="coin-verify coin-stat-extra' + (s.priceDiffPct > 2 ? ' warn' : '') + '">' + escapeHtml(src + agree + usdSrc + histSrc) + '</div>';
+    html += '<button type="button" class="coin-stats-more" id="coinStatsMoreBtn" aria-expanded="' + coinStatsExpanded + '">' + (coinStatsExpanded ? 'LESS ▴' : 'M0RE ▾') + '</button>';
     el.coinStats.innerHTML = html;
+    el.coinStats.classList.toggle('coin-stats-open', coinStatsExpanded);
   }
   // T0P 10 WALLETS — opens over the chart + numbers (reported live), the
   // pool shown as the LP with a drop and a B!TH0MP link.
@@ -24252,6 +24274,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function closeCoinPage(){
     exitCoinChartFullscreen();
     el.coinModal.style.display = 'none';
+    document.body.classList.remove('coin-open');
     coinOpenKey = null;
   }
   // ---- Price chart: one line (price in XRP) over the picked range, soft
@@ -24482,6 +24505,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     openCoinPage();
   });
   el.coinCloseBtn.addEventListener('click', closeCoinPage);
+  el.coinStats.addEventListener('click', function(e){
+    if (!e.target.closest('#coinStatsMoreBtn')) return;
+    coinStatsExpanded = !coinStatsExpanded;
+    renderCoinStats();
+  });
   el.coinModal.addEventListener('click', function(e){ if (e.target === el.coinModal) closeCoinPage(); });
   el.coinSwapBtn.addEventListener('click', function(){ closeCoinPage(); openBuySwapPanel(state.collection); });
 
