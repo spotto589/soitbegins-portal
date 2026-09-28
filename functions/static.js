@@ -11047,8 +11047,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     body.has-bottom-bar #screenBrowse{ padding-bottom:5.5rem; }
 
     /* P!GE0N #N moves left when the watchlist star is on the card. */
-    #resultsArea .result-num:has(.watchlist-toggle){ text-align:left; font-size:17px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-left:0.55rem !important; padding-right:1.9rem !important; }
-    #resultsArea .result-num .watchlist-toggle{ right:0.2rem !important; }
+    /* P!GE0N #N centred like the rest of the card (reported live
+       2026-09-28 as looking off pushed left): equal room both sides so
+       the ☆ never shoves it over, and the text steps down on narrow
+       phones so a 4-digit number always fits whole. */
+    #resultsArea .result-num:has(.watchlist-toggle){ text-align:center; font-size:clamp(12px, 3.6vw, 17px) !important; letter-spacing:0.03em; white-space:nowrap; overflow:hidden; text-overflow:clip; padding-left:1.55rem !important; padding-right:1.55rem !important; }
+    #resultsArea .result-num .watchlist-toggle{ right:0.15rem !important; font-size:18px !important; }
+    /* RAR!TY N/3015 on one line on every card, so side-by-side cards line up. */
+    #resultsArea .result-rarity-line{ white-space:nowrap; font-size:clamp(13px, 4.4vw, 18px) !important; }
 
     /* SWAP box — always fits the screen: tighter spacing, a smaller coin
        picture, and it scrolls inside itself as a last resort. */
