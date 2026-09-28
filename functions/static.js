@@ -9717,7 +9717,12 @@ const SWAP_HTML = `<!DOCTYPE html>
   #coinModal .coin-hero-title{ color:#fff; font-size:15px; font-weight:700; letter-spacing:0.14em; opacity:0.85; line-height:1.2; }
   #coinModal .coin-hero-price{ font-size:30px; }
   #coinModal .coin-hero-change{ align-self:flex-start; font-size:12px; }
-  #coinModal .coin-links{ margin-top:0.15rem; }
+  #coinModal .coin-links{ margin-top:0; }
+  #coinModal .coin-hero-row{ display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem; margin-top:0.15rem; }
+  #coinModal .coin-holders-btn{ display:inline-flex; align-items:center; gap:0.4em; height:32px; padding:0 0.85em; background:#000; color:#fff; border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:999px; box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); font-family:inherit; font-size:11px; font-weight:700; letter-spacing:0.08em; white-space:nowrap; cursor:pointer; }
+  #coinModal .coin-holders-btn .coin-action-ico{ font-size:14px; }
+  #coinModal .coin-holders-btn:hover{ border-color:var(--collection-accent); box-shadow:0 0 16px rgba(var(--collection-accent-rgb), 0.55); }
+  #coinModal .cpop-actions{ grid-template-columns:1fr !important; }
   /* Four boxes to start, the rest behind M0RE. */
   #coinModal .coin-stats{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
   #coinModal .coin-stat-extra{ display:none; }
@@ -9887,7 +9892,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     .coin-chart-plot{ height:210px; }
     #coinModal .coin-hero-price{ font-size:24px; }
     #coinModal .coin-hero-img{ width:92px; height:92px; }
-    #coinModal .coin-hero{ gap:0.9rem; padding-right:2.2rem; }
+    #coinModal .coin-hero{ gap:0.9rem; padding-right:0; }
+    #coinModal .coin-hero-title{ padding-right:2.4rem; }
+    /* Socials + T0P 10 WALLETS on one line beside the picture. */
+    #coinModal .coin-hero-row{ gap:0.3rem; }
+    #coinModal .coin-links{ gap:0.3rem; }
+    #coinModal .coin-social{ width:30px; height:30px; }
+    #coinModal .coin-social svg{ width:14px; height:14px; }
+    #coinModal .coin-holders-btn{ height:30px; padding:0 0.6em; font-size:10px; letter-spacing:0.04em; gap:0.3em; }
+    #coinModal .coin-holders-btn .coin-action-ico{ font-size:12px; }
+    /* Shorter words on phones so it fits beside the socials. */
+    #coinModal #coinHoldersBtnLabel{ display:none; }
+    #coinModal .coin-holders-btn::after{ content:'T0P 10'; }
+    #coinModal .coin-holders-btn.is-open::after{ content:'H!DE'; }
     #coinModal .coin-stats{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     #coinModal .simple-picker-title{ font-size:19px; }
     #coinModal .coin-chart-modes button{ padding:0.4em 0.6em; font-size:11px; letter-spacing:0.04em; }
@@ -12066,7 +12083,12 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="coin-hero-title" id="coinTitle">C0!N</span>
             <span class="coin-hero-price" id="coinPrice">…</span>
             <span class="coin-hero-change" id="coinChange"></span>
-            <div class="coin-links" id="coinLinks"></div>
+            <!-- T0P 10 WALLETS sits to the right of the socials (reported
+                 live 2026-09-28), leaving SWAP alone at the bottom. -->
+            <div class="coin-hero-row">
+              <div class="coin-links" id="coinLinks"></div>
+              <button type="button" class="coin-holders-btn" id="coinHoldersBtn"><span class="coin-action-ico">&#128081;</span><span id="coinHoldersBtnLabel">T0P 10 WALLETS</span></button>
+            </div>
           </div>
         </div>
         <!-- Our own chart (price history from GeckoTerminal's public API) —
@@ -12104,7 +12126,6 @@ const SWAP_HTML = `<!DOCTYPE html>
         <!-- T0P 10 WALLETS — opens in place; the pool shows as the LP (💧). -->
         <div class="coin-holders" id="coinHolders" style="display:none;"></div>
         <div class="cpop-actions">
-          <button type="button" class="coin-action coin-action-ghost" id="coinHoldersBtn"><span class="coin-action-ico">&#128081;</span><span id="coinHoldersBtnLabel">T0P 10 WALLETS</span></button>
           <button type="button" class="coin-action coin-action-main" id="coinSwapBtn"><span class="coin-action-ico">&#8644;</span><span id="coinSwapBtnLabel">SWAP</span></button>
         </div>
       </div>
@@ -24222,16 +24243,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   function closeCoinHolders(){
     el.coinHolders.style.display = 'none';
     el.coinHoldersBtnLabel.textContent = 'T0P 10 WALLETS';
+    el.coinHoldersBtn.classList.remove('is-open');
   }
   function toggleCoinHolders(){
     if (el.coinHolders.style.display !== 'none'){ closeCoinHolders(); return; }
     // Cover from the chart down to just above the buttons.
     var top = el.coinChart.offsetTop;
-    var bottom = el.coinHoldersBtn.parentNode.offsetTop - 10;
+    var bottom = el.coinSwapBtn.parentNode.offsetTop - 10;
     el.coinHolders.style.top = top + 'px';
     el.coinHolders.style.height = Math.max(240, bottom - top) + 'px';
     el.coinHolders.style.display = '';
     el.coinHoldersBtnLabel.textContent = 'H!DE WALLETS';
+    el.coinHoldersBtn.classList.add('is-open');
     var key = state.collection;
     var label = COLLECTION_META[key].tokenLabel;
     el.coinHolders.innerHTML = '<div class="coin-chart-msg coin-holders-msg">L0AD!NG WALLETS...</div>';
