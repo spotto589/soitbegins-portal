@@ -473,7 +473,7 @@ export async function onRequestGet(context) {
   // edge-cached so every visitor shares one copy (Cache API, not KV).
   if (params.get('coinStats') === '1' || params.get('coinHistory') === '1') {
     const isStats = params.get('coinStats') === '1';
-    const cacheKey = new Request('https://soitbegins.xyz/__cache/coin-' + (isStats ? 'stats' : 'history') + '/v1/' + tradeKey);
+    const cacheKey = new Request('https://soitbegins.xyz/__cache/coin-' + (isStats ? 'stats' : 'history') + '/v2/' + tradeKey);
     const cache = typeof caches !== 'undefined' ? caches.default : null;
     const hit = cache ? await cache.match(cacheKey) : null;
     if (hit) return hit;
@@ -500,7 +500,11 @@ export async function onRequestGet(context) {
         if (closes[c[0]]) lastClose = closes[c[0]];
         if (close && (!athUsd || c[2] * close > athUsd.price)) athUsd = { price: c[2] * close, t: c[0], xrpUsd: close };
       }
-      body = Object.assign(hist, { athXrp, athUsd, supply, marketCapAthUsd: athUsd && supply ? athUsd.price * supply : null, asOf: Date.now() });
+      // Daily XRP/USD closes over the chart's span, so the C0!N chart can
+      // show USD and market cap with each day's real rate.
+      const fromDay = (hist.firstTs || 0) - 86400;
+      const xrpUsd = Object.keys(closes).map(Number).filter(t => t >= fromDay).sort((a, b) => a - b).map(t => [t, closes[t]]);
+      body = Object.assign(hist, { athXrp, athUsd, supply, xrpUsd, marketCapAthUsd: athUsd && supply ? athUsd.price * supply : null, asOf: Date.now() });
     }
     // A history that's still building is cached only briefly, so the next
     // visit runs the next build step.
