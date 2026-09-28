@@ -9568,6 +9568,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   #amountEntryModal.styled .transfer-wallet-input{ order:4; width:100%; box-sizing:border-box; font-size:24px; padding:0.7em 0.8em; text-align:center; border:1px solid rgba(var(--collection-accent-rgb), 0.45); }
   #amountEntryModal.styled .transfer-wallet-input{ font-size:18px; }
   #amountEntryModal.styled .list-duration-row{ order:5; margin:0; }
+  /* L!ST / 0FFER time choice: one joined bar, same as the cart's and the
+     NFT page's duration bars (reported live 2026-09-28). */
+  #amountEntryModal.styled .list-duration-row{ display:flex; gap:2px; padding:3px; border:1px solid rgba(var(--collection-accent-rgb), 0.45); border-radius:12px; background:#000; box-sizing:border-box; }
+  #amountEntryModal.styled .list-duration-row .list-duration-btn{ flex:1 1 0; min-width:0; margin:0; border:none !important; border-radius:9px !important; background:none !important; box-shadow:none !important; text-shadow:none; color:#fff !important; font-size:14px; font-weight:700; padding:0.6em 0; }
+  #amountEntryModal.styled .list-duration-row .list-duration-btn.active{ background:rgba(var(--collection-accent-rgb), 0.9) !important; color:#fff !important; }
+  #amountEntryModal.styled .list-duration-row .list-duration-forever{ font-family:"Segoe UI Symbol", "Arial", sans-serif !important; font-size:24px; font-weight:400; line-height:1; padding:0.1em 0; }
+  @media (max-width:600px){
+    #amountEntryModal.styled .list-duration-row .list-duration-btn{ font-size:11px; letter-spacing:0; padding:0.65em 0; }
+    #amountEntryModal.styled .list-duration-row .list-duration-forever{ font-size:22px; padding:0.1em 0; }
+  }
+  /* Just the pop-up: the top bar gets out of the way while it's open. */
+  body.amount-entry-open #globalTopBar{ display:none !important; }
   #amountEntryModal.styled #amountEntryOfferBtn,
   #amountEntryModal.styled #amountEntryListBtn,
   #amountEntryModal.styled #amountEntryTransferBtn{ order:6; width:100%; margin:0; background:var(--green); border:1px solid var(--green); color:#000; font-size:18px; font-weight:700; letter-spacing:0.05em; padding:0.9em; border-radius:var(--radius); }
@@ -11266,6 +11278,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     #traitsFlyout.flyout-popup:not(.flyout-drilled) #traitsFlyoutCats{ flex:1 1 auto; min-height:0; height:auto; overflow-y:auto; gap:0.45rem; }
     #traitsFlyout.flyout-popup:not(.flyout-drilled) #traitsFlyoutCats .traits-flyout-cat{ flex:1 1 0 !important; min-height:38px; max-height:54px; display:flex; align-items:center; justify-content:center; margin:0 !important; padding:0 1em !important; box-sizing:border-box; }
     #traitsFlyout.traits-flyout.flyout-popup.flyout-drilled .flyout-back-btn{ margin-left:-1rem !important; margin-right:-1rem !important; width:calc(100% + 2rem) !important; top:-1.6rem; margin-top:-1.6rem !important; }
+    /* Inside a category (or searching): every list is the same box size,
+       whatever's in it, so the pop-up doesn't jump size from one category
+       to the next (reported live 2026-09-28). The CATEG0R!ES step above
+       keeps its own bigger size; the list scrolls inside this box. */
+    #traitsFlyout.traits-flyout.flyout-popup.flyout-drilled{ height:min(70vh, calc(100vh - var(--top-bar-h, 40px) - 1.5rem)) !important; height:min(70dvh, calc(100dvh - var(--top-bar-h, 40px) - 1.5rem)) !important; max-height:none !important; overflow-y:auto !important; box-sizing:border-box; }
 
     /* Bottom S0RT BY / 🎒 ▲ 🧹 / F!LTER BY TRA!TS bar — bigger on phones. */
     .bottom-controls-bar{ padding-bottom:env(safe-area-inset-bottom); }
@@ -11676,7 +11693,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
               <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">L0G!N T0 V!EW BALANCE</button>
             </div>
-            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;"><span class="lbl-full">SWAP $P!GE0NS</span><span class="lbl-short" aria-hidden="true">&#128260;</span></button>
+            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;"><span class="lbl-full">SWAP $P!GE0NS</span><span class="lbl-short" aria-hidden="true">&#8645;</span></button>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
             <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#127890; <span id="openCartLabel">SATCHEL</span> <span id="openCartCount"></span></button>
           </div>
@@ -17296,6 +17313,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       }
     }
     el.amountEntryModal.style.display = 'flex';
+    document.body.classList.add('amount-entry-open');
     // Phones: just the pop-up, no keyboard jumping up until you tap the
     // box yourself (reported live 2026-09-27).
     if (!isTouchPhone()) (mode === 'list' ? el.amountEntryListInput : mode === 'offer' ? el.amountEntryOfferInput : el.amountEntryTransferInput).focus();
@@ -17303,6 +17321,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function isTouchPhone(){ return window.matchMedia && window.matchMedia('(max-width: 760px), (hover: none) and (pointer: coarse)').matches; }
   function closeAmountEntryModal(){
     el.amountEntryModal.style.display = 'none';
+    document.body.classList.remove('amount-entry-open');
     amountEntryPigeon = null;
     dualListing = null;
   }
@@ -23417,7 +23436,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.ciIssuerAddr.setAttribute('data-full', '');
       el.ciIssuerAddr.textContent = 'N/A';
     }
-    el.pigeonsBalanceBuyBtn.innerHTML = '<span class="lbl-full">SWAP ' + escapeHtml(meta.tokenLabel) + '</span><span class="lbl-short" aria-hidden="true">&#128260;</span>';
+    el.pigeonsBalanceBuyBtn.innerHTML = '<span class="lbl-full">SWAP ' + escapeHtml(meta.tokenLabel) + '</span><span class="lbl-short" aria-hidden="true">&#8645;</span>';
     el.pigeonsCalcBuyBtn.textContent = 'SWAP ' + meta.tokenLabel;
     el.pigeonsCalcPigeonsUnit.textContent = meta.tokenLabel;
     el.salesCurrencyPigeonsBtn.textContent = meta.tokenLabel;
