@@ -10997,6 +10997,11 @@ const SWAP_HTML = `<!DOCTYPE html>
      later same-specificity base rules on source order (see the handoff's
      cascade gotcha), so these land last. ---- */
 
+  /* SEARCH & F!LTERS fold-away button — phones only (see the phone block). */
+  .db-tools-toggle{ display:none; }
+  /* SATCHEL (3) on desktop; phones show the number as a badge instead. */
+  #openCartCount:not(:empty)::before{ content:'('; }
+  #openCartCount:not(:empty)::after{ content:')'; }
   /* Short button labels — the full one everywhere but phones. */
   .lbl-short{ display:none; }
 
@@ -11142,26 +11147,29 @@ const SWAP_HTML = `<!DOCTYPE html>
      all one size, and SALES H!ST0RY / T0P 123 H0LDERS redesigned for
      phones. Last in the stylesheet so it wins. ---- */
   @media (max-width:700px){
-    /* Banner: coin picture + BALANCE on top, then 🔄 SWAP | 🎒 SATCHEL as
-       a full-width row the same size as 🪙 C0!N / 🖼️ MY NFTS / ⭐ WATCHL!ST
-       and 🧮 CALC / 🏆 H0LDERS / 📜 SALES below it. The info box's
-       children join the banner's own grid (display:contents) so the two
-       buttons can span the full width instead of sitting beside the coin. */
-    #pigeonsMergedPanel .pigeons-bar-balance{ display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)); grid-template-rows:auto auto; column-gap:0.4rem; row-gap:0.4rem; align-items:center !important; }
+    /* Banner: coin picture | BALANCE | 🔄 | 🎒 on one row (reported live
+       2026-09-28: SWAP and SATCHEL as big emoji buttons right of the
+       balance). The info box's children join the banner's own grid
+       (display:contents) so the buttons can sit in their own columns. */
+    #pigeonsMergedPanel .pigeons-bar-balance{ display:grid !important; grid-template-columns:64px minmax(0, 1fr) 56px 56px; grid-template-rows:auto auto; column-gap:0.55rem; row-gap:0.2rem; align-items:center !important; }
     #pigeonsMergedPanel .pigeons-bar-balance-info{ display:contents !important; }
     #pigeonsMergedPanel .pigeons-bar-thumb-wrap{ grid-column:1; grid-row:1 / span 2; justify-self:start; align-self:center; }
     #pigeonsMergedPanel .pigeons-bar-thumb-wrap .pigeons-bar-thumb{ width:64px !important; height:64px !important; flex:0 0 64px !important; }
     #pigeonsMergedPanel .bar-bell, #pigeonsMergedPanel #openNotifyBtn.bar-bell{ width:24px; height:24px; font-size:11px; top:-6px; right:-6px; }
-    #pigeonsMergedPanel .pigeons-bar-balance-info > :is(.pigeons-bar-balance-label, .pigeons-bar-balance-value, .pigeons-bar-balance-login){ grid-column:1 / -1 !important; padding-left:calc(64px + 0.8rem); box-sizing:border-box; min-width:0; }
+    #pigeonsMergedPanel .pigeons-bar-balance-info > :is(.pigeons-bar-balance-label, .pigeons-bar-balance-value, .pigeons-bar-balance-login){ grid-column:2 !important; padding-left:0; box-sizing:border-box; min-width:0; }
     #pigeonsMergedPanel .pigeons-bar-balance-label{ grid-row:1; align-self:end; }
     #pigeonsMergedPanel :is(.pigeons-bar-balance-value, .pigeons-bar-balance-login){ grid-row:2; align-self:start; }
-    #pigeonsMergedPanel .pigeons-bar-balance .pigeons-bar-balance-info .pigeons-bar-balance-buy{ grid-row:3; }
-    #pigeonsMergedPanel #pigeonsBalanceBuyBtn{ grid-column:1; }
-    #pigeonsMergedPanel #openCartBtn{ grid-column:2; }
-    #pigeonsMergedPanel #pigeonsBalanceBuyBtn[style*="none"] + #openCartBtn{ grid-column:1 / -1; }
+    #pigeonsMergedPanel .pigeons-bar-balance-login .bar-btn{ white-space:normal !important; font-size:11px !important; line-height:1.2; padding:0.45em 0.4em !important; }
+    #pigeonsMergedPanel :is(#pigeonsBalanceBuyBtn, #openCartBtn){ grid-row:1 / span 2; align-self:center; }
+    #pigeonsMergedPanel #pigeonsBalanceBuyBtn{ grid-column:3; }
+    #pigeonsMergedPanel #openCartBtn, #pigeonsMergedPanel #pigeonsBalanceBuyBtn[style*="none"] + #openCartBtn{ grid-column:4 !important; }
     /* Same box as the rows below it: 38px tall, 12px text, green edge. */
     #pigeonsMergedPanel :is(#pigeonsBalanceBuyBtn, #openCartBtn, #pigeonsBarLoggedIn .pigeons-bar-balance-buy, .pigeons-calc-toggle-btn){ height:38px !important; min-height:0 !important; margin:0 !important; padding:0 0.3em !important; font-size:12px !important; letter-spacing:0.08em; gap:0.3em; display:flex !important; align-items:center; justify-content:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-sizing:border-box; }
     #pigeonsMergedPanel #pigeonsBalanceBuyBtn[style*="none"], #pigeonsMergedPanel #pigeonsBarDexBtn[style*="none"]{ display:none !important; }
+    /* 🔄 / 🎒: big square emoji buttons (after the 38px rule so they win). */
+    #pigeonsMergedPanel .pigeons-bar-balance :is(#pigeonsBalanceBuyBtn, #openCartBtn){ position:relative; width:56px !important; height:56px !important; padding:0 !important; font-size:28px !important; line-height:1; letter-spacing:0; border-radius:14px; overflow:visible; }
+    #pigeonsMergedPanel #openCartLabel{ display:none; }
+    #pigeonsMergedPanel #openCartCount:not(:empty){ position:absolute; top:-7px; right:-7px; min-width:20px; height:20px; padding:0 5px; box-sizing:border-box; border-radius:10px; background:var(--green); color:#000; font-size:11px; font-weight:700; line-height:20px; text-align:center; text-shadow:none; }
     #pigeonsMergedPanel #pigeonsBarLoggedIn .pigeons-bar-identity-actions{ display:grid !important; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); }
 
     /* SALES H!ST0RY + T0P 123 H0LDERS — a sheet that fills the phone
@@ -11220,6 +11228,31 @@ const SWAP_HTML = `<!DOCTYPE html>
     #topHoldersModal .th-count-amt, #topHoldersModal .th-count-pct{ min-width:0 !important; text-align:right; }
     #topHoldersModal .th-count-amt{ font-size:13px; }
     #topHoldersModal .th-count-pct{ font-size:11px; opacity:0.85; }
+    #openCartCount:not(:empty)::before, #openCartCount:not(:empty)::after{ content:none; }
+
+    /* Trustline banner: clear of the fixed top bar, so its top border
+       shows (it started 2px under the bar). */
+    #pigeonsMergedPanel{ margin-top:calc(var(--top-bar-h, 36px) - 33px + 0.5rem) !important; }
+
+    /* S0RT BY / F!LTER BY TRA!TS: each box fills its half and the words
+       fit inside the border (F!LTER BY TRA!TS ran past it). */
+    #dbControlsSticky .db-config-traits-section{ width:100% !important; }
+    #dbControlsSticky :is(#sortDropWrap, #traitsHoverWrap){ width:100% !important; }
+    #dbControlsSticky :is(#sortDropLabel, #traitsHoverLabel){ width:100% !important; white-space:normal !important; text-align:center; line-height:1.2; font-size:12px !important; letter-spacing:0.06em !important; padding:0 0.35rem !important; }
+
+    /* SEARCH & F!LTERS — one clear fold-away button, closed by default. */
+    .db-tools-toggle{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; width:100%; box-sizing:border-box; margin:0 0 0.8rem; padding:0.85rem 1rem; background:rgba(0,0,0,0.45); border:1px solid var(--cyan-dim, rgba(0,229,255,0.5)); border-radius:var(--radius); color:var(--cyan); font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:0.1em; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .db-tools-toggle-arrow{ font-size:18px; line-height:1; transition:transform 0.2s ease; }
+    #resultsBlock.db-tools-open .db-tools-toggle{ background:var(--cyan-faint); }
+    #resultsBlock.db-tools-open .db-tools-toggle-arrow{ transform:rotate(180deg); }
+    #resultsBlock:not(.db-tools-open) > :is(.results-header-row, #dbControlsSticky, .results-reset-row){ display:none !important; }
+
+    /* NFT page: a normal page on phones, not a fixed layer that scrolls
+       inside itself (iPhone Safari cut the bottom of it off). DATABASE
+       leaves the layout while it's open, same as SELECT A DATABASE. */
+    body.nft-detail-open{ overflow:visible !important; }
+    body.nft-detail-open .page > *:not(#screenDetail):not(#notifyToasts):not([id$="Modal"]){ display:none !important; }
+    body.nft-detail-open #screenDetail{ position:relative !important; top:auto !important; left:auto !important; right:auto !important; bottom:auto !important; overflow:visible !important; height:auto !important; min-height:calc(100vh - var(--top-bar-h, 36px)); min-height:calc(100dvh - var(--top-bar-h, 36px)); margin:calc(var(--top-bar-h, 36px) - 33px) 0 0 !important; padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px)) !important; box-sizing:border-box; }
   }
 </style>
 </head>
@@ -11420,7 +11453,7 @@ const SWAP_HTML = `<!DOCTYPE html>
             <div class="pigeons-bar-balance-login" id="pigeonsBalanceLoginWrap">
               <button class="bar-btn ci-copy-btn" id="pigeonsLoginBtn">L0G!N T0 V!EW BALANCE</button>
             </div>
-            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;"><span class="lbl-full">SWAP $P!GE0NS</span><span class="lbl-short">&#128260; SWAP</span></button>
+            <button class="pigeons-bar-balance-buy" id="pigeonsBalanceBuyBtn" style="display:none;"><span class="lbl-full">SWAP $P!GE0NS</span><span class="lbl-short" aria-hidden="true">&#128260;</span></button>
             <!-- Under BUY $P!GE0NS (reported live 2026-09-25). -->
             <button type="button" class="pigeons-bar-balance-buy pigeons-bar-notify-btn" id="openCartBtn">&#127890; <span id="openCartLabel">SATCHEL</span> <span id="openCartCount"></span></button>
           </div>
@@ -12801,6 +12834,15 @@ const SWAP_HTML = `<!DOCTYPE html>
              the coin data itself is always live). -->
         <div class="wallet-scope-coins" id="walletScopeCoins" style="display:none;"></div>
         <div class="results-block" id="resultsBlock">
+          <!-- Phones only (reported live 2026-09-28): SEARCH / ED!T!0N /
+               V!EW / S0RT BY / F!LTER BY TRA!TS fold away behind this one
+               button, closed by default. The S0RT/TRA!TS popups still open
+               from the bottom bar while it's closed (they move themselves
+               to <body> when opened). -->
+          <button type="button" class="db-tools-toggle" id="dbToolsToggle" aria-expanded="false" aria-controls="resultsBlock">
+            <span class="db-tools-toggle-label">&#128269; SEARCH &amp; F!LTERS</span>
+            <span class="db-tools-toggle-arrow" aria-hidden="true">&#9662;</span>
+          </button>
           <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
           <div class="results-header-row">
             <div class="search-row">
@@ -14643,6 +14685,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // (2100) is finally compared against #screenMainframe's directly.
   document.body.appendChild(el.buySwapModal);
 
+  // Same breakpoint as the phone CSS.
+  function isPhoneWidth(){ return window.matchMedia('(max-width:760px)').matches; }
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, function(c){
       return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
@@ -15361,6 +15405,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // WALLET H!ST0RY.
     el.screenAchievements.style.display = name === 'achievements' ? '' : 'none';
     document.body.classList.toggle('detail-open', name === 'detail' || name === 'profile' || name === 'walletHistory' || name === 'achievements');
+    // Phones: the NFT page is a normal page in the flow (see
+    // body.nft-detail-open in the CSS), not a fixed layer over DATABASE —
+    // iPhone Safari cut its bottom off — so it starts at the top.
+    document.body.classList.toggle('nft-detail-open', name === 'detail');
+    if (name === 'detail' && isPhoneWidth()) window.scrollTo(0, 0);
     el.screenSummary.style.display = name === 'summary' ? '' : 'none';
     el.screenSwapReview.style.display = name === 'swapreview' ? '' : 'none';
     el.screenSwapOfferConfirm.style.display = name === 'swapofferconfirm' ? '' : 'none';
@@ -20681,7 +20730,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       b.classList.toggle('in-cart', on);
       b.textContent = on ? '✓ !N SATCHEL' : 'ADD T0 SATCHEL';
     });
-    el.openCartCount.textContent = list.length ? '(' + list.length + ')' : '';
+    el.openCartCount.textContent = list.length ? String(list.length) : '';
     el.openCartLabel.textContent = list.length ? 'V!EW SATCHEL' : 'SATCHEL';
     el.quickCartCount.textContent = list.length ? String(list.length) : '';
     el.bottomSatchelCount.textContent = list.length ? String(list.length) : '';
@@ -23060,7 +23109,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.ciIssuerAddr.setAttribute('data-full', '');
       el.ciIssuerAddr.textContent = 'N/A';
     }
-    el.pigeonsBalanceBuyBtn.innerHTML = '<span class="lbl-full">SWAP ' + escapeHtml(meta.tokenLabel) + '</span><span class="lbl-short">&#128260; SWAP</span>';
+    el.pigeonsBalanceBuyBtn.innerHTML = '<span class="lbl-full">SWAP ' + escapeHtml(meta.tokenLabel) + '</span><span class="lbl-short" aria-hidden="true">&#128260;</span>';
     el.pigeonsCalcBuyBtn.textContent = 'SWAP ' + meta.tokenLabel;
     el.pigeonsCalcPigeonsUnit.textContent = meta.tokenLabel;
     el.salesCurrencyPigeonsBtn.textContent = meta.tokenLabel;
@@ -25957,11 +26006,19 @@ const SWAP_HTML = `<!DOCTYPE html>
     // card position remembered in openDetail — going back should land you
     // back on the specific Pigeon you clicked, not just near the top.
     if (scrollBeforeDetail !== null){
-      window.scrollTo({ top: scrollBeforeDetail, behavior: 'smooth' });
+      // Instant on phones: DATABASE was out of the layout while the NFT
+      // page was open, so a smooth scroll would crawl down from the top.
+      window.scrollTo({ top: scrollBeforeDetail, behavior: isPhoneWidth() ? 'auto' : 'smooth' });
       scrollBeforeDetail = null;
     }
   }
   el.backToBrowseBtnTop.addEventListener('click', goBackFromDetail);
+  // SEARCH & F!LTERS fold-away (phones) — closed on every page load.
+  var dbToolsToggle = document.getElementById('dbToolsToggle');
+  dbToolsToggle.addEventListener('click', function(){
+    var open = el.resultsBlock.classList.toggle('db-tools-open');
+    dbToolsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
   el.detailBackBtnBottom.addEventListener('click', goBackFromDetail);
   // Copies a real, working /<collection>/<number> link (see nftHrefFor and
   // the deep-link handler near the bottom of this script) — the number,
