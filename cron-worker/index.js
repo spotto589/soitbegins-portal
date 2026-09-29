@@ -11,7 +11,7 @@
 // reached yet showed as "not indexed" to whoever searched for it first.
 // This worker just keeps both indexes warm on its own, independent of
 // whether anyone is on the site.
-import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder, TRADEABLE_COLLECTIONS, FLOOR_INDEX_COLLECTIONS } from '../functions/_shared.js';
+import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder, maybeRefreshCollectionHolders, TRADEABLE_COLLECTIONS, FLOOR_INDEX_COLLECTIONS } from '../functions/_shared.js';
 import { runLedgerWatch } from '../functions/_ledgerwatch.js';
 import { stepPopularCoins } from '../functions/_coins.js';
 
@@ -94,6 +94,9 @@ export default {
       // 10-minute tick calling it unconditionally is still just 1 real
       // recompute (2 KV writes) per tick, not per request.
       recomputeCrownHolder(env.coin),
+      // T0P 123 H0LDERS for every other collection (2026-09-29) — one at a
+      // time so the ledger server isn't hit with every scan at once.
+      (async () => { for (const key of collectionKeys) await maybeRefreshCollectionHolders(env.coin, key); })(),
       pingXamanProxy(env),
     ]));
   },

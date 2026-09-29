@@ -2758,6 +2758,75 @@ async function fetchAllPigeonOwners() {
   return counts;
 }
 
+// ---- Per-collection holders (2026-09-29) — T0P 123 H0LDERS for every
+// collection, not just P!GE0NS (whose list rides the Crown scan above).
+// Same full nfts_by_issuer scan, run by the cron worker at most every
+// COLLECTION_HOLDERS_STALE_SECONDS, stored per collection. A failed page
+// throws, so a partial scan never replaces a good snapshot.
+const COLLECTION_HOLDERS_KEY = 'pswap:holders:v1';
+const COLLECTION_HOLDERS_LOCK_KEY = 'pswap:holderslock:v1';
+const COLLECTION_HOLDERS_STALE_SECONDS = 1800;
+async function fetchAllCollectionOwners(issuer, taxon) {
+  const counts = new Map();
+  let marker;
+  do {
+    const params = { issuer, nft_taxon: taxon, limit: 100 };
+    if (marker) params.marker = marker;
+    const res = await fetch(CLIO_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'nfts_by_issuer', params: [params] }),
+    });
+    const data = await res.json();
+    const result = data && data.result;
+    if (!result || result.error) throw new Error('nfts_by_issuer scan failed: ' + (result && result.error ? JSON.stringify(result.error) : 'no result'));
+    for (const nft of result.nfts || []) {
+      // The issuer's own unsold stock isn't a holder.
+      if (nft.is_burned || !nft.owner || nft.owner === issuer) continue;
+      counts.set(nft.owner, (counts.get(nft.owner) || 0) + 1);
+    }
+    marker = result.marker;
+  } while (marker);
+  return counts;
+}
+export async function getCollectionHolders(kv, collectionKey) {
+  const raw = await kv.get(kvKeyFor(COLLECTION_HOLDERS_KEY, collectionKey));
+  return raw ? JSON.parse(raw) : null;
+}
+export async function maybeRefreshCollectionHolders(kv, collectionKey) {
+  const cfg = TRADEABLE_COLLECTIONS[collectionKey];
+  if (!cfg || !cfg.nftIssuer || cfg.nftTaxon === null || cfg.nftTaxon === undefined || collectionKey === 'pigeons') return null;
+  const now = Math.floor(Date.now() / 1000);
+  const existing = await getCollectionHolders(kv, collectionKey);
+  if (existing && now - existing.computedAt < COLLECTION_HOLDERS_STALE_SECONDS) return existing;
+  const lockKey = kvKeyFor(COLLECTION_HOLDERS_LOCK_KEY, collectionKey);
+  const lock = await kv.get(lockKey);
+  if (lock && now - Number(lock) < 300) return existing;
+  await safeKvPut(kv, lockKey, String(now), { expirationTtl: 300 });
+  try {
+    const counts = await fetchAllCollectionOwners(cfg.nftIssuer, cfg.nftTaxon);
+    const topHolders = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 123).map(([wallet, count]) => ({ wallet, count }));
+    // Rarest-held picture for the top 15 (same as the Crown scan's).
+    await Promise.all(topHolders.slice(0, 15).map(async (h) => {
+      const owned = await getOwnerPigeonsViaDeeptide(kv, h.wallet, cfg.deeptideShopSlug).catch(() => []);
+      const ranked = owned.filter(it => typeof it.rarityRank === 'number' && it.image);
+      if (!ranked.length) return;
+      const rarest = ranked.reduce((a, b) => (a.rarityRank <= b.rarityRank ? a : b));
+      h.rarestPigeon = { number: rarest.number, image: rarest.image, rarityRank: rarest.rarityRank };
+    }));
+    let total = 0;
+    counts.forEach(c => { total += c; });
+    const snapshot = { computedAt: now, holderCount: counts.size, total, topHolders };
+    await safeKvPut(kv, kvKeyFor(COLLECTION_HOLDERS_KEY, collectionKey), JSON.stringify(snapshot));
+    return snapshot;
+  } catch (e) {
+    console.log('maybeRefreshCollectionHolders failed', collectionKey, String(e && e.message || e));
+    return existing;
+  } finally {
+    await safeKvPut(kv, lockKey, '0');
+  }
+}
+
 // The expensive operation: live full scan -> current Crown holder,
 // persisted to KV along with the per-wallet holdings history the
 // tie-break rule needs. Self-rate-limited via

@@ -6,7 +6,7 @@ import { marketListingsFromOffers, marketMeta,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex, hasFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
-  getCachedCrownHolder, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
+  getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
   fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply, fetchNftDetails, COLLECTION_DESCRIPTIONS
 } from '../_shared.js';
 
@@ -109,7 +109,12 @@ const COLLECTIONS = {
   // K!NG — real Deeptide shop king-thwncy + xrp.cafe collection "king",
   // 3147 items (Deeptide's own total, 2026-09-27). XRP only (no token,
   // see TRADEABLE_COLLECTIONS.king in _shared.js).
-  king: { key: 'king', shopSlug: 'king-thwncy', vanitySlug: 'king', xrpCafeUrl: 'https://xrp.cafe/collection/king', sizeApprox: 3147, tradeable: true }
+  king: { key: 'king', shopSlug: 'king-thwncy', vanitySlug: 'king', xrpCafeUrl: 'https://xrp.cafe/collection/king', sizeApprox: 3147, tradeable: true },
+  // SEAL / FUZZY "ALL" views (2026-09-29): no shop of their own — every
+  // request is answered by its member collections and merged (see
+  // groupResponse). tokenMember answers token questions ($SEAL/$FUZZY).
+  sealall: { key: 'sealall', members: ['seal', 'sealscrolls'], tokenMember: 'seal', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: 1812, tradeable: true },
+  fuzzyall: { key: 'fuzzyall', members: ['fuzzy', 'yzzuf'], tokenMember: 'fuzzy', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: 4430, tradeable: true }
 };
 function resolveCollection(params) {
   const key = params.get('collection');
@@ -313,6 +318,166 @@ async function attachListings(kv, items, cap = LISTINGS_ENRICH_CAP, collectionKe
   return items;
 }
 
+// ---- SEAL / FUZZY "ALL" views (2026-09-29) ----
+// A group collection (COLLECTIONS.sealall/fuzzyall) has no data of its own:
+// each request is asked of every member collection (the same handler,
+// collection=<member>) and the answers merged. Lists merge in the
+// requested sort order with a per-member cursor (gcur) so paging stays
+// exact; token questions go to tokenMember.
+async function callMember(context, params, member, overrides) {
+  const p = new URLSearchParams(params);
+  p.set('collection', member);
+  p.delete('gcur');
+  Object.keys(overrides || {}).forEach(k => { if (overrides[k] === null) p.delete(k); else p.set(k, String(overrides[k])); });
+  const u = new URL(context.request.url);
+  u.search = p.toString();
+  const res = await onRequestGet({ ...context, request: new Request(u.toString(), { headers: context.request.headers }) });
+  try { return await res.json(); } catch (e) { return null; }
+}
+// { f: item -> number|null, dir: 1 asc / -1 desc } for the requested list
+// sort; null = no shared order (members are interleaved).
+function groupSortKey(params) {
+  const cl = params.get('crossListing');
+  if (cl === 'recent') return { f: it => it.listedSeq, dir: -1 };
+  if (cl === 'asc' || cl === 'desc') return { f: it => it.bestListingXrp, dir: cl === 'asc' ? 1 : -1 };
+  if (params.get('scyllaListed') === '1') {
+    const d = params.get('dir');
+    if (d === 'recent') return { f: it => it.scyllaListedAt, dir: -1 };
+    return { f: it => (it.scyllaListing ? parseFloat(it.scyllaListing.price) : null), dir: d === 'desc' ? -1 : 1 };
+  }
+  if (params.get('highestSale') === '1') {
+    const m = params.get('metric');
+    const f = m === 'avg' ? (it => it.avgSaleXrp) : m === 'avg_pigeons' ? (it => it.avgSalePigeons || null) : (it => it.highSaleXrp);
+    return { f, dir: params.get('dir') === 'asc' ? 1 : -1 };
+  }
+  const num = params.get('numericOrder');
+  if (num) return { f: it => it.number, dir: num === 'desc' ? -1 : 1 };
+  const sort = params.get('sort') || 'RARITY_ASC';
+  // Rarity across two collections: position within its own collection
+  // (rank / size), so a 1-of-906 Scroll and a 1-of-906 Seal sit together.
+  const pct = it => (it.ourRarityRank && it.ourRarityTotal) ? it.ourRarityRank / it.ourRarityTotal
+    : (it.rarityRank && it.rarityTotal) ? it.rarityRank / it.rarityTotal : null;
+  if (sort === 'RARITY_ASC') return { f: pct, dir: 1 };
+  if (sort === 'RARITY_DESC') return { f: pct, dir: -1 };
+  return null;
+}
+async function groupResponse(context, coll, params) {
+  const members = coll.members;
+  // Anything about the token, or one NFT, goes to a single member.
+  const tokenQs = ['pigeonsRate', 'pigeonsAccountLine', 'pigeonsQuote', 'coinStats', 'coinHistory', 'tokenHolders', 'walletProfileCoins', 'nftDescription', 'events'];
+  if (tokenQs.some(k => params.get(k) === '1') || params.get('detail') || params.get('history') || params.get('number')) {
+    const j = await callMember(context, params, coll.tokenMember || members[0], {});
+    return json(j || { error: 'group_failed' });
+  }
+  if (params.get('stats') === '1') {
+    const all = (await Promise.all(members.map(m => callMember(context, params, m, {})))).filter(Boolean);
+    const sum = k => { const v = all.map(s => s[k]).filter(n => typeof n === 'number'); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
+    const min = k => { const v = all.map(s => s[k]).filter(n => typeof n === 'number' && n > 0); return v.length ? Math.min(...v) : null; };
+    const items = sum('items');
+    const listed = all.map(s => (typeof s.listedPercent === 'number' && typeof s.items === 'number') ? s.listedPercent * s.items : null).filter(n => n !== null);
+    return json({
+      items, holders: sum('holders'),
+      xrpFloorXrp: min('xrpFloorXrp'), deeptideFloorXrp: min('deeptideFloorXrp'), xrpCafeFloorXrp: min('xrpCafeFloorXrp'),
+      totalVolumeXrp: sum('totalVolumeXrp'),
+      listedPercent: listed.length && items ? Math.round(listed.reduce((a, b) => a + b, 0) / items * 10) / 10 : null,
+      scyllaListedCount: sum('scyllaListedCount'), scyllaFloorPigeons: min('scyllaFloorPigeons'),
+      sales24hCount: sum('sales24hCount'), traded24hCount: sum('traded24hCount'), buyers24hCount: sum('buyers24hCount'), volume24hXrp: sum('volume24hXrp')
+    });
+  }
+  if (params.get('traits') === '1') {
+    const all = (await Promise.all(members.map(m => callMember(context, params, m, {})))).filter(Boolean);
+    const size = all.reduce((a, t) => a + (Number(t.collectionSizeApprox) || 0), 0) || coll.sizeApprox;
+    const categories = {}, noTraitCounts = {}, examples = {};
+    all.forEach(t => {
+      Object.keys(t.categories || {}).forEach(cat => {
+        const byVal = categories[cat] || (categories[cat] = {});
+        (t.categories[cat] || []).forEach(v => {
+          const e = byVal[v.value] || (byVal[v.value] = { value: v.value, label: v.label, count: 0 });
+          e.count += v.count || 0;
+        });
+      });
+      Object.keys(t.noTraitCounts || {}).forEach(cat => {
+        const e = noTraitCounts[cat] || (noTraitCounts[cat] = { count: 0 });
+        e.count += (t.noTraitCounts[cat] && t.noTraitCounts[cat].count) || 0;
+      });
+      Object.keys(t.examples || {}).forEach(cat => { examples[cat] = Object.assign(examples[cat] || {}, t.examples[cat]); });
+    });
+    const out = {};
+    Object.keys(categories).forEach(cat => {
+      out[cat] = Object.values(categories[cat]).map(e => ({ ...e, percent: size ? Math.round(e.count / size * 100000) / 1000 : null })).sort((a, b) => String(a.label).localeCompare(String(b.label)));
+    });
+    Object.keys(noTraitCounts).forEach(cat => { noTraitCounts[cat].percent = size ? Math.round(noTraitCounts[cat].count / size * 100000) / 1000 : null; });
+    return json({ categories: out, noTraitCounts, examples, collectionSizeApprox: size, numberMapStats: all[0] ? all[0].numberMapStats : null, rarityStats: all[0] ? all[0].rarityStats : null });
+  }
+  if (params.get('topHolders') === '1') {
+    const all = (await Promise.all(members.map(m => callMember(context, params, m, {})))).filter(Boolean);
+    const byWallet = new Map();
+    all.forEach(t => (t.holders || []).forEach(h => {
+      const e = byWallet.get(h.wallet) || { wallet: h.wallet, ownerShort: h.ownerShort, count: 0, rarestPigeon: null };
+      e.count += h.count || 0;
+      if (!e.rarestPigeon && h.rarestPigeon) e.rarestPigeon = h.rarestPigeon;
+      byWallet.set(h.wallet, e);
+    }));
+    const holders = Array.from(byWallet.values()).sort((a, b) => b.count - a.count).slice(0, 123)
+      .map(h => ({ ...h, percent: coll.sizeApprox ? h.count / coll.sizeApprox * 100 : null }));
+    return json({ holders, computedAt: Math.max(0, ...all.map(t => t.computedAt || 0)) || null, pending: all.some(t => t.pending) });
+  }
+  if (params.get('sales') === '1') {
+    const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+    const limit = Math.min(50, Math.max(1, parseInt(params.get('limit') || '20', 10) || 20));
+    const all = await Promise.all(members.map(m => callMember(context, params, m, { skip: 0, limit: Math.min(50, skip + limit) })));
+    const items = [];
+    all.forEach((t, i) => ((t && t.items) || []).forEach(it => items.push({ ...it, collectionKey: members[i] })));
+    items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    return json({ items: items.slice(skip, skip + limit), hasMore: all.some(t => t && t.hasMore) || items.length > skip + limit });
+  }
+  // Lists — merged in sort order, one cursor per member.
+  const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+  let cur = {};
+  try { cur = JSON.parse(params.get('gcur') || '{}') || {}; } catch (e) { cur = {}; }
+  const results = await Promise.all(members.map(m => cur[m] === -1 ? null : callMember(context, params, m, { skip: cur[m] || 0, limit })));
+  const pools = members.map((m, i) => ({ m, res: results[i], items: ((results[i] && results[i].items) || []).map(it => ({ ...it, collectionKey: m })), taken: 0 }));
+  const key = groupSortKey(params);
+  const merged = [];
+  const better = (a, b) => {
+    const va = key.f(a), vb = key.f(b);
+    const na = va === null || va === undefined || !isFinite(va), nb = vb === null || vb === undefined || !isFinite(vb);
+    if (na !== nb) return na ? 1 : -1;
+    if (na) return 0;
+    return key.dir * (va - vb);
+  };
+  let turn = 0;
+  while (merged.length < limit) {
+    // A member with more to come but nothing left in hand could still hold
+    // the next item in order — stop there; the next page carries on.
+    if (key && pools.some(p => p.taken >= p.items.length && p.res && p.res.hasMore)) break;
+    const avail = pools.filter(p => p.taken < p.items.length);
+    if (!avail.length) break;
+    let pick;
+    if (key) pick = avail.reduce((best, p) => (better(p.items[p.taken], best.items[best.taken]) < 0 ? p : best));
+    else { pick = avail[turn % avail.length]; turn++; }
+    merged.push(pick.items[pick.taken]);
+    pick.taken++;
+  }
+  const next = {};
+  pools.forEach(p => {
+    if (!p.res) { next[p.m] = -1; return; }
+    const base = cur[p.m] || 0;
+    if (p.taken >= p.items.length) {
+      if (!p.res.hasMore) next[p.m] = -1;
+      else next[p.m] = (typeof p.res.skip === 'number' && params.get('crossListing')) ? p.res.skip : base + p.items.length;
+    } else next[p.m] = base + p.taken;
+  });
+  const total = results.reduce((a, r) => a + ((r && typeof r.total === 'number') ? r.total : 0), 0);
+  return json({
+    items: merged,
+    total: total || undefined,
+    hasMore: Object.values(next).some(v => v !== -1),
+    gcur: JSON.stringify(next),
+    collectionSizeApprox: coll.sizeApprox
+  });
+}
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   if (!env.coin) return json({ error: 'server_misconfigured' }, 500);
@@ -320,6 +485,7 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const params = url.searchParams;
   const coll = resolveCollection(params);
+  if (coll.members) return groupResponse(context, coll, params);
   const tradeable = coll.tradeable;
   // The active collection's real token currency — toItem's own
   // scyllaListing.currency used to always say 'PIGEONS' even on a PHNIX
@@ -729,6 +895,24 @@ export async function onRequestGet(context) {
   // Cheap KV read only; the background recompute-on-stale trigger was
   // removed (see board.js) to stop the recurring KV writes, so this now
   // just serves whatever was last computed, frozen.
+  if (params.get('topHolders') === '1' && coll.key !== 'pigeons') {
+    // Every other collection: its own ledger scan (see
+    // maybeRefreshCollectionHolders), kept fresh by the cron worker.
+    let snap = await getCollectionHolders(env.coin, coll.key);
+    if (!snap) context.waitUntil(maybeRefreshCollectionHolders(env.coin, coll.key));
+    const size = (snap && snap.total) || coll.sizeApprox || 0;
+    return json({
+      holders: ((snap && snap.topHolders) || []).map(h => ({
+        wallet: h.wallet,
+        ownerShort: shortenAddr(h.wallet),
+        count: h.count,
+        percent: size > 0 ? (h.count / size) * 100 : null,
+        rarestPigeon: h.rarestPigeon || null,
+      })),
+      computedAt: snap ? snap.computedAt : null,
+      pending: !snap
+    });
+  }
   if (params.get('topHolders') === '1') {
     const snapshot = await getCachedCrownHolder(env.coin);
     const holders = (snapshot && snapshot.topHolders) || [];
@@ -1281,6 +1465,7 @@ export async function onRequestGet(context) {
     const pageIds = sortedIds.slice(skip, skip + limit);
     const resolved = await resolveDetailsCached(context, coll.key, pageIds);
     const items = resolved.filter(Boolean).map(it => toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent));
+    items.forEach(it => { const l = scyllaListingsMap[it.nftId]; it.scyllaListedAt = l && l.listedAt ? l.listedAt : null; });
 
     // Deeptide's own current-owner field, reused from the detail fetch
     // above (no extra request) — lets the background self-heal below catch
@@ -1575,6 +1760,7 @@ export async function onRequestGet(context) {
       it.bestListingSource = pick ? pick.key : null;
       it.bestListingLabel = pick ? pick.label : null;
       it.bestListingUrl = pick ? pick.url : null;
+      it.listedSeq = c.listedSeq || null;
     });
     // A floor-index candidate whose real offer was cancelled/accepted
     // since the background scan last ran, and isn't currently showing a

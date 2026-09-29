@@ -275,14 +275,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     --collection-accent-glow:rgba(122,66,26,0.4);
     --collection-accent-2-rgb:94,50,20;
   }
-  body.collection-sealscrolls{
+  body.collection-group-all .thumb-offer{ display:none !important; }
+  body.collection-sealall, body.collection-sealscrolls{
     --collection-accent:#2d8ca8;
     --collection-accent-rgb:45,140,168;
     --collection-accent-dim:rgba(45,140,168,0.4);
     --collection-accent-glow:rgba(45,140,168,0.4);
     --collection-accent-2-rgb:34,108,130;
   }
-  body.collection-yzzuf, body.collection-fuzzybars{
+  body.collection-fuzzyall, body.collection-yzzuf, body.collection-fuzzybars{
     --collection-accent:#7a421a;
     --collection-accent-rgb:122,66,26;
     --collection-accent-dim:rgba(122,66,26,0.4);
@@ -10211,7 +10212,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      quote, no address (reported live 2026-09-29). Phones keep their own
      layout (max-width:700px block). */
   @media (min-width:701px){
-    #topHoldersModal .th2-row, #topHoldersModal .th-row-medal.th2-row{ grid-template-columns:90px 110px minmax(0, 1fr) 210px !important; column-gap:1rem !important; }
+    #topHoldersModal .th2-row, #topHoldersModal .th-row-medal.th2-row{ grid-template-columns:90px 110px minmax(0, 1fr) 270px !important; column-gap:1rem !important; }
     #topHoldersModal .th2-rank{ justify-self:center; text-align:center; }
     #topHoldersModal .th2-avatar{ justify-self:center; }
     #topHoldersModal .th2-id{ align-items:center; text-align:center; gap:0.3rem; }
@@ -13257,7 +13258,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <!-- SEAL + FUZZY — live DATABASES (2026-09-29), each with its own
                collection switch inside (SEALS / SCR0LLS, FUZZYBEARS / YZZUF /
                FUZZY BARS). -->
-          <div class="mainframe-card mainframe-card-seal" data-collection="seal" role="button" tabindex="0" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
+          <div class="mainframe-card mainframe-card-seal" data-collection="sealall" role="button" tabindex="0" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -13265,7 +13266,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               </a>
             </div>
             <div class="mainframe-card-body">
-              <a class="mainframe-card-label-link" href="/seal">
+              <a class="mainframe-card-label-link" href="/sealall">
                 <div class="mainframe-card-label">$SEAL</div>
                 <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
                 <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
@@ -13273,7 +13274,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="seal">SWAP $SEAL</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-fuzzy" data-collection="fuzzy" role="button" tabindex="0" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
+          <div class="mainframe-card mainframe-card-fuzzy" data-collection="fuzzyall" role="button" tabindex="0" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
@@ -13281,7 +13282,7 @@ const SWAP_HTML = `<!DOCTYPE html>
               </a>
             </div>
             <div class="mainframe-card-body">
-              <a class="mainframe-card-label-link" href="/fuzzy">
+              <a class="mainframe-card-label-link" href="/fuzzyall">
                 <div class="mainframe-card-label">$FUZZY</div>
                 <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
                 <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
@@ -15155,8 +15156,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     // SEAL (CTO) + FUZZY NFTs (2026-09-29): group = one database with a
     // switch between its collections (collGroupSelect); groupLabel is the
     // switch button. See TRADEABLE_COLLECTIONS in _shared.js.
+    // ALL = Seals + Scrolls together (merged server-side, see groupResponse
+    // in pigeons.js). Cards open in their own collection (see openDetail).
+    sealall: { label: 'SEAL', itemLabel: 'SEAL', tradeable: true, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2', group: 'seal', groupLabel: 'ALL', groupAll: true },
     seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: true, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', nftIssuer: 'rst9Sq8mVxK8b7BbgFs4VmnVtfm7N2qN4j', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2', group: 'seal', groupLabel: 'SEALS' },
     sealscrolls: { label: 'SEAL SCR0LLS', itemLabel: 'SCR0LL', tradeable: true, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', nftIssuer: 'rUSdvkwdGnU8qpfRR2sa1h7JExzBi7fUHr', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2', group: 'seal', groupLabel: 'SCR0LLS' },
+    // ALL = Fuzzybears + yzzuf together (FUZZY BARS only ever by itself).
+    fuzzyall: { label: 'FUZZY', itemLabel: 'FUZZYBEAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'ALL', groupAll: true },
     fuzzy: { label: 'FUZZY', itemLabel: 'FUZZYBEAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', nftIssuer: 'rw1R8cfHGMySmbj7gJ1HkiCqTY1xhLGYAs', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'FUZZYBEARS' },
     yzzuf: { label: 'YZZUF', itemLabel: 'RAEBYZZUF', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'r3NftTqH2hv3skuWAEDWKvqnxjtuqcFWYR', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'YZZUF' },
     fuzzybars: { label: 'FUZZY BARS', itemLabel: 'FUZZY BAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', nftIssuer: 'rPK77tBNduykbofMU91uffeRSUvtEkadbx', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'FUZZY BARS' },
@@ -15231,7 +15237,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // only by the BUY swap panel (buySwapMeta). Deliberately separate from
   // COLLECTION_META, which several screens loop over as "the collections".
   var POPULAR_COIN_META = {};
-  var OFFERS_TRADEABLE_COLLECTIONS = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; });
+  var OFFERS_TRADEABLE_COLLECTIONS = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable && !COLLECTION_META[k].groupAll; });
+  // One coin row per token: a group's sister collections (SEAL SCR0LLS,
+  // FUZZY BARS, the ALL views) share their group's coin.
+  function isOwnCoinKey(k){ var m = COLLECTION_META[k]; return !!m && !m.groupAll && !(m.group && m.group !== k); }
 
   var el = {};
   ['searchInput','searchBtn','editionSelect','collGroupSelect','dbViewSelect','dbViewBtn','dbViewMenu','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
@@ -15835,6 +15844,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         document.body.classList.add('collection-' + state.collection);
         document.body.classList.toggle('collection-browse-only', !presetMeta.tradeable);
         document.body.classList.add('collection-non-pigeons');
+        document.body.classList.toggle('collection-group-all', !!presetMeta.groupAll);
         renderCollGroupSelect();
         // state's own literal defaults (sort: 'SCYLLA_PRICE_ASC', scyllaListedOnly:
         // true) are P!GE0NS-specific — a P!GE0NS-denominated ONLY SH0W
@@ -17361,7 +17371,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var traits = boxedTraitsHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
       '<div class="result-row boxed-card">' +
-        '<div class="result-num bc-num">' + collectionItemLabel() + ' ' + num + watchlistToggleHtml(p) + '</div>' +
+        '<div class="result-num bc-num">' + collectionItemLabel(p) + ' ' + num + watchlistToggleHtml(p) + '</div>' +
         '<div class="bc-summary">' + rarityAboveTraitsHtml + '</div>' +
         '<div class="pigeon-img-box bc-img" data-nftid="' + escapeHtml(p.nftId) + '">' +
           linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
@@ -17468,7 +17478,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var ownedBadge = (p.owner === MY_WALLET && !isOwnWalletScope() && !p.scyllaListing && !(p.xrpListing && p.xrpListing.priceXrp)) ? '<div class="thumb-owned-badge">0WNED</div>' : '';
     var watchlistBtn = watchlistToggleHtml(p);
     return '<div class="result-card' + (inTarget ? ' in-target' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '">' +
-      '<div class="result-num">' + collectionItemLabel() + ' ' + num + watchlistBtn + '</div>' +
+      '<div class="result-num">' + collectionItemLabel(p) + ' ' + num + watchlistBtn + '</div>' +
       '<div class="pigeon-img-box" data-nftid="' + escapeHtml(p.nftId) + '">' +
         linkWrap(nftHrefFor(p), 'pigeon-img-link', img) +
         '<button class="card-select-toggle' + (inTarget ? ' selected' : '') + (atCap ? ' at-cap' : '') + '" data-nftid="' + escapeHtml(p.nftId) + '" title="SELECT">' + (inTarget ? '✓' : '+') + '</button>' +
@@ -18193,6 +18203,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     // for — same params, byte for byte. Anything else (a filter/edition
     // pick landed in between, say) just lets it fall out of scope unused;
     // its own response is still harmless, just never rendered.
+    // ALL views page with one cursor per member collection (gcur), reset
+    // whenever the query itself changes.
+    var groupSig = null;
+    if (COLLECTION_META[state.collection] && COLLECTION_META[state.collection].groupAll){
+      var sigParams = Object.assign({}, reqParams); delete sigParams.skip; delete sigParams.rawSkip;
+      groupSig = JSON.stringify(sigParams) + '|' + state.collection;
+      if (state.skip === 0 || state.groupCursorSig !== groupSig){ state.groupCursor = null; }
+      reqParams.gcur = state.groupCursor || '{}';
+    }
     var usePrefetch = scyllaFallbackPrefetch && reqParams.highestSale === 1 &&
       reqParams.dir === 'asc' && reqParams.metric === 'avg' && reqParams.skip === 0 &&
       !reqParams.filters && !reqParams.numberRange;
@@ -18210,6 +18229,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       el.loadMoreNote.style.display = 'none';
       el.resetDbBtn.style.display = '';
       var rawItems = data.items || [];
+      if (groupSig){ state.groupCursor = data.gcur || null; state.groupCursorSig = groupSig; }
       // Each auto-fallback stage below (listed -> sold-before -> full
       // collection) re-paginates its own bounded set from skip 0, so the
       // same Pigeon can legitimately come back around once browsing moves
@@ -18999,9 +19019,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // table behind the EXPAND button (see the markup's own comment). ----
   var topHoldersData = null;
   function loadTopHolders(){
+    var forColl = state.collection;
     api({ topHolders: 1 }).then(function(data){
+      if (forColl !== state.collection) return;
       topHoldersData = data.holders || [];
       renderTopHoldersList();
+      // Still being counted (a collection's first scan): ask again next open.
+      if (data.pending) topHoldersData = null;
     }).catch(function(){ topHoldersData = []; renderTopHoldersList(); });
   }
   function thPercentStr(h){
@@ -19054,7 +19078,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         '<span class="th2-quote">' + quote + '</span>' +
         '<span class="th2-addr">' + escapeHtml(shortAddr(h.wallet)) + '</span>' +
       '</span>' +
-      '<span class="th-count"><span class="th-count-amt">' + greenNum(h.count) + ' P!GE0NS</span><span class="th-count-pct">' + (percentStr ? greenNum(percentStr + '%') : '') + '</span></span>' +
+      '<span class="th-count"><span class="th-count-amt">' + greenNum(h.count) + ' ' + escapeHtml(collectionItemLabel()) + (h.count === 1 ? '' : 'S') + '</span><span class="th-count-pct">' + (percentStr ? greenNum(percentStr + '%') : '') + '</span></span>' +
     '</a>';
   }
   function renderTopHoldersList(){
@@ -23765,7 +23789,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var keys = Object.keys(COLLECTION_META);
     var html = pageRow + keys.filter(function(k){ return open[k]; }).map(function(k){
       return '<div class="db-option' + (k === state.collection ? ' db-option-active' : '') + '" data-collection="' + k + '">' + escapeHtml(COLLECTION_META[k].label) + '</div>';
-    }).concat(keys.filter(function(k){ return !open[k]; }).map(function(k){
+    }).concat(keys.filter(function(k){ return !open[k] && !COLLECTION_META[k].group; }).map(function(k){
       return '<div class="db-option db-option-disabled">' + escapeHtml(COLLECTION_META[k].label) + ' <span class="db-soon">C0M!NG S00N</span></div>';
     })).join('');
     el.dbSelectFlyout.innerHTML = html;
@@ -23887,7 +23911,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   // Card headers ("P!GE0N #1921") were hardcoded to say P!GE0N regardless
   // of collection — harmless-looking but wrong once PHN!X/TEDDY actually
   // load real items.
-  function collectionItemLabel(){
+  function collectionItemLabel(p){
+    // An ALL-view card names its own collection (SCR0LL vs SEAL).
+    if (p && p.collectionKey && COLLECTION_META[p.collectionKey]) return COLLECTION_META[p.collectionKey].itemLabel;
     return COLLECTION_META[state.collection].itemLabel;
   }
   // "#1921" for almost everything, but a numberless item (PHN!X has a
@@ -23908,6 +23934,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var meta = COLLECTION_META[newCollection];
     if (!meta || newCollection === state.collection) return;
     state.collection = newCollection;
+    // T0P 123 H0LDERS is per collection now — fetch the new one's list.
+    topHoldersData = null;
     el.dbSelectLabel.textContent = meta.label;
     el.dbSelectFlyout.querySelectorAll('.db-option[data-collection]').forEach(function(opt){
       opt.classList.toggle('db-option-active', opt.getAttribute('data-collection') === newCollection);
@@ -23922,7 +23950,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // once PHN!X flipped to tradeable: meta.tradeable became true, so this
     // class never got added and the trustline banner stayed purple instead
     // of PHN!X's own real orange/red (#ff5a1f) — confirmed live.
-    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki', 'collection-king', 'collection-sealscrolls', 'collection-yzzuf', 'collection-fuzzybars');
+    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki', 'collection-king', 'collection-sealscrolls', 'collection-yzzuf', 'collection-fuzzybars', 'collection-sealall', 'collection-fuzzyall');
+    document.body.classList.toggle('collection-group-all', !!meta.groupAll);
     if (newCollection !== 'pigeons') document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
     // ED!T!ON/# 0R WALLET search (see their own CSS comment) are
@@ -24307,8 +24336,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // nothing useful against a null slug) but still get their real
     // marketcap/liquidity below.
     { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', hasShopSlug: true },
-    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', hasShopSlug: true },
-    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', hasShopSlug: true },
+    { collection: 'sealall', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', hasShopSlug: true },
+    { collection: 'fuzzyall', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', hasShopSlug: true },
     { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', hasShopSlug: true },
     // BEAR/CULT have a real confirmed Deeptide shop slug (see COLLECTIONS
     // in pigeons.js), same reasoning as TEDDY above — real holders.
@@ -25316,6 +25345,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var notifySettingsKey = null;
   function notifySettingsCollection(){
     var k = notifySettingsKey || state.collection;
+    if (COLLECTION_META[k] && COLLECTION_META[k].groupAll) k = COLLECTION_META[k].group;
     return COLLECTION_META[k] && COLLECTION_META[k].tradeable ? k : 'pigeons';
   }
   var notifyHeldCounts = null;
@@ -25331,7 +25361,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function renderNotifyCollMenu(){
     var key = notifySettingsCollection();
     var q = notifyNorm(el.notifyCollSearch.value.trim());
-    var all = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; });
+    var all = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable && !COLLECTION_META[k].groupAll; });
     var matches = all.filter(function(k){ return !q || notifyNorm(COLLECTION_META[k].label).indexOf(q) !== -1 || k.indexOf(q) !== -1; });
     var counts = notifyHeldCounts || {};
     // Your top 10 holdings first (only while not searching).
@@ -27153,6 +27183,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   function openDetail(nftId){
     scrollBeforeDetail = window.scrollY;
     var known = findKnown(nftId);
+    // From an ALL view: act inside the item's own collection (BUY/OFFER/
+    // LIST/traits all need it); goBackFromDetail puts ALL back.
+    if (known && known.collectionKey && COLLECTION_META[known.collectionKey]){
+      var curMeta = COLLECTION_META[state.collection] || {};
+      if (curMeta.groupAll && !state.groupAllReturn) state.groupAllReturn = state.collection;
+      if (state.groupAllReturn) state.collection = known.collectionKey;
+    }
     el.detailNum.innerHTML = known && known.number !== null ? collectionItemLabel() + ' #' +greenNum(known.number) : (known && known.name ? collectionItemLabel() + ' ' + escapeHtml(known.name) : collectionItemLabel() + ' ...');
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : 'IMAGE';
     // Keep the fullscreen lightbox's own picture in sync when PREV/NEXT is
@@ -27376,6 +27413,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.historyModal.addEventListener('click', function(e){ if (e.target === el.historyModal) closeHistoryModal(); });
   function goBackFromDetail(){
     showScreen('browse');
+    if (state.groupAllReturn){ state.collection = state.groupAllReturn; state.groupAllReturn = null; }
     // Came from the 0FFER pop-up's Pigeon picture: back into that pop-up.
     if (offerConfirmReturn && offerTarget){
       offerConfirmReturn = false;
@@ -28805,7 +28843,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function renderProfileCoinsEditList(){
     var hidden = getHiddenCoinKeys();
-    el.profileCoinsEditList.innerHTML = Object.keys(COLLECTION_META).map(function(key){
+    el.profileCoinsEditList.innerHTML = Object.keys(COLLECTION_META).filter(isOwnCoinKey).map(function(key){
       var checked = hidden.indexOf(key) === -1;
       return '<label class="profile-coins-edit-row"><span>' + escapeHtml(COLLECTION_META[key].tokenLabel) + '</span>' +
         '<input type="checkbox" data-collection="' + key + '"' + (checked ? ' checked' : '') + '></label>';
@@ -28849,7 +28887,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // STAT!C://C0!NS popular coins (once that list has loaded).
   function watchableCoins(){
     var out = [];
-    Object.keys(COLLECTION_META).forEach(function(k){
+    Object.keys(COLLECTION_META).filter(isOwnCoinKey).forEach(function(k){
       var m = COLLECTION_META[k];
       if (m && m.tokenIssuer && m.tokenLabel) out.push({ key: k, name: m.tokenLabel.replace(/^\\$/, ''), image: m.thumb || null, issuer: m.tokenIssuer, sub: m.label });
     });
@@ -29157,7 +29195,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     renderProfileCoinsEditList();
     var hiddenKeys = getHiddenCoinKeys();
-    var keys = Object.keys(COLLECTION_META).filter(function(k){ return hiddenKeys.indexOf(k) === -1; });
+    var keys = Object.keys(COLLECTION_META).filter(function(k){ return hiddenKeys.indexOf(k) === -1 && isOwnCoinKey(k); });
     el.profileCoinsList.innerHTML = !keys.length ? '<div class="th-empty">N0 C0!NS SH0WN — CL!CK ED!T T0 P!CK S0ME.</div>' : keys.map(function(key){
       var meta = COLLECTION_META[key];
       var accent = PROFILE_COIN_ACCENTS[key] || '61,243,236';
