@@ -2725,6 +2725,34 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profiles-hub-grid > .profile-search-results{ margin:0; max-height:14rem; overflow-y:auto; }
   .profiles-hub-grid > .profile-search-results:empty{ display:none; }
   .profiles-hub-grid > .profiles-hub-search-box{ grid-row:1; }
+  /* FAV0UR!TES beside the search (2026-09-29): 4 columns — search 3,
+     favourites 1; V!EW / ED!T 2 each. */
+  .profile-box-grid.profiles-hub-grid{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+  .profiles-hub-grid > .profiles-hub-search-box{ grid-column:1 / span 3; }
+  .profiles-hub-grid > .profiles-hub-fav-box{ grid-row:1; grid-column:4; }
+  .profiles-hub-grid > .profiles-hub-btn{ grid-column:span 2; }
+  .profiles-hub-fav-box .flock-account-box-row{ gap:0.5rem; }
+  .profiles-fav-star{ color:#f5c518; font-size:20px; line-height:1; text-shadow:0 0 8px rgba(245,197,24,0.6); }
+  .profiles-fav-n{ color:rgb(52,255,133); font-size:13px; font-weight:700; }
+  .profiles-fav-n:empty{ display:none; }
+  @media (max-width:640px){
+    .profiles-hub-fav-box .flock-account-box-label{ display:none; }
+    .profiles-fav-star{ font-size:22px; }
+  }
+  .profile-search-row{ position:relative; }
+  .profile-search-fav{
+    margin-left:auto; flex:0 0 auto; width:34px; height:34px; border-radius:50%; background:#000;
+    border:1px solid rgba(245,197,24,0.5); color:#f5c518; font-size:17px; line-height:1; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; padding:0;
+  }
+  .profile-search-fav:hover, .profile-search-fav.on{ border-color:#f5c518; box-shadow:0 0 8px rgba(245,197,24,0.5); }
+  .profile-fav-toggle{
+    position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); z-index:2;
+    padding:0.5em 1em; font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:0.08em;
+    color:#f5c518; background:transparent; border:1px solid rgba(245,197,24,0.55); border-radius:var(--radius); cursor:pointer;
+  }
+  .profile-fav-toggle:hover, .profile-fav-toggle.on{ background:rgba(245,197,24,0.12); border-color:#f5c518; }
+  @media (max-width:760px){ .profile-fav-toggle{ font-size:12px; padding:0.4em 0.7em; } }
   .profiles-hub-grid > .profile-search-results{ grid-row:2; }
   .profiles-hub-grid > .profiles-hub-btn{ grid-row:3; }
   @media (max-width:640px){
@@ -3076,6 +3104,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     #sweepModal > div, #pigeonsCalcModal > div, #topHoldersModal > div, #salesModal > div, #notifyModal > div, #nftDataModal > div, #rarityModal > div, #coinModal > div, #extBuyModal > div{
       max-height:calc(100dvh - var(--global-ticker-h, 66px) - 1.5rem) !important;
     }
+  }
+  /* T0P 123 / SALES H!ST0RY with the top bar hidden: use the full
+     height again. */
+  body.bar-hidden-modal #globalTopBar{ display:none !important; }
+  body.bar-hidden-modal #topHoldersModal, body.bar-hidden-modal #salesModal{ padding-top:0.75rem !important; padding-bottom:0.75rem !important; align-items:center !important; }
+  body.bar-hidden-modal #topHoldersModal > div, body.bar-hidden-modal #salesModal > div{ max-height:calc(100dvh - 1.5rem) !important; }
+  @media (max-width:700px){
+    body.bar-hidden-modal #topHoldersModal > div, body.bar-hidden-modal #salesModal > div{ height:calc(100dvh - 1.5rem) !important; }
   }
   /* Alert settings: collection picker. */
   #notifyModal .node-eyebrow:empty{ display:none; }
@@ -6116,6 +6152,13 @@ const SWAP_HTML = `<!DOCTYPE html>
     transition:color 0.15s ease;
   }
   .input-clear-btn:hover{ color:var(--magenta); }
+  /* The clear x — a red, properly centred circle (reported live
+     2026-09-29). */
+  .input-clear-btn{
+    display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; padding:0;
+    border-radius:50%; border:1px solid rgba(255,59,92,0.7); color:#ff3b5c; font-size:15px; line-height:1;
+  }
+  .input-clear-btn:hover{ color:#000; background:#ff3b5c; border-color:#ff3b5c; }
   /* ~ (general sibling), not + (immediate next sibling) — matches every
      input on the page where the clear button really is a sibling. Doesn't
      reach into .buyswap-trailing (the BUY $P!GE0NS/EXCHANGE CALCULAT0R
@@ -7140,7 +7183,24 @@ const SWAP_HTML = `<!DOCTYPE html>
      calculator modal specifically so the small versions used elsewhere
      (the trustline banner's own link, the stats carousel tile) stay
      untouched. */
-  #pigeonsCalcModal .pigeons-bar-rate-row{ justify-content:center; margin-bottom:1.5rem; gap:0.75rem; }
+  #pigeonsCalcModal .pigeons-bar-rate-row{ justify-content:center; margin-bottom:0.6rem; gap:0.75rem; }
+  /* EXCHANGE CALCULAT0R, bigger + rate lines + ⇅ (2026-09-29). */
+  #pigeonsCalcModal .offer-confirm-panel{ width:min(540px, 100%); padding:2rem 1.9rem; }
+  #pigeonsCalcModal .buyswap-input{ font-size:24px; }
+  #pigeonsCalcModal .buyswap-input-wrap{ min-height:62px; }
+  .calc-rate-lines{ display:flex; flex-direction:column; align-items:center; gap:0.3rem; margin:0 0 1.3rem; }
+  .calc-rate-line{ display:flex; align-items:baseline; gap:0.45em; font-size:17px; font-weight:700; letter-spacing:0.06em; color:#fff; }
+  .calc-rate-line .pigeons-green-num{ font-size:20px; }
+  .calc-rate-eq{ color:var(--grey-dim); }
+  .calc-flip-btn{
+    display:flex; align-items:center; justify-content:center; width:46px; height:46px; margin:0.8rem auto; padding:0;
+    border-radius:50%; background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.8); cursor:pointer;
+    font-family:inherit; font-size:24px; line-height:1; transition:transform 0.25s ease, border-color 0.15s ease;
+  }
+  .calc-flip-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  #pigeonsCalcModal .calc-flip-btn{ margin:0.8rem auto; }
+  #pigeonsCalcModal .pigeons-bar-rate-value{ display:none !important; }
+  .calc-flip-btn.flipped{ transform:rotate(180deg); }
   #pigeonsCalcModal .pigeons-bar-rate-value{ font-size:22px; }
   #pigeonsCalcModal .pigeons-bar-dex-btn{ width:38px; height:38px; padding:5px; }
   #pigeonsCalcModal .pigeons-bar-dex-icon{ width:26px; height:26px; }
@@ -11950,7 +12010,9 @@ const SWAP_HTML = `<!DOCTYPE html>
           </a>
           <span class="pigeons-bar-rate-value" id="pigeonsBarRateValue" style="display:none;"></span>
         </div>
-        <div class="buyswap-row">
+        <!-- 1 XRP = N $TOKEN / 1 DR0P = N $TOKEN (2026-09-29). -->
+        <div class="calc-rate-lines" id="pigeonsCalcRateLines"></div>
+        <div class="buyswap-row" id="pigeonsCalcXrpRow">
           <span class="buyswap-label">Y0U PAY</span>
           <div class="buyswap-input-wrap">
             <input class="buyswap-input" id="pigeonsCalcXrpInput" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
@@ -11960,8 +12022,8 @@ const SWAP_HTML = `<!DOCTYPE html>
             </div>
           </div>
         </div>
-        <div class="buyswap-arrow" aria-hidden="true">↓</div>
-        <div class="buyswap-row">
+        <button type="button" class="buyswap-arrow calc-flip-btn" id="pigeonsCalcFlipBtn" title="SW!TCH AR0UND" aria-label="SW!TCH AR0UND">⇅</button>
+        <div class="buyswap-row" id="pigeonsCalcPigeonsRow">
           <span class="buyswap-label">Y0U RECE!VE</span>
           <div class="buyswap-input-wrap">
             <input class="buyswap-input" id="pigeonsCalcPigeonsInput" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
@@ -12575,6 +12637,12 @@ const SWAP_HTML = `<!DOCTYPE html>
               <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11.5 11.5l4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="flock-account-box-prefix">//</span><input type="text" class="profiles-hub-search-input" id="profileSearchInput" placeholder="SEARCH PR0F!LES" autocomplete="off"></div>
               <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
             </label>
+            <!-- FAV0UR!TES (2026-09-29) — profiles you've starred, one tap
+                 away; star them from a search result or their profile. -->
+            <button type="button" class="sw-panel flock-account-box flock-account-box-clickable profiles-hub-fav-box" id="profileFavBtn">
+              <div class="flock-account-box-row"><span class="profiles-fav-star">★</span><span class="flock-account-box-label">FAV0UR!TES</span><span class="profiles-fav-n" id="profileFavCount"></span></div>
+              <span class="flock-account-box-scanbar" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-tl" aria-hidden="true"></span><span class="flock-account-box-corner flock-account-box-corner-br" aria-hidden="true"></span>
+            </button>
             <div class="profile-search-results" id="profileSearchResults"></div>
             <button type="button" class="sw-panel flock-account-box flock-account-box-clickable profiles-hub-btn" data-profiles-view="view">
               <div class="flock-account-box-row"><svg class="flock-account-box-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.5 9s2.8-5 7.5-5 7.5 5 7.5 5-2.8 5-7.5 5-7.5-5-7.5-5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="9" cy="9" r="2.2" stroke="currentColor" stroke-width="1.4"/></svg><span class="flock-account-box-prefix">//</span><span class="flock-account-box-label">V!EW MY FULL PR0F!LE</span><span class="flock-account-box-arrow">›</span></div>
@@ -13687,6 +13755,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="profile-screen-top-row">
         <button class="detail-back-btn-top" id="profileScreenBackBtn">← BACK</button>
         <button class="detail-share-btn" id="profileScreenShareBtn" title="C0PY A SHAREABLE L!NK T0 TH!S PR0F!LE">SHARE</button>
+        <button class="profile-fav-toggle" id="profileScreenFavBtn" type="button" style="display:none;">☆ FAV0UR!TE</button>
       </div>
       <div class="profile-screen-banner-wrap" id="profileScreenBanner"></div>
       <!-- Σκύλλα://!DENT!TY — a small generated code block (real fields
@@ -15107,7 +15176,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','setTrustlineLink','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn','pigeonsBarCoinOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
-   'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink',
+   'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink','pigeonsCalcRateLines','pigeonsCalcXrpRow','pigeonsCalcPigeonsRow','pigeonsCalcFlipBtn','profileFavBtn','profileFavCount','profileScreenFavBtn',
    'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki','mainframeStatsKing',
    'conspiracyPickerModal','screenConspiracyPicker','conspiracyPickAreaBtn','conspiracyPickRabbitBtn','conspiracyPickerBackBtn',
@@ -15344,7 +15413,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     var raw = input.value;
     var cursorPos = input.selectionStart === null ? raw.length : input.selectionStart;
-    var digitsBeforeCursor = raw.slice(0, cursorPos).replace(/[^0-9]/g, '').length;
+    // Digits AND the decimal point before the cursor (2026-09-29: counting
+    // digits only put the cursor back BEFORE a just-typed ".", so "1.23"
+    // came out as "123." — decimals were impossible to type).
+    var digitsBeforeCursor = raw.slice(0, cursorPos).replace(/[^0-9.]/g, '').length;
     var cleaned = raw.replace(/[^0-9.]/g, '');
     var firstDot = cleaned.indexOf('.');
     if (firstDot !== -1){
@@ -15362,7 +15434,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     var count = 0, newPos = formatted.length;
     for (var i = 0; i < formatted.length; i++){
-      if (/[0-9]/.test(formatted[i])) count++;
+      if (/[0-9.]/.test(formatted[i])) count++;
       if (count === digitsBeforeCursor){ newPos = i + 1; break; }
     }
     input.setSelectionRange(newPos, newPos);
@@ -24273,6 +24345,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (trustlineXrpPerPigeon !== null){
         el.pigeonsBarRateValue.textContent = trustlineXrpPerPigeon.toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' XRP';
         el.pigeonsBarRateValue.style.display = '';
+        renderCalcRateLines();
         el.pigeonsBarCalc.style.display = '';
         // Re-derive whichever side the rate refresh shouldn't silently
         // overwrite what's mid-typing — XRP wins ties (matches its
@@ -24895,6 +24968,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   function updateCalcToggleLabel(){
     el.pigeonsCalcToggleLabel.textContent = 'EXCHANGE CALCULAT0R';
   }
+  // 1 XRP = N $TOKEN and 1 DR0P (0.000001 XRP) = N $TOKEN.
+  function renderCalcRateLines(){
+    if (!trustlineXrpPerPigeon){ el.pigeonsCalcRateLines.innerHTML = ''; return; }
+    var tok = (COLLECTION_META[state.collection] || {}).tokenLabel || '';
+    var perXrp = 1 / trustlineXrpPerPigeon, perDrop = perXrp / 1000000;
+    var fmt = function(n){ return n.toLocaleString(undefined, { maximumFractionDigits: n >= 100 ? 0 : n >= 1 ? 2 : 6 }); };
+    el.pigeonsCalcRateLines.innerHTML =
+      '<div class="calc-rate-line"><span>1 XRP</span><span class="calc-rate-eq">=</span>' + greenNum(fmt(perXrp)) + '<span>' + escapeHtml(tok) + '</span></div>' +
+      '<div class="calc-rate-line"><span>1 DR0P</span><span class="calc-rate-eq">=</span>' + greenNum(fmt(perDrop)) + '<span>' + escapeHtml(tok) + '</span></div>';
+  }
+  // ⇅ swaps which side you pay with (2026-09-29): moves the rows, the
+  // PAY/RECE!VE labels follow position.
+  var calcFlipped = false;
+  function applyCalcFlip(){
+    var first = calcFlipped ? el.pigeonsCalcPigeonsRow : el.pigeonsCalcXrpRow;
+    var second = calcFlipped ? el.pigeonsCalcXrpRow : el.pigeonsCalcPigeonsRow;
+    var parent = el.pigeonsCalcFlipBtn.parentNode;
+    parent.insertBefore(first, el.pigeonsCalcFlipBtn);
+    parent.insertBefore(second, el.pigeonsCalcFlipBtn.nextSibling);
+    first.querySelector('.buyswap-label').textContent = 'Y0U PAY';
+    second.querySelector('.buyswap-label').textContent = 'Y0U RECE!VE';
+    el.pigeonsCalcFlipBtn.classList.toggle('flipped', calcFlipped);
+  }
+  el.pigeonsCalcFlipBtn.addEventListener('click', function(){
+    calcFlipped = !calcFlipped;
+    applyCalcFlip();
+  });
   function updatePigeonsCalcFromXrp(){
     var xrpValue = Number(el.pigeonsCalcXrpInput.value.replace(/,/g, ''));
     if (isFinite(xrpValue) && xrpValue > CALC_MAX_XRP){
@@ -24951,6 +25051,17 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.pigeonsCalcModal.addEventListener('click', function(e){
     if (e.target === el.pigeonsCalcModal) closeCalcPopover();
   });
+  // T0P 123 H0LDERS / SALES H!ST0RY hide the top bar while open (reported
+  // live 2026-09-29) — watched on the modals themselves so every way of
+  // closing them (X, overlay, Escape, back) brings the bar back.
+  (function(){
+    var mods = [el.topHoldersModal, el.salesModal];
+    function sync(){
+      document.body.classList.toggle('bar-hidden-modal', mods.some(function(m){ return m && m.style.display !== 'none' && m.style.display !== ''; }));
+    }
+    var mo = new MutationObserver(sync);
+    mods.forEach(function(m){ if (m) mo.observe(m, { attributes: true, attributeFilter: ['style'] }); });
+  })();
   // T0P 123 H0LDERS/SALES H!ST0RY — same real popup pattern as the
   // EXCHANGE CALCULAT0R right above (reported live as wanting these off
   // their own top-level tabs and into the DATABASE banner instead), each
@@ -27710,6 +27821,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // rather than hiding outright, so it still teaches you the feature
     // exists).
     el.profileScreenMessageBtn.style.display = (wallet === MY_WALLET) ? 'none' : '';
+    el.profileScreenFavBtn.style.display = (wallet === MY_WALLET) ? 'none' : '';
+    el.profileScreenFavBtn.textContent = isProfileFav(wallet) ? '★ FAV0UR!TE' : '☆ FAV0UR!TE';
+    el.profileScreenFavBtn.classList.toggle('on', isProfileFav(wallet));
     // Full profile (not just the async signatureBannerHtml patch-in) —
     // isPublic gating, THEME, and the real BANNER-NFT colour sample all
     // need this synchronously-ish rather than waiting on whatever else on
@@ -29414,12 +29528,62 @@ const SWAP_HTML = `<!DOCTYPE html>
           '<div class="profile-search-row-name">' + escapeHtml(r.username || short) + '</div>' +
           '<div class="profile-search-row-wallet">' + escapeHtml(r.wallet) + '</div>' +
         '</div>' +
+        (r.wallet === MY_WALLET ? '' : '<button type="button" class="profile-search-fav' + (isProfileFav(r.wallet) ? ' on' : '') + '" data-wallet="' + escapeHtml(r.wallet) + '" data-username="' + escapeHtml(r.username || '') + '" data-pfp="' + escapeHtml(r.pfpImage || '') + '" title="FAV0UR!TE">' + (isProfileFav(r.wallet) ? '★' : '☆') + '</button>') +
       '</a>';
     }).join('');
   }
+  // ---- PR0F!LE FAV0UR!TES (2026-09-29) — starred profiles, kept per
+  // wallet on this device: [{ wallet, username, pfpImage }].
+  function profileFavKey(){ return 'skyllaFavProfiles:' + (MY_WALLET || 'guest'); }
+  function getProfileFavs(){ var v = lsGet(profileFavKey(), []); return Array.isArray(v) ? v : []; }
+  function isProfileFav(w){ return getProfileFavs().some(function(f){ return f.wallet === w; }); }
+  function toggleProfileFav(w, info){
+    var favs = getProfileFavs();
+    if (favs.some(function(f){ return f.wallet === w; })) favs = favs.filter(function(f){ return f.wallet !== w; });
+    else {
+      var p = profileCache[w] || {};
+      favs.unshift({ wallet: w, username: (info && info.username) || p.username || null, pfpImage: (info && info.pfpImage) || p.pfpImage || null });
+    }
+    lsSet(profileFavKey(), favs);
+    syncProfileFavUi();
+    return isProfileFav(w);
+  }
+  var showingProfileFavs = false;
+  function syncProfileFavUi(){
+    var n = getProfileFavs().length;
+    el.profileFavCount.textContent = n ? n : '';
+    el.profileFavBtn.classList.toggle('active', showingProfileFavs);
+    if (showingProfileFavs) renderProfileFavList();
+    if (currentProfileWallet && el.screenProfile.style.display !== 'none'){
+      var on = isProfileFav(currentProfileWallet);
+      el.profileScreenFavBtn.textContent = on ? '★ FAV0UR!TE' : '☆ FAV0UR!TE';
+      el.profileScreenFavBtn.classList.toggle('on', on);
+    }
+  }
+  function renderProfileFavList(){
+    var favs = getProfileFavs().map(function(f){
+      var p = profileCache[f.wallet] || {};
+      return { wallet: f.wallet, username: p.username || f.username, pfpImage: p.pfpImage || f.pfpImage };
+    });
+    if (!favs.length){
+      el.profileSearchResults.innerHTML = '<div class="th-empty">N0 FAV0UR!TES YET — TAP ☆ 0N A PR0F!LE T0 ADD 0NE.</div>';
+      return;
+    }
+    renderProfileSearchResults(favs);
+  }
+  el.profileFavBtn.addEventListener('click', function(){
+    showingProfileFavs = !showingProfileFavs;
+    if (showingProfileFavs){ el.profileSearchInput.value = ''; profileSearchReqId++; renderProfileFavList(); }
+    else el.profileSearchResults.innerHTML = '';
+    syncProfileFavUi();
+  });
+  el.profileScreenFavBtn.addEventListener('click', function(){
+    if (currentProfileWallet) toggleProfileFav(currentProfileWallet);
+  });
   el.profileSearchInput.addEventListener('input', function(){
     var q = el.profileSearchInput.value.trim();
     var reqId = ++profileSearchReqId;
+    if (q && showingProfileFavs){ showingProfileFavs = false; syncProfileFavUi(); }
     if (!q){ el.profileSearchResults.innerHTML = ''; return; }
     setTimeout(function(){
       if (reqId !== profileSearchReqId) return;
@@ -29432,6 +29596,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     }, 250);
   });
   el.profileSearchResults.addEventListener('click', function(e){
+    var star = e.target.closest('.profile-search-fav');
+    if (star){
+      e.preventDefault();
+      e.stopPropagation();
+      var w = star.getAttribute('data-wallet');
+      var on = toggleProfileFav(w, { username: star.getAttribute('data-username') || null, pfpImage: star.getAttribute('data-pfp') || null });
+      star.classList.toggle('on', on);
+      star.textContent = on ? '★' : '☆';
+      return;
+    }
     var row = e.target.closest('.profile-search-row');
     if (!row || e.ctrlKey || e.metaKey) return;
     e.preventDefault();
