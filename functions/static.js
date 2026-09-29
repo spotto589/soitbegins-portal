@@ -3043,6 +3043,55 @@ const SWAP_HTML = `<!DOCTYPE html>
   @media (max-width:640px){
     .notif-action-btn{ padding:0.5em 0.7em; font-size:10.5px; letter-spacing:0.05em; }
   }
+  /* 2026-09-29 rework — see the HTML's own comment. */
+  .notif-topline{ display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; }
+  .notif-topline .notif-actions{ flex:1 1 auto; align-items:center; justify-content:flex-end; }
+  .notif-topline .notif-head-count{ margin-right:auto; }
+  .notif-settings-btn{
+    flex:0 0 auto; display:inline-flex; align-items:center; gap:0.55em; cursor:pointer;
+    background:rgba(61,243,236,0.08); color:var(--cyan); border:1px solid var(--cyan); border-radius:999px;
+    font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:0.1em; padding:0.6em 1.2em;
+    box-shadow:0 0 12px rgba(61,243,236,0.3); transition:background 0.15s ease, color 0.15s ease;
+  }
+  .notif-settings-btn:hover{ background:var(--cyan); color:#000; }
+  .notif-settings-ico{ font-size:20px; line-height:1; display:inline-block; transition:transform 0.4s ease; }
+  .notif-settings-btn:hover .notif-settings-ico{ transform:rotate(90deg); }
+  .notif-filter-line{ display:flex; align-items:center; gap:0.6rem; min-width:0; }
+  .notif-filter-l{ flex:0 0 5.6rem; color:rgba(255,255,255,0.5); font-size:10px; font-weight:700; letter-spacing:0.14em; }
+  .notif-filter-line .notif-chips{ flex:1 1 auto; min-width:0; }
+  .notif-coll-chip{ display:inline-flex; align-items:center; gap:0.45em; padding-left:0.35em; }
+  .notif-coll-chip img{ width:20px; height:20px; border-radius:50%; object-fit:cover; display:block; }
+  /* Header while N0T!F!CAT!0NS is open: BACK sits beside the title (not
+     a row above it), so the title moves up. */
+  .scylla-nav-panel.notif-open > .scylla-back-slot{ position:absolute; left:1rem; top:2.35rem; margin:0; z-index:3; }
+  .scylla-nav-panel.notif-open > .scylla-system-header{ margin:0.1rem 0 0.7rem; }
+  /* Alert settings: collection picker. */
+  .notify-colls{ display:flex; flex-wrap:wrap; justify-content:center; gap:0.4rem; margin:0.2rem 0 1rem; }
+  .notify-coll{
+    position:relative; display:inline-flex; align-items:center; gap:0.45em; cursor:pointer;
+    background:#000; color:#fff; border:1px solid rgba(255,255,255,0.25); border-radius:999px;
+    font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.06em; padding:0.35em 0.9em 0.35em 0.35em;
+  }
+  .notify-coll img{ width:24px; height:24px; border-radius:50%; object-fit:cover; display:block; }
+  .notify-coll:hover{ border-color:var(--cyan); }
+  .notify-coll.on{ border-color:var(--cyan); background:rgba(61,243,236,0.12); color:var(--cyan); box-shadow:0 0 10px var(--cyan-glow); }
+  .notify-coll-dot{ position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green-glow); }
+  @media (max-width:700px){
+    /* Phones: no S!GNAL N0DE / CHANGE ACC0UNT / S!GN 0UT here — just the
+       title, fitted to one line, with a clear ‹ back button beside it. */
+    .scylla-nav-panel.notif-open > .scylla-nav-readout,
+    .scylla-nav-panel.notif-open > .scylla-header-account-actions{ display:none !important; }
+    .scylla-nav-panel.notif-open > .scylla-back-slot{ left:0.6rem; top:0.85rem; }
+    .scylla-nav-panel.notif-open > .scylla-back-slot .profile-holdings-viewmore{ font-size:0 !important; width:38px; height:38px; padding:0 !important; display:inline-flex; align-items:center; justify-content:center; }
+    .scylla-nav-panel.notif-open > .scylla-back-slot .profile-holdings-viewmore::before{ content:'‹'; font-size:26px; line-height:1; }
+    .scylla-nav-panel.notif-open > .scylla-system-header{ margin:0 0 0.7rem; padding:0 2.6rem; min-height:38px; display:flex; align-items:center; justify-content:center; }
+    .scylla-nav-panel.notif-open .scylla-system-header-title{ font-size:clamp(15px, 5vw, 24px); letter-spacing:0.04em; white-space:nowrap; }
+    .notif-topline{ gap:0.5rem; }
+    .notif-settings-btn{ width:100%; justify-content:center; font-size:15px; padding:0.7em 1em; }
+    .notif-topline .notif-actions{ justify-content:space-between; }
+    .notif-filter-line{ flex-direction:column; align-items:stretch; gap:0.3rem; }
+    .notif-filter-l{ flex:0 0 auto; }
+  }
   .notify-row-watch small{ font-size:11px; font-weight:400; opacity:0.7; margin-left:0.4em; }
   .notify-row-watch{ border-color:rgba(245,197,24,0.55) !important; }
   .notify-toast.nt-clickable .nt-icon{ font-size:22px; flex:0 0 auto; }
@@ -12270,8 +12319,10 @@ const SWAP_HTML = `<!DOCTYPE html>
       <div class="pigeons-calc-panel sales-modal-panel sales-styled notify-panel">
         <button type="button" class="simple-picker-close sales-styled-close" id="notifyCloseBtn" title="CL0SE">&times;</button>
         <img class="buyswap-thumb" id="notifyCoinThumb" src="" alt="" style="display:none;">
-        <div class="history-title">N0T!F!CAT!0NS</div>
+        <div class="history-title">ALERT SETT!NGS</div>
         <div class="node-eyebrow" id="notifyEyebrow"></div>
+        <!-- Pick which collection's alerts to set (2026-09-29). -->
+        <div class="notify-colls" id="notifyColls"></div>
         <div class="notify-phone" id="notifyPhone"></div>
         <div class="notify-toggles" id="notifyToggles"></div>
         <div class="notify-note" id="notifyNote"></div>
@@ -12592,18 +12643,21 @@ const SWAP_HTML = `<!DOCTYPE html>
              (CLEAR ALL always visible), then the filter chips on one
              swipeable line (reported live 2026-09-29: "layout is poor, I
              need to be able to clear all"). -->
+        <!-- 2026-09-29 rework: big ⚙ ALERT SETT!NGS up top, then the
+             tools, then C0LLECT!0N chips and TYPE chips (reported live:
+             "sort by collection... make it simple and enjoyable"). -->
         <div class="notif-toolbar">
-          <div class="notif-head">
-            <span class="notif-head-title">N0T!F!CAT!0NS</span>
-            <span class="notif-head-count" id="notifHeadCount"></span>
+          <div class="notif-topline">
+            <button type="button" class="notif-settings-btn" id="notifSettingsBtn"><span class="notif-settings-ico">⚙</span><span>ALERT SETT!NGS</span></button>
+            <div class="notif-actions">
+              <span class="notif-head-count" id="notifHeadCount"></span>
+              <button type="button" class="notif-action-btn" id="notifSortBtn">NEWEST F!RST</button>
+              <button type="button" class="notif-action-btn" id="notifReadAllBtn">✓ READ ALL</button>
+              <button type="button" class="notif-action-btn notif-action-danger" id="notifClearBtn">CLEAR ALL</button>
+            </div>
           </div>
-          <div class="notif-actions">
-            <button type="button" class="notif-action-btn" id="notifSortBtn">NEWEST F!RST</button>
-            <button type="button" class="notif-action-btn" id="notifReadAllBtn">✓ READ ALL</button>
-            <button type="button" class="notif-action-btn" id="notifSettingsBtn" title="SETT!NGS">⚙</button>
-            <button type="button" class="notif-action-btn notif-action-danger" id="notifClearBtn">CLEAR ALL</button>
-          </div>
-          <div class="notif-chips" id="notifChips"></div>
+          <div class="notif-filter-line"><span class="notif-filter-l">C0LLECT!0N</span><div class="notif-chips notif-colls" id="notifColls"></div></div>
+          <div class="notif-filter-line"><span class="notif-filter-l">TYPE</span><div class="notif-chips" id="notifChips"></div></div>
         </div>
         <div class="notif-list" id="notifList"></div>
         <button type="button" class="profile-holdings-viewmore" id="profileNotifBack">← BACK</button>
@@ -15017,7 +15071,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'mainframeDexThirdeye','mainframeDexBear','mainframeDexCult','mainframeDexSmoki',
    'topTabs','topTabsWrap','flockTabLabel','scyllaWalletWrap','walletSwitchDropdown','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
-   'scyllaNavStaticBg','scyllaNavReadout',
+   'scyllaNavStaticBg','scyllaNavReadout','notifColls','notifyColls',
    'profileBoxGrid','profileTabOffersBadge','profileTabMessagesBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelMyNfts','myNftsPicker','myNftsPickerGrid','myNftsGrid','myNftsGridBackBtn','myNftsGridStatus','myNftsGridItems','myNftsBackBtn',
    'myNftsSearchInput','myNftsSearchClearBtn','myNftsEditionToggle','myNftsSortSelect','myNftsTraitCatSelect','myNftsTraitValSelect','myNftsTraitAddBtn','myNftsTraitChips',
@@ -25026,12 +25080,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
   });
   refreshPushState();
+  // Which collection the ALERT SETT!NGS popup is showing (null = the one
+  // you're browsing). Chips along the top switch it (2026-09-29).
+  var notifySettingsKey = null;
+  function notifySettingsCollection(){
+    var k = notifySettingsKey || state.collection;
+    return COLLECTION_META[k] && COLLECTION_META[k].tradeable ? k : 'pigeons';
+  }
   function renderNotifyModal(){
-    var key = state.collection;
+    var key = notifySettingsCollection();
+    el.notifyColls.innerHTML = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; }).map(function(k){
+      var m = COLLECTION_META[k], c = (notifyPrefs.collections && notifyPrefs.collections[k]) || {};
+      var live = notifyTypesOf(c).length > 0;
+      return '<button type="button" class="notify-coll' + (k === key ? ' on' : '') + (live ? ' live' : '') + '" data-coll="' + escapeHtml(k) + '">' +
+        (m.thumb ? '<img src="' + escapeHtml(m.thumb) + '" alt="">' : '') + '<span>' + escapeHtml(m.label) + '</span>' + (live ? '<i class="notify-coll-dot"></i>' : '') + '</button>';
+    }).join('');
     var meta = COLLECTION_META[key] || {};
     var on = (notifyPrefs.collections && notifyPrefs.collections[key]) || {};
     if (meta.thumb){ el.notifyCoinThumb.src = meta.thumb; el.notifyCoinThumb.style.display = ''; } else el.notifyCoinThumb.style.display = 'none';
-    el.notifyEyebrow.textContent = meta.label || key;
+    el.notifyEyebrow.textContent = 'ALERTS F0R ' + (meta.label || key);
     // WATCHL!ST 0NLY (2026-09-28) on top: when on, the switches below only
     // fire for NFTs you've starred in this collection.
     var watchedHere = watchedIdsFor(key).length;
@@ -25043,8 +25110,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.notifyNote.textContent = (MY_WALLET ? 'SAVED T0 Y0UR WALLET.' : 'SAVED 0N TH!S DEV!CE — L0G !N T0 KEEP THEM EVERYWHERE.') + ' P0P-UPS SH0W WH!LE TH!S S!TE !S 0PEN.';
     refreshPushState().then(function(){ renderPhoneSection(); });
   }
+  el.notifyColls.addEventListener('click', function(e){
+    var b = e.target.closest('.notify-coll');
+    if (!b) return;
+    notifySettingsKey = b.getAttribute('data-coll');
+    renderNotifyModal();
+  });
   el.openNotifyBtn.addEventListener('click', function(e){
     e.stopPropagation();
+    notifySettingsKey = null;
     renderNotifyModal();
     el.notifyModal.style.display = 'flex';
   });
@@ -25053,7 +25127,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.notifyToggles.addEventListener('click', function(e){
     var row = e.target.closest('.notify-row');
     if (!row) return;
-    var key = state.collection, type = row.getAttribute('data-type');
+    var key = notifySettingsCollection(), type = row.getAttribute('data-type');
     notifyPrefs.collections = notifyPrefs.collections || {};
     var c = notifyPrefs.collections[key] = notifyPrefs.collections[key] || {};
     if (type === 'watchOnly'){
@@ -25067,6 +25141,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (type === 'watchOnly' && c.watchOnly && !c.watch.length) el.notifyNote.textContent = 'N0TH!NG STARRED !N TH!S C0LLECT!0N YET — STAR NFTS ☆ 0N DATABASE F!RST.';
     saveNotifyPrefs();
     pollNotifications();
+    // Keep the collection chips' green "on" dots current.
+    var chip = el.notifyColls.querySelector('.notify-coll[data-coll="' + key + '"]');
+    if (chip){
+      var live = !!notifyPrefs.collections[key] && notifyTypesOf(notifyPrefs.collections[key]).length > 0;
+      chip.classList.toggle('live', live);
+      var dot = chip.querySelector('.notify-coll-dot');
+      if (live && !dot) chip.insertAdjacentHTML('beforeend', '<i class="notify-coll-dot"></i>');
+      if (!live && dot) dot.parentNode.removeChild(dot);
+    }
   });
   function notifyPriceText(e, key){
     if (!e.price) return '';
@@ -25176,7 +25259,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     { f: 'offer', label: '0FFERS' }, { f: 'sale', label: 'SALES' }, { f: 'listing', label: 'L!ST!NGS' }, { f: 'other', label: '0THER' }
   ];
   var NOTIF_ICONS = { message: '✉', offer: '🤝', sale: '💰', listing: '🏷', other: '⚡' };
-  var notifView = { filter: 'all', oldestFirst: false };
+  var notifView = { filter: 'all', collection: 'all', oldestFirst: false };
   var notifLog = null;
   function notifKey(){ return 'skyllaNotifLog:' + (MY_WALLET || 'guest'); }
   function notifLoad(){ if (notifLog === null) notifLog = lsGet(notifKey(), []); if (!Array.isArray(notifLog)) notifLog = []; return notifLog; }
@@ -25357,7 +25440,18 @@ const SWAP_HTML = `<!DOCTYPE html>
         (counts[f.f] ? ' <span class="notif-chip-n">' + counts[f.f] + '</span>' : '') + '</button>';
     }).join('');
     el.notifSortBtn.textContent = notifView.oldestFirst ? '⇅ 0LDEST' : '⇅ NEWEST';
+    // C0LLECT!0N chips — every collection in the pile, plus ALL.
+    var collCounts = {};
+    log.forEach(function(n){ if (n.collection) collCounts[n.collection] = (collCounts[n.collection] || 0) + 1; });
+    if (notifView.collection !== 'all' && !collCounts[notifView.collection]) notifView.collection = 'all';
+    el.notifColls.innerHTML = '<button type="button" class="notif-chip' + (notifView.collection === 'all' ? ' on' : '') + '" data-coll="all">ALL' + (log.length ? ' <span class="notif-chip-n">' + log.length + '</span>' : '') + '</button>' +
+      Object.keys(collCounts).map(function(k){
+        var m = COLLECTION_META[k] || {};
+        return '<button type="button" class="notif-chip notif-coll-chip' + (notifView.collection === k ? ' on' : '') + '" data-coll="' + escapeHtml(k) + '">' +
+          (m.thumb ? '<img src="' + escapeHtml(m.thumb) + '" alt="">' : '') + escapeHtml(m.label || k) + ' <span class="notif-chip-n">' + collCounts[k] + '</span></button>';
+      }).join('');
     var rows = log.filter(function(n){
+      if (notifView.collection !== 'all' && n.collection !== notifView.collection) return false;
       if (notifView.filter === 'all') return true;
       if (notifView.filter === 'unread') return !n.read;
       return n.cat === notifView.filter;
@@ -25405,6 +25499,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     notifView.filter = b.getAttribute('data-filter');
     renderNotifPanel();
   });
+  el.notifColls.addEventListener('click', function(e){
+    var b = e.target.closest('.notif-chip');
+    if (!b) return;
+    notifView.collection = b.getAttribute('data-coll');
+    renderNotifPanel();
+  });
   el.notifSortBtn.addEventListener('click', function(){ notifView.oldestFirst = !notifView.oldestFirst; renderNotifPanel(); });
   el.notifReadAllBtn.addEventListener('click', function(){
     notifLoad().forEach(function(n){ n.read = true; });
@@ -25425,6 +25525,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderNotifPanel();
   });
   el.notifSettingsBtn.addEventListener('click', function(){
+    notifySettingsKey = notifView.collection !== 'all' && COLLECTION_META[notifView.collection] && COLLECTION_META[notifView.collection].tradeable ? notifView.collection : null;
     renderNotifyModal();
     el.notifyModal.style.display = 'flex';
   });
@@ -29020,6 +29121,10 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.profileTabPanelMessages.style.display = tab === 'messages' ? '' : 'none';
     el.profileTabPanelNotifications.style.display = tab === 'notifications' ? '' : 'none';
     if (tab === 'notifications') renderNotifPanel();
+    // Compact header on N0T!F!CAT!0NS (2026-09-29): title higher, BACK
+    // beside it, no S!GNAL N0DE / account buttons on phones.
+    var navPanel = el.profileTabPanelNotifications.closest('.scylla-nav-panel');
+    if (navPanel) navPanel.classList.toggle('notif-open', tab === 'notifications');
     if (tab !== 'messages') chatStopPoll();
     el.profileTabPanelOffers.style.display = tab === 'offers' ? '' : 'none';
     el.profileTabPanelCollections.style.display = tab === 'collections' ? '' : 'none';
