@@ -220,7 +220,6 @@ function renderRarityHtml() {
       <div class="layer-desc">
         <a href="/assets/rarity-data/fuzzy-traits.json" style="color:#3df3ec;">fuzzy-traits.json</a> &mdash; Fuzzybears<br>
         <a href="/assets/rarity-data/yzzuf-traits.json" style="color:#3df3ec;">yzzuf-traits.json</a> &mdash; sraebyzzuF (traits exactly as published, backwards)<br>
-        <a href="/assets/rarity-data/fuzzybars-traits.json" style="color:#3df3ec;">fuzzybars-traits.json</a> &mdash; Fuzzy Bars<br>
         Each has a <code>.sha256</code> seal beside it, same as the Pigeons file.
       </div>
     </div>

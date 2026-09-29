@@ -5103,7 +5103,6 @@ const RARITY_SNAPSHOT_FILES = {
   king: '/assets/rarity-data/king-traits.json',
   fuzzy: '/assets/rarity-data/fuzzy-traits.json',
   yzzuf: '/assets/rarity-data/yzzuf-traits.json',
-  fuzzybars: '/assets/rarity-data/fuzzybars-traits.json',
 };
 
 // yzzuf (sraebyzzuF) publishes every trait backwards ("ruF" / "paC
