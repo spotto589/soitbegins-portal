@@ -4726,7 +4726,7 @@ const RARITY_CRAWL_KEY = 'pswap:raritycrawl:v1';
 // flat layer (RARITY_NUMBER_MULTIPLIER), and doesn't count toward 1 0F N.
 // '6': RANK and headline score are now the Trait Score (Layer 1 only);
 // the full layered formula is kept as the separate Lore Score.
-const RARITY_FORMULA_VERSION = '7'; // 7: category names matched ignoring case/spaces, real population (2026-09-29)
+const RARITY_FORMULA_VERSION = '8'; // 7: category names matched ignoring case/spaces, real population; 8: Fuzzy Bars number order (2026-09-29)
 // Layer 3 multiplier by how many Pigeons share a set combination (see
 // maybeRefreshRarityScores' own Layer 3 comment).
 const LAYER3_MULTIPLIERS = { 1: 5.89, 2: 3.21, 3: 1.23 };
@@ -5429,6 +5429,11 @@ function normalizeSnapshot(snapshot) {
   const dist = snapshotFromSealedFile({ items: Object.keys(items).map(id => ({ nftId: id, ...items[id] })) }).dist;
   return { ...snapshot, items, dist };
 }
+// Fuzzy Bars (2026-09-29): every bar shares the same few traits, so
+// within one trait group the LOWER number is rarer — each bar adds
+// 1 − number ÷ 10,000 (always under 1, so it never jumps a bar past one
+// with rarer traits: the smallest trait gap there is 1.5).
+const RARITY_NUMBER_ORDER = { fuzzybars: true };
 function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
   const raw = {};
   snapshot = normalizeSnapshot(snapshot);
@@ -5436,7 +5441,12 @@ function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
   for (const nftId of Object.keys(snapshot.items)) {
     const it = snapshot.items[nftId];
     // Layer 1 (see scoreAgainstDistribution's own comment).
-    const { score: baseScore, breakdown } = scoreAgainstDistribution(it.attributes, snapshot.dist, collectionSizeApprox);
+    let { score: baseScore, breakdown } = scoreAgainstDistribution(it.attributes, snapshot.dist, collectionSizeApprox);
+    if (RARITY_NUMBER_ORDER[collectionKey] && typeof it.number === 'number') {
+      const bonus = 1 - it.number / 10000;
+      baseScore += bonus;
+      breakdown = breakdown.concat([{ category: 'Number', value: '#' + it.number, count: null, percent: 100, contribution: Math.round(bonus * 10000) / 10000, math: '1 - ' + it.number + ' / 10,000' }]);
+    }
     // __no_trait__ never actually appears in Deeptide's own per-item
     // traits array (an empty category is just omitted, see
     // deeptideListingToPigeon) — the filter here is just a safety net.

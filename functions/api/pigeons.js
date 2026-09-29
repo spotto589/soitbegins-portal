@@ -417,6 +417,14 @@ async function groupResponse(context, coll, params) {
   const hasGmap = gmap && Object.keys(gmap).length > 0;
   // Anything about the token, or one NFT, goes to a single member.
   const tokenQs = ['pigeonsRate', 'pigeonsAccountLine', 'pigeonsQuote', 'coinStats', 'coinHistory', 'tokenHolders', 'walletProfileCoins', 'nftDescription', 'events'];
+  // Number search: every member can have that number (Fuzzybear #589 and
+  // raebyzzuF #589) — ask them all.
+  if (params.get('number') && !params.get('detail') && !params.get('history')) {
+    const all = await Promise.all(members.map(m => callMember(context, params, m, {}).then(j => ({ m, j }))));
+    const items = [];
+    all.forEach(({ m, j }) => ((j && j.items) || []).forEach(it => items.push(applyGroupRarity({ ...it, collectionKey: m }, hasGmap ? gmap : null))));
+    return json({ items, notIndexed: !items.length && all.some(({ j }) => j && j.notIndexed) });
+  }
   if (tokenQs.some(k => params.get(k) === '1') || params.get('detail') || params.get('history') || params.get('number')) {
     const j = await callMember(context, params, coll.tokenMember || members[0], {});
     return json(j || { error: 'group_failed' });

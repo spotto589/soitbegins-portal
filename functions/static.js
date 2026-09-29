@@ -367,7 +367,7 @@ const SWAP_HTML = `<!DOCTYPE html>
      (tradeable vs not), which is a different axis entirely. */
   body.collection-non-pigeons .edition-toggle:not(.coll-group-toggle),
   .coll-group-toggle[style*="none"],
-  body.collection-non-pigeons .search-row{ display:none; }
+  body.collection-non-pigeons .search-row:not(.db-search-row){ display:none; }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
   /* Site-wide scrollbar — every scrollable box (the page itself, popups,
@@ -13504,7 +13504,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <div class="edition-toggle coll-group-toggle" id="collGroupSelect" style="display:none;"></div>
           <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
           <div class="results-header-row">
-            <div class="search-row">
+            <div class="search-row db-search-row">
               <input class="search-input" id="searchInput" placeholder="# 0R WALLET">
               <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
               <button class="bar-btn" id="searchBtn">GO</button>
@@ -13656,7 +13656,6 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
           <div id="resultsArea"></div>
           <div class="scroll-sentinel" id="scrollSentinel"></div>
-          <div class="load-more-note" id="loadMoreNote" style="display:none;">L0AD!NG M0RE P!GE0NS...</div>
           <div class="end-of-collection-note" id="endOfCollectionNote" style="display:none;">// END 0F C0LLECT!0N</div>
         </div>
       </div>
@@ -15307,7 +15306,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'traitRows','clearTraitsBtn',
    'traitsHoverWrap','traitsHoverLabel','traitsFlyout','traitsFlyoutSelected','traitsFlyoutCats','traitsFlyoutVals','traitsFlyoutBack','traitsCatsScrollPrevBtn','traitsCatsScrollNextBtn',
    'traitsFlyoutSortRarity','traitsFlyoutSortAz','traitsFlyoutSearchInput',
-   'statusLine','resultsQuick','quickCartBtn','quickCartCount','quickSweepBtn','quickMultiListBtn','quickMultiListCount','multiListModal','mlClearBtn','mlCloseBtn','mlAddAllBtn','mlSetAll','mlSetAllToken','mlList','mlDuration','mlTotal','mlStatus','mlSubmitBtn','resultsBlock','resultsArea','scrollSentinel','loadMoreNote','endOfCollectionNote',
+   'statusLine','resultsQuick','quickCartBtn','quickCartCount','quickSweepBtn','quickMultiListBtn','quickMultiListCount','multiListModal','mlClearBtn','mlCloseBtn','mlAddAllBtn','mlSetAll','mlSetAllToken','mlList','mlDuration','mlTotal','mlStatus','mlSubmitBtn','resultsBlock','resultsArea','scrollSentinel','endOfCollectionNote',
    'salesScrollBox','salesArea','salesScrollSentinel','salesLoadMoreNote','salesEndNote','salesCurrencyToggle',
    'nodeHeaderPanel','nodeAddr','nodeCount','backToFullCollectionLink','searchPanelTitle','searchPanelSubtitle','walletScopeBanner','walletScopeCoins',
    'flockGridPanel',
@@ -18149,7 +18148,6 @@ const SWAP_HTML = `<!DOCTYPE html>
     // this), this response is for a sort/filter the user has already
     // moved on from and must be discarded, not rendered.
     var myQueryToken = state.queryToken;
-    el.loadMoreNote.style.display = '';
     var filters = activeFilters();
     var isEdition = state.edition === 'LOW' || state.edition === 'HIGH';
     var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_XRP_DESC' || state.sort === 'AVG_SALE_PIGEONS_ASC';
@@ -18242,7 +18240,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       // the time a stale response like this one arrives.
       if (myQueryToken !== state.queryToken){ if (onDone) onDone(); return; }
       state.loading = false;
-      el.loadMoreNote.style.display = 'none';
       el.resetDbBtn.style.display = '';
       var rawItems = data.items || [];
       if (groupSig){ state.groupCursor = data.gcur || null; state.groupCursorSig = groupSig; }
@@ -18378,7 +18375,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       // one's loading state or paint an error over its results.
       if (myQueryToken !== state.queryToken){ if (onDone) onDone(); return; }
       state.loading = false;
-      el.loadMoreNote.style.display = 'none';
       el.resetDbBtn.style.display = '';
       if (!state.items.length) el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['C0ULD N0T REACH THE C0LLECT!0N. TRY AGA!N.'], false);
       pendingTraitScroll = false;
@@ -19056,7 +19052,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var isNumber = /^#?\\d+$/.test(q);
     if (!isNumber){
       el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
-      el.resultsArea.innerHTML = emptyStateHtml('// !NVAL!D QUERY', ['ENTER A P!GE0N NUMBER (E.G. 1842) 0R A WALLET ADDRESS.'], true);
+      el.resultsArea.innerHTML = emptyStateHtml('// !NVAL!D QUERY', ['ENTER A ' + collectionItemLabel() + ' NUMBER (E.G. 589) 0R A WALLET ADDRESS.'], true);
       wireClearSearch();
       return;
     }
@@ -19067,12 +19063,13 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (!state.items.length){
         el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
         el.resultsArea.innerHTML = data.notIndexed
-          ? emptyStateHtml('// N0T YET !NDEXED', ['QUERY :: "' + q + '"', 'TH!S P!GE0N HAS N0T BEEN SEEN BY THE NUMBER !NDEX YET.', 'TRY AGA!N SH0RTLY — !T CRAWLS THE C0LLECT!0N !N THE BACKGR0UND.'], true)
-          : emptyStateHtml('// N0 P!GE0N MATCH', ['QUERY :: "' + q + '"'], true);
+          ? emptyStateHtml('// N0T YET !NDEXED', ['QUERY :: "' + q + '"', 'TH!S ' + collectionItemLabel() + ' HAS N0T BEEN SEEN BY THE NUMBER !NDEX YET.', 'TRY AGA!N SH0RTLY — !T CRAWLS THE C0LLECT!0N !N THE BACKGR0UND.'], true)
+          : emptyStateHtml('// N0 ' + collectionItemLabel() + ' MATCH', ['QUERY :: "' + q + '"'], true);
         wireClearSearch();
         return;
       }
-      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">1</span><br>P!GE0N #' + state.items[0].number;
+      // An ALL view can match one per collection (Fuzzybear #589 + raebyzzuF #589).
+      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">' + state.items.length + '</span>' + state.items.map(function(p){ return '<br>' + collectionItemLabel(p) + ' ' + itemNumberLabel(p); }).join('');
       renderResultsReplace(state.items);
     }).catch(function(){
       el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
@@ -26765,7 +26762,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       var displayValue = r.value === '__no_trait__' ? 'N0NE' : r.value;
       return '<div class="rb-row">' +
         '<div class="rb-trait">' + escapeHtml(r.category) + ': <span class="rb-value">' + escapeHtml(displayValue) + '</span></div>' +
-        '<div class="rb-math">' + r.percent + '% 0F P!GE0NS &nbsp;&rarr;&nbsp; 100 &divide; ' + r.percent + ' &nbsp;=&nbsp; ' + greenNum(r.contribution) + '</div>' +
+        (r.math
+          ? '<div class="rb-math">L0WER NUMBER = RARER &nbsp;&rarr;&nbsp; ' + escapeHtml(r.math) + ' &nbsp;=&nbsp; ' + greenNum(r.contribution) + '</div>'
+          : '<div class="rb-math">' + r.percent + '% 0F ' + collectionItemLabel(p) + 'S &nbsp;&rarr;&nbsp; 100 &divide; ' + r.percent + ' &nbsp;=&nbsp; ' + greenNum(r.contribution) + '</div>') +
       '</div>';
     }).join('');
     // RAR!TY SC0RE (Layer 1, the trait maths) is the real score now — the one rank
