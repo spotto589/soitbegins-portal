@@ -3372,6 +3372,29 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   .sale-currency-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
   .sale-currency-btn-active{ border-color:var(--green); color:var(--green); background:rgba(0,255,140,0.08); }
+  /* Every $TOKEN / XRP switch (2026-09-29): SATCHEL's segmented bar look,
+     each side with its own badge — the collection's coin head (--token-
+     thumb, set per collection) or a round XRP mark; B0TH shows both. */
+  .sale-currency-toggle:has(> .sale-currency-btn[data-currency]){
+    display:flex; gap:3px; padding:3px; width:min(100%, 420px); margin-left:auto; margin-right:auto; box-sizing:border-box;
+    border:1px solid rgba(var(--collection-accent-rgb), 0.55); border-radius:var(--radius); background:#000;
+  }
+  .sale-currency-toggle > .sale-currency-btn[data-currency]{
+    flex:1 1 0 !important; min-width:0 !important; margin:0; border:none !important; border-radius:var(--radius) !important;
+    background:none; color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:0.5em;
+    padding:0.5em 0.6em !important; white-space:nowrap; box-shadow:none;
+  }
+  .sale-currency-toggle > .sale-currency-btn[data-currency]:hover{ color:#fff; background:rgba(255,255,255,0.06); }
+  .sale-currency-toggle > .sale-currency-btn[data-currency].sale-currency-btn-active{ background:rgba(var(--collection-accent-rgb), 0.9) !important; color:#fff !important; }
+  .sale-currency-btn[data-currency]::before, .sale-currency-btn[data-currency="both"]::after{
+    content:''; flex:0 0 auto; width:1.55em; height:1.55em; border-radius:50%; box-sizing:border-box;
+    background-size:cover; background-position:center; background-repeat:no-repeat; border:1px solid rgba(255,255,255,0.45);
+  }
+  .sale-currency-btn:is([data-currency="token"], [data-currency="PIGEONS"], [data-currency="both"])::before{ background-image:var(--token-thumb, url('/assets/mainframe/pigeons-coin.webp')); background-color:#222; }
+  .sale-currency-btn:is([data-currency="xrp"], [data-currency="XRP"])::before, .sale-currency-btn[data-currency="both"]::after{
+    background-color:#000; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M4.6 4h2.7l3.2 3.2a2.1 2.1 0 0 0 3 0L16.7 4h2.7l-4.6 4.6a4 4 0 0 1-5.6 0zM4.6 20h2.7l3.2-3.2a2.1 2.1 0 0 1 3 0l3.2 3.2h2.7l-4.6-4.6a4 4 0 0 0-5.6 0z'/></svg>"); background-size:62%;
+  }
+  .sale-currency-btn[data-currency="both"]::after{ margin-left:-0.35em; order:-1; }
   /* No max-height/overflow of its own any more — reported live as not
      needing "two scroll bars" (this box scrolling internally, inside the
      whole page also scrolling). Now just flows as part of the normal
@@ -8734,6 +8757,15 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
   }
   .confirm-pigeon-num-clickable{ cursor:pointer; }
+  /* Bigger all round, amount in green (2026-09-29). */
+  #offerConfirmModal .offer-confirm-panel{ width:min(520px, 100%); }
+  #offerConfirmModal .confirm-field-label{ font-size:15px; letter-spacing:0.16em; color:rgba(255,255,255,0.7); margin-bottom:0.6rem; }
+  #offerConfirmModal .confirm-field-value-big{ font-size:40px; color:rgb(52,255,133); text-shadow:0 0 12px rgba(52,255,133,0.45); margin-bottom:1rem; }
+  #offerConfirmModal .confirm-pigeon-thumb{ width:200px; height:200px; transition:transform 0.15s ease, border-color 0.15s ease; }
+  #offerConfirmModal .confirm-pigeon-thumb:hover{ transform:scale(1.03); border-color:var(--cyan); }
+  #offerConfirmModal .confirm-pigeon-num{ font-size:22px; font-weight:700; letter-spacing:0.06em; }
+  #offerConfirmModal .node-eyebrow{ font-size:17px; }
+  #offerConfirmModal .index-line{ font-size:15px; }
   .confirm-pigeon-num-clickable:hover{ text-decoration:underline; }
   /* ---- 0FFER CONFIRMATION — a real second popup (stacked on top of the
      amount-entry one, see showOfferConfirm), not a showScreen navigation
@@ -22502,6 +22534,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function closeOfferConfirmModal(){
     el.offerConfirmModal.style.display = 'none';
+    offerConfirmReturn = false;
     offerTarget = null;
     if (offerSignalPollTimer) clearTimeout(offerSignalPollTimer);
     offerSignalUuid = null;
@@ -22512,11 +22545,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // closes the popup first (openDetail is a showScreen navigation, not
   // another stacked popup — see gotcha #10 in HANDOFF.md, popups don't
   // nest CSS-wise) rather than leaving it open underneath.
+  // Opens the full Pigeon page; its BACK comes straight back to this
+  // pop-up, offer and all (reported live 2026-09-29) — so the pop-up is
+  // only hidden, not cleared.
+  var offerConfirmReturn = false;
   function openOfferConfirmPigeonDetail(){
     if (!offerTarget) return;
-    var nftId = offerTarget.nftId;
-    closeOfferConfirmModal();
-    openDetail(nftId);
+    offerConfirmReturn = true;
+    el.offerConfirmModal.style.display = 'none';
+    openDetail(offerTarget.nftId);
   }
   el.offerConfPigeonImg.addEventListener('click', openOfferConfirmPigeonDetail);
   el.offerConfPigeonNum.addEventListener('click', openOfferConfirmPigeonDetail);
@@ -23769,6 +23806,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // The art itself, untinted (the purple wash over it made it look faded
     // — reported live 2026-09-27).
     el.pigeonsBarThumb.style.backgroundImage = 'url("' + meta.thumb + '")';
+    // The coin head on every $TOKEN / XRP switch (see .sale-currency-btn).
+    document.documentElement.style.setProperty('--token-thumb', 'url("' + meta.thumb + '")');
   }
   // Everything in the trustline banner that isn't already driven by
   // fmtPigeons/collectionItemLabel — title text, issuer address + COPY,
@@ -26287,7 +26326,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // itself again in the same tick since the click's real target (inside
     // #myNftsGridItems) isn't inside #screenDetail yet at the moment
     // DETAIL just opened.
-    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn') && !e.target.closest('.sale-row') && !e.target.closest('.profile-nft-pick') && !e.target.closest('.profile-watchlist-tile') && !e.target.closest('#cartModal')){
+    if (el.screenDetail.style.display !== 'none' && !el.screenDetail.contains(e.target) && !el.detailLightbox.contains(e.target) && !el.historyModal.contains(e.target) && !e.target.closest('.pigeon-img-box') && !e.target.closest('.simple-picker-view-btn') && !e.target.closest('.sale-row') && !e.target.closest('.profile-nft-pick') && !e.target.closest('.profile-watchlist-tile') && !e.target.closest('#cartModal') && !e.target.closest('#offerConfirmModal')){
       // .profile-watchlist-tile too (reported live: clicking an NFT in
       // WATCHL!ST should go straight to its expanded view — it opened and
       // closed again in the same click, same story as above).
@@ -27282,6 +27321,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   el.historyModal.addEventListener('click', function(e){ if (e.target === el.historyModal) closeHistoryModal(); });
   function goBackFromDetail(){
     showScreen('browse');
+    // Came from the 0FFER pop-up's Pigeon picture: back into that pop-up.
+    if (offerConfirmReturn && offerTarget){
+      offerConfirmReturn = false;
+      el.offerConfirmModal.style.display = 'flex';
+    }
     // Restores whatever the address bar showed before openDetail's own
     // replaceState swapped it to the Pigeon's deep link — same
     // replaceState-only approach (see urlBeforeDetail's own comment), so
