@@ -20,6 +20,8 @@ function healthHtml(h) {
   return '<p>Every day the site re-checks the stored scores of every collection: every item scored, every item has a row for every trait category, the count of every trait matches a fresh recount, and every score is exactly the sum of its rows. Last check: <strong>' + when + '</strong>.</p><div class="hc-list">' + rows + '</div>';
 }
 
+const SEALED_EXTRA = [['king', 'K!NG'], ['seal', 'SEAL'], ['sealscrolls', 'SEAL SCR0LLS'], ['cult', 'CULT']];
+
 function renderRarityHtml(health) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -244,7 +246,9 @@ function renderRarityHtml(health) {
       <div class="layer-desc">
         <a href="/assets/rarity-data/fuzzy-traits.json" style="color:#3df3ec;">fuzzy-traits.json</a> &mdash; Fuzzybears<br>
         <a href="/assets/rarity-data/yzzuf-traits.json" style="color:#3df3ec;">yzzuf-traits.json</a> &mdash; sraebyzzuF (traits exactly as published, backwards)<br>
-        Each has a <code>.sha256</code> seal beside it, same as the Pigeons file.
+        Each has a <code>.sha256</code> seal beside it, same as the Pigeons file.<br><br>
+        <span style="color:rgba(232,232,232,0.6);">EVERY 0THER SEALED C0LLECT!0N ::</span>
+        ${SEALED_EXTRA.map(([k, name]) => '<a href="/assets/rarity-data/' + k + '-traits.json" style="color:#3df3ec;">' + name + '</a>').join(' &middot; ')}
       </div>
     </div>
 

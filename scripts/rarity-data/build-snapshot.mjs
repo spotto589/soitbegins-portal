@@ -54,7 +54,21 @@ const COLLECTIONS = {
     taxon: 1,
     numberFromName: name => { const m = String(name || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : null; },
   },
+  // Every other collection (2026-09-29). Issuer/taxon read straight out of
+  // the collections' own NFT IDs (an NFTokenID encodes both).
+  seal: { issuer: 'rst9Sq8mVxK8b7BbgFs4VmnVtfm7N2qN4j', taxon: 1 },
+  sealscrolls: { issuer: 'rUSdvkwdGnU8qpfRR2sa1h7JExzBi7fUHr', taxon: 2 },
+  phnixs: { issuer: 'rMiNJh6eQE5fSpgke5vrjUGiU9rXhrgoSA', taxon: 1 },
+  teddybg: { issuer: 'rwYNpdWqnjB43doyurzezv2yRvgMMABDGy', taxon: 0 },
+  conspiracy: { issuer: 'r447JrNyi61jstafY19bMsddhUxEhfJCSe', taxon: 2 },
+  whiterabbit: { issuer: 'rLTjw8JXWZfVAXwAWy1SvvDTSjh2iG3icj', taxon: 1 },
+  bear: { issuer: 'rBEARbo4Prn33894evmvYcAf9yAQjp4VJF', taxon: 0 },
+  cult: { issuer: 'rwXtqbb49G4eDyikLv77JEHCx25eH3pCsx', taxon: 69 },
 };
+// Default: the first run of digits in the NFT's own name ("SEAL 657").
+for (const c of Object.values(COLLECTIONS)) {
+  if (!c.numberFromName) c.numberFromName = name => { const m = String(name || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : null; };
+}
 
 const CLIO = 'https://s2-clio.ripple.com';
 // ipfs.io / dweb.link now refuse scripted requests (HTTP 429), so these

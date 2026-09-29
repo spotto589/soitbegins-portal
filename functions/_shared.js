@@ -5184,6 +5184,10 @@ const RARITY_SNAPSHOT_FILES = {
   king: '/assets/rarity-data/king-traits.json',
   fuzzy: '/assets/rarity-data/fuzzy-traits.json',
   yzzuf: '/assets/rarity-data/yzzuf-traits.json',
+  // 2026-09-29: checked item-for-item against the site's own data first.
+  seal: '/assets/rarity-data/seal-traits.json',
+  sealscrolls: '/assets/rarity-data/sealscrolls-traits.json',
+  cult: '/assets/rarity-data/cult-traits.json',
 };
 
 // yzzuf (sraebyzzuF) publishes every trait backwards ("ruF" / "paC
