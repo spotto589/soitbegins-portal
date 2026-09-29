@@ -6,7 +6,7 @@ import { marketListingsFromOffers, marketMeta,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex, hasFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
-  getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, RARITY_GROUPS, REVERSED_TRAIT_COLLECTIONS, reverseTraitText, rarityGroupOf, maybeRescoreGroupRarity, loadGroupPool, poolItemMatches, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
+  getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, RARITY_GROUPS, REVERSED_TRAIT_COLLECTIONS, reverseTraitText, rarityGroupOf, maybeRescoreGroupRarity, loadGroupPool, poolItemMatches, noTraitFilterLabel, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
   fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply, fetchNftDetails, COLLECTION_DESCRIPTIONS
 } from '../_shared.js';
 
@@ -471,9 +471,12 @@ async function groupResponse(context, coll, params) {
       Object.keys(out).forEach(cat => { delete out[cat]; });
       Object.keys(noTraitCounts).forEach(cat => { delete noTraitCounts[cat]; });
       const dist = pool.snapshot.dist;
+      // Filterable no-trait values: Naked / No Hat only (same as each
+      // collection's own list); No Aura / No Mask still count, not listed.
+      const noLabel = cat => noTraitFilterLabel(COLLECTIONS[pool.members[0]].shopSlug, cat);
       Object.keys(dist).forEach(cat => {
-        out[cat] = Object.keys(dist[cat]).map(v => ({
-          value: v, label: v === '__no_trait__' ? 'No ' + cat : v, count: dist[cat][v], percent: pct(dist[cat][v]),
+        out[cat] = Object.keys(dist[cat]).filter(v => v !== '__no_trait__' || noLabel(cat)).map(v => ({
+          value: v, label: v === '__no_trait__' ? noLabel(cat) : v, count: dist[cat][v], percent: pct(dist[cat][v]),
         })).sort((a, b) => String(a.label).localeCompare(String(b.label)));
         if (dist[cat].__no_trait__) noTraitCounts[cat] = { count: dist[cat].__no_trait__, percent: pct(dist[cat].__no_trait__) };
       });
@@ -626,10 +629,13 @@ export async function onRequestGet(context) {
   // Just the two values toItem actually needs (NAKED's/BALD's own real
   // percent) — pulled out once here rather than making every toItem call
   // re-scan the whole categories object for its own value.
-  const noTraitPercent = {
-    Clothing: ((traitCategoriesForSynth.Clothing || []).find(v => v.label === 'Naked') || {}).percent,
-    Headwear: ((traitCategoriesForSynth.Headwear || []).find(v => v.label === 'Bald') || {}).percent
-  };
+  // Every filterable no-trait value (Naked / No Hat / Bald — see
+  // noTraitFilterLabel in _shared.js), whatever the category is called.
+  const noTraitPercent = {};
+  Object.keys(traitCategoriesForSynth || {}).forEach(cat => {
+    const v = (traitCategoriesForSynth[cat] || []).find(x => x.value === '__no_trait__');
+    if (v) noTraitPercent[cat] = v.percent;
+  });
 
   const pigeonsSalesMap = {};
   for (const sale of salesLog) {

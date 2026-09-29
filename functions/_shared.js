@@ -3919,8 +3919,28 @@ async function fetchDeeptideTraitCards(skip, limit, shopSlug = DEEPTIDE_PIGEON_S
 // (own key, NO_TRAIT_CACHE_KEY_PREFIX) for DETAIL's "NO <category>" boxes —
 // bumped so both keys rebuild together instead of v5's cached categories
 // sitting beside a missing no-trait key.
-const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v6:';
-const NO_TRAIT_CACHE_KEY_PREFIX = 'pswap:notraitcounts:v1:';
+// v6 -> v7 (2026-09-29): NAKED / NO HAT filters for every collection's
+// clothes/hat category, not just Pigeons' Clothing/Headwear.
+const TRAIT_CARDS_CACHE_KEY_PREFIX = 'pswap:traitcards:v7:';
+const NO_TRAIT_CACHE_KEY_PREFIX = 'pswap:notraitcounts:v2:';
+// "Nothing here" as a filterable trait value — only the wardrobe
+// categories, where none is a real look (naked, no hat). Aura, Mask, etc.
+// are "none" for most items, so that isn't offered as a filter (it still
+// counts in every rarity score).
+const NO_TRAIT_FILTER_LABELS = { Clothing: 'Naked', Clothes: 'Naked', Headwear: 'No Hat', Hat: 'No Hat' };
+// Pigeons and K!NG have always called no headwear BALD.
+const NO_TRAIT_FILTER_LABEL_OVERRIDES = { xrpigeons: { Headwear: 'Bald' }, 'king-thwncy': { Headwear: 'Bald' } };
+// sraebyzzuF publishes its trait text backwards — so its labels are too.
+const REVERSED_TRAIT_SLUGS = { sraebyzzuf: true };
+export function noTraitFilterLabel(shopSlug, category) {
+  const rev = !!REVERSED_TRAIT_SLUGS[shopSlug];
+  const cat = rev ? reverseTraitText(category) : category;
+  const label = (NO_TRAIT_FILTER_LABEL_OVERRIDES[shopSlug] || {})[cat] || NO_TRAIT_FILTER_LABELS[cat];
+  return label ? (rev ? reverseTraitText(label) : label) : undefined;
+}
+function noTraitFilterCategories(shopSlug) {
+  return Object.keys(NO_TRAIT_FILTER_LABELS).map(c => REVERSED_TRAIT_SLUGS[shopSlug] ? reverseTraitText(c) : c);
+}
 const TRAIT_CARDS_CACHE_TTL_SECONDS = 3600;
 // Real per-category "has nothing here" count/percent, straight from
 // Deeptide's own `__no_trait__` trait cards — for EVERY category, not just
@@ -3972,14 +3992,13 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
   // Only surfaced for these two categories (the ones actually wanted);
   // every other category's `__no_trait__` (Eyewear, Aura, ...) is still
   // dropped exactly as before, unchanged.
-  const NO_TRAIT_LABELS = { Clothing: 'Naked', Headwear: 'Bald' };
   const grouped = {};
   const noTrait = {}; // every category's real __no_trait__ count — see getNoTraitCounts
   const seen = new Set(); // trait_type+value can appear on more than one page — Deeptide's `sort=rarest` isn't stable across ties, and pages are fetched concurrently, so the same card can land in two overlapping pages and double up in the filter dropdown
   for (const t of all) {
     if (!t.trait_type || !t.value) continue;
     const isNoTrait = t.value.startsWith('__');
-    const noTraitLabel = isNoTrait ? NO_TRAIT_LABELS[t.trait_type] : undefined;
+    const noTraitLabel = isNoTrait ? noTraitFilterLabel(shopSlug, t.trait_type) : undefined;
     if (isNoTrait && !noTrait[t.trait_type]) noTrait[t.trait_type] = { count: t.count, percent: Math.round((t.count / collectionSizeApprox) * 100000) / 1000 };
     if (isNoTrait && !noTraitLabel) continue; // Deeptide's internal "no trait" placeholder, uncovered category
 
@@ -4011,7 +4030,7 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
   // category never has just one value in the first place, so this can't
   // accidentally remove a genuine one.
   for (const cat of Object.keys(grouped)) {
-    if (grouped[cat].length === 1) delete grouped[cat];
+    if (grouped[cat].filter(v => v.value !== '__no_trait__').length <= 1) delete grouped[cat];
   }
 
   await safeKvPut(kv, cacheKey, JSON.stringify(grouped), { expirationTtl: TRAIT_CARDS_CACHE_TTL_SECONDS });
@@ -4396,7 +4415,7 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
       // membership list to filter by). Only these two categories, same as
       // every other '__no_trait__' consumer in this file.
       const noTraitCategories = Array.isArray(it.attributes) ? it.attributes.map(a => a.trait_type) : [];
-      for (const category of ['Clothing', 'Headwear']) {
+      for (const category of noTraitFilterCategories(shopSlug)) {
         if (noTraitCategories.includes(category)) continue;
         if (it.image) {
           if (!traitExamples[category]) traitExamples[category] = {};
@@ -4413,6 +4432,14 @@ export async function maybeRefreshPigeonNumberMap(kv, collectionKey) {
       // Pass genuinely complete — ONLY now does the live map (every real
       // reader) actually change, in one atomic swap rather than the
       // gradual, visibly-incomplete rebuild this used to be.
+      // A no-trait row for a category this collection doesn't have at all
+      // (Hat on Pigeons, ...) — every item "lacks" it; drop it.
+      for (const category of noTraitFilterCategories(shopSlug)) {
+        if (traitIndex[category] && Object.keys(traitIndex[category]).every(v => v === '__no_trait__')) {
+          delete traitIndex[category];
+          if (traitExamples[category]) delete traitExamples[category];
+        }
+      }
       await safeKvPut(kv, kvKeyFor(PIGEON_NUMBER_MAP_KEY, collectionKey), JSON.stringify(map));
       await safeKvPut(kv, kvKeyFor(TRAIT_EXAMPLE_MAP_KEY, collectionKey), JSON.stringify(traitExamples));
       await safeKvPut(kv, kvKeyFor(TRAIT_INDEX_MAP_KEY, collectionKey), JSON.stringify(traitIndex));
