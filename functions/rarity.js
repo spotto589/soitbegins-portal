@@ -20,7 +20,7 @@ function healthHtml(h) {
   return '<p>Every day the site re-checks the stored scores of every collection: every item scored, every item has a row for every trait category, the count of every trait matches a fresh recount, and every score is exactly the sum of its rows. Last check: <strong>' + when + '</strong>.</p><div class="hc-list">' + rows + '</div>';
 }
 
-const SEALED_EXTRA = [['king', 'K!NG'], ['seal', 'SEAL'], ['sealscrolls', 'SEAL SCR0LLS'], ['cult', 'CULT']];
+const SEALED_EXTRA = [['king', 'K!NG'], ['seal', 'SEAL'], ['sealscrolls', 'SEAL SCR0LLS'], ['cult', 'CULT'], ['whiterabbit', 'WH!TE RABB!T'], ['phnixs', 'PHN!X'], ['teddybg', 'TEDDY'], ['fuzzybars', 'FUZZY BARS']];
 
 function renderRarityHtml(health) {
   return `<!DOCTYPE html>
