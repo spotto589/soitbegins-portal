@@ -6,7 +6,7 @@ import { marketListingsFromOffers, marketMeta,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex, hasFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
-  getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
+  getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, RARITY_GROUPS, REVERSED_TRAIT_COLLECTIONS, reverseTraitText, rarityGroupOf, maybeRescoreGroupRarity, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
   fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply, fetchNftDetails, COLLECTION_DESCRIPTIONS
 } from '../_shared.js';
 
@@ -328,6 +328,13 @@ async function callMember(context, params, member, overrides) {
   const p = new URLSearchParams(params);
   p.set('collection', member);
   p.delete('gcur');
+  // Group views speak forwards trait text; yzzuf's own data is backwards.
+  if (REVERSED_TRAIT_COLLECTIONS[member] && p.get('filters')) {
+    try {
+      const f = JSON.parse(p.get('filters'));
+      p.set('filters', JSON.stringify(f.map(x => ({ ...x, trait: reverseTraitText(x.trait), value: reverseTraitText(x.value) }))));
+    } catch (e) {}
+  }
   Object.keys(overrides || {}).forEach(k => { if (overrides[k] === null) p.delete(k); else p.set(k, String(overrides[k])); });
   const u = new URL(context.request.url);
   u.search = p.toString();
@@ -361,8 +368,26 @@ function groupSortKey(params) {
   if (sort === 'RARITY_DESC') return { f: pct, dir: -1 };
   return null;
 }
+// Combined-rarity fields over an item (see RARITY_GROUPS in _shared.js);
+// its own collection's rank stays alongside as ownRarityRank.
+function applyGroupRarity(it, gmap) {
+  const e = gmap && gmap[it.nftId];
+  if (!e) return it;
+  it.ownRarityRank = it.ourRarityRank; it.ownRarityTotal = it.ourRarityTotal; it.ownRarityScore = it.ourRarityScore;
+  it.ourRarityRank = e.rank; it.ourRarityTotal = e.total; it.ourRarityScore = e.score;
+  it.ourRarityBase = e.base; it.ourRarityBreakdown = e.breakdown || null; it.ourRarityRareTraits = e.rareTraits || null;
+  it.groupRarity = { rank: e.rank, total: e.total, score: e.score };
+  return it;
+}
 async function groupResponse(context, coll, params) {
   const members = coll.members;
+  const isRarityGroup = !!RARITY_GROUPS[coll.key];
+  if (isRarityGroup && context.env.ASSETS) {
+    const loadAsset = path => context.env.ASSETS.fetch(new URL(path, context.request.url));
+    context.waitUntil(maybeRescoreGroupRarity(context.env.coin, coll.key, loadAsset).catch(() => {}));
+  }
+  const gmap = isRarityGroup ? await getRarityMap(context.env.coin, coll.key) : null;
+  const hasGmap = gmap && Object.keys(gmap).length > 0;
   // Anything about the token, or one NFT, goes to a single member.
   const tokenQs = ['pigeonsRate', 'pigeonsAccountLine', 'pigeonsQuote', 'coinStats', 'coinHistory', 'tokenHolders', 'walletProfileCoins', 'nftDescription', 'events'];
   if (tokenQs.some(k => params.get(k) === '1') || params.get('detail') || params.get('history') || params.get('number')) {
@@ -385,7 +410,17 @@ async function groupResponse(context, coll, params) {
     });
   }
   if (params.get('traits') === '1') {
-    const all = (await Promise.all(members.map(m => callMember(context, params, m, {})))).filter(Boolean);
+    const all = (await Promise.all(members.map(m => callMember(context, params, m, {}).then(t => {
+      // Backwards collection: flip its trait names/values forwards so they
+      // merge with the others.
+      if (!t || !REVERSED_TRAIT_COLLECTIONS[m]) return t;
+      const r = reverseTraitText;
+      const cats = {}, none = {}, ex = {};
+      Object.keys(t.categories || {}).forEach(c => { cats[r(c)] = (t.categories[c] || []).map(v => ({ ...v, value: r(v.value), label: r(v.label) })); });
+      Object.keys(t.noTraitCounts || {}).forEach(c => { none[r(c)] = t.noTraitCounts[c]; });
+      Object.keys(t.examples || {}).forEach(c => { ex[r(c)] = {}; Object.keys(t.examples[c]).forEach(v => { ex[r(c)][r(v)] = t.examples[c][v]; }); });
+      return { ...t, categories: cats, noTraitCounts: none, examples: ex };
+    })))).filter(Boolean);
     const size = all.reduce((a, t) => a + (Number(t.collectionSizeApprox) || 0), 0) || coll.sizeApprox;
     const categories = {}, noTraitCounts = {}, examples = {};
     all.forEach(t => {
@@ -431,12 +466,32 @@ async function groupResponse(context, coll, params) {
     items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     return json({ items: items.slice(skip, skip + limit), hasMore: all.some(t => t && t.hasMore) || items.length > skip + limit });
   }
-  // Lists — merged in sort order, one cursor per member.
   const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
+  // Combined rarity order (FUZZY ALL): one ranking over both collections,
+  // paged straight off the combined map; each page's items fetched from
+  // their own collection by id.
+  const plainListSort = !params.get('crossListing') && params.get('scyllaListed') !== '1' && params.get('highestSale') !== '1' && !params.get('numericOrder') && !params.get('numberRange') && !params.get('wallet');
+  const raritySort = params.get('sort') || 'RARITY_ASC';
+  let filterList = [];
+  try { filterList = JSON.parse(params.get('filters') || '[]') || []; } catch (e) { filterList = []; }
+  if (hasGmap && plainListSort && !filterList.length && (raritySort === 'RARITY_ASC' || raritySort === 'RARITY_DESC')) {
+    const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
+    const ids = Object.keys(gmap).sort((a, b) => raritySort === 'RARITY_ASC' ? gmap[a].rank - gmap[b].rank : gmap[b].rank - gmap[a].rank);
+    const pageIds = ids.slice(skip, skip + limit);
+    const byMember = {};
+    pageIds.forEach(id => { const m = gmap[id].c; (byMember[m] = byMember[m] || []).push(id); });
+    const got = {};
+    await Promise.all(Object.keys(byMember).map(m => callMember(context, params, m, { ids: byMember[m].join(','), skip: null, sort: null, gcur: null }).then(j => {
+      ((j && j.items) || []).forEach(it => { got[it.nftId] = { ...it, collectionKey: m }; });
+    })));
+    const items = pageIds.map(id => got[id] ? applyGroupRarity(got[id], gmap) : null).filter(Boolean);
+    return json({ items, total: ids.length, hasMore: skip + pageIds.length < ids.length, collectionSizeApprox: coll.sizeApprox });
+  }
+  // Lists — merged in sort order, one cursor per member.
   let cur = {};
   try { cur = JSON.parse(params.get('gcur') || '{}') || {}; } catch (e) { cur = {}; }
   const results = await Promise.all(members.map(m => cur[m] === -1 ? null : callMember(context, params, m, { skip: cur[m] || 0, limit })));
-  const pools = members.map((m, i) => ({ m, res: results[i], items: ((results[i] && results[i].items) || []).map(it => ({ ...it, collectionKey: m })), taken: 0 }));
+  const pools = members.map((m, i) => ({ m, res: results[i], items: ((results[i] && results[i].items) || []).map(it => applyGroupRarity({ ...it, collectionKey: m }, hasGmap ? gmap : null)), taken: 0 }));
   const key = groupSortKey(params);
   const merged = [];
   const better = (a, b) => {
@@ -548,6 +603,15 @@ export async function onRequestGet(context) {
   // equivalent crawl exists for a non-tradeable collection yet, so those
   // just come back empty rather than showing a Pigeon's photo on a Teddy/
   // Phnix trait.
+  // Specific NFTs by id, in the order given (FUZZY ALL's combined rarity
+  // pages ask each collection for just its own items this way).
+  if (params.get('ids')) {
+    const ids = params.get('ids').split(',').filter(x => /^[0-9A-Fa-f]{64}$/.test(x)).slice(0, 60);
+    const resolved = await resolveDetailsCached(context, coll.key, ids);
+    const items = resolved.map(it => it ? toItem(it.nftId, it, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent) : null).filter(Boolean);
+    await attachListings(env.coin, items, items.length, coll.key);
+    return json({ items });
+  }
   if (params.get('traits') === '1') {
     const categories = await getTraitCategoriesWithPercent(env.coin, coll.shopSlug, coll.sizeApprox);
     // DETAIL's "NO <category>" boxes — real per-category counts (see
@@ -1215,6 +1279,11 @@ export async function onRequestGet(context) {
       return { trait_type: a.trait_type, value: a.value, percent: match ? match.percent : (a.percent != null ? a.percent : null), count: match ? match.count : null };
     });
     const result = toItem(item.nftId, item, undefined, highSaleMap, scyllaListingsMap, pigeonsSalesMap, tokenCurrency, rarityMap, noTraitPercent);
+    const rGroup = rarityGroupOf(coll.key);
+    if (rGroup) {
+      const ge = (await getRarityMap(env.coin, rGroup))[result.nftId];
+      if (ge) result.groupRarity = { group: rGroup, rank: ge.rank, total: ge.total, score: ge.score };
+    }
     // Live re-verify + self-heal a Σκύλλα SWAP listing on this single
     // item's own page — the browse-grid views (LISTED, badges elsewhere)
     // only ever sample a handful of listings per page for this same check

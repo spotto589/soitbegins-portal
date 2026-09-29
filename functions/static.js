@@ -8775,6 +8775,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     border:1px solid var(--border-mid);
   }
   .confirm-pigeon-num-clickable{ cursor:pointer; }
+  .trait-flip-btn{ white-space:nowrap; }
+  #traitsFlyoutToolbar{ flex-wrap:wrap; }
+  #traitsFlyoutToolbar .trait-flip-btn{ flex:1 1 100%; order:9; padding:0.55em 1em; border:1px solid rgba(61,243,236,0.6); border-radius:999px; }
+  .trait-flip-btn.active{ background:var(--cyan); color:#000; border-color:var(--cyan); }
+  .detail-trait-flip{ display:block; margin:0 0 0.6rem auto; }
   /* Bigger all round, amount in green (2026-09-29). */
   #offerConfirmModal .offer-confirm-panel{ width:min(520px, 100%); }
   #offerConfirmModal .confirm-field-label{ font-size:15px; letter-spacing:0.16em; color:rgba(255,255,255,0.7); margin-bottom:0.6rem; }
@@ -13596,6 +13601,7 @@ const SWAP_HTML = `<!DOCTYPE html>
                       <button type="button" class="tfs-toggle-btn" id="traitsFlyoutSortAz" data-sort="az">A-Z</button>
                     </div>
                     <input type="text" class="traits-flyout-search-input" id="traitsFlyoutSearchInput" placeholder="SEARCH..." autocomplete="off">
+                    <button type="button" class="tfs-toggle-btn trait-flip-btn" style="display:none;">⇄ READ F0RWARDS</button>
                   </div>
                   <!-- Desktop only (see .traits-flyout-cats' own CSS) — a
                        horizontal row of every trait category (Background,
@@ -13702,6 +13708,12 @@ const SWAP_HTML = `<!DOCTYPE html>
                 <div class="tc-value" id="detailRarityScore"></div>
                 <button type="button" class="rarity-expand-btn" id="detailRarityExpandBtn" style="display:none;" title="SEE H0W TH!S SC0RE !S W0RKED 0UT">EXPAND</button>
               </div>
+              <!-- Combined rarity (2026-09-29): rank across both FUZZY
+                   collections together (Fuzzybears + yzzuf). -->
+              <div class="trait-cell" id="detailGroupRarityCell" style="display:none;">
+                <div class="tc-label" id="detailGroupRarityLabel">B0TH C0LLECT!0NS</div>
+                <div class="tc-value" id="detailGroupRarity"></div>
+              </div>
             </div>
             <div class="scylla-listing-block">
               <div class="scylla-listing-row" id="detailScyllaListingRow">
@@ -13756,6 +13768,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           </div>
         </div>
         <div class="detail-col-right">
+          <button type="button" class="tfs-toggle-btn trait-flip-btn detail-trait-flip" style="display:none;">⇄ READ F0RWARDS</button>
           <div class="trait-grid" id="detailTraits"></div>
           <div class="detail-sales-section">
             <div class="detail-field" id="detailPriceRow" style="display:none;"><span class="df-label">PR!CE</span><span class="df-value price" id="detailPrice"></span></div>
@@ -15164,7 +15177,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // ALL = Fuzzybears + yzzuf together (FUZZY BARS only ever by itself).
     fuzzyall: { label: 'FUZZY', itemLabel: 'FUZZYBEAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'ALL', groupAll: true },
     fuzzy: { label: 'FUZZY', itemLabel: 'FUZZYBEAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', nftIssuer: 'rw1R8cfHGMySmbj7gJ1HkiCqTY1xhLGYAs', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'FUZZYBEARS' },
-    yzzuf: { label: 'YZZUF', itemLabel: 'RAEBYZZUF', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'r3NftTqH2hv3skuWAEDWKvqnxjtuqcFWYR', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'YZZUF' },
+    yzzuf: { label: 'YZZUF', itemLabel: 'RAEBYZZUF', reversedTraits: true, tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'r3NftTqH2hv3skuWAEDWKvqnxjtuqcFWYR', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'YZZUF' },
     fuzzybars: { label: 'FUZZY BARS', itemLabel: 'FUZZY BAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', nftIssuer: 'rPK77tBNduykbofMU91uffeRSUvtEkadbx', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'FUZZY BARS' },
     conspiracy: { label: 'C0NSP!RACY AREA 589', itemLabel: 'C0NSP!RACY', tradeable: true, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' },
     // WH!TE RABB!T — Deeptide's second real C0NSP!RACY-brand shop, shares
@@ -15248,7 +15261,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','setTrustlineLink','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn','pigeonsBarCoinOutBtn',
    'pigeonsBalanceValue','pigeonsBalanceBuyBtn','pigeonsBalanceLoginWrap','pigeonsBarThumb',
-   'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink','pigeonsCalcRateLines','pigeonsCalcXrpRow','pigeonsCalcPigeonsRow','pigeonsCalcFlipBtn','profileFavBtn','profileFavCount','profileScreenFavBtn',
+   'pigeonsBarCalc','pigeonsCalcToggleBtn','pigeonsCalcToggleLabel','pigeonsCalcModal','pigeonsCalcCloseBtn','pigeonsCalcBuyBtn','pigeonsCalcPigeonsUnit','pigeonsBarRateValue','pigeonsCalcXrpInput','pigeonsCalcPigeonsInput','pigeonsDexLink','pigeonsCalcRateLines','pigeonsCalcXrpRow','pigeonsCalcPigeonsRow','pigeonsCalcFlipBtn','profileFavBtn','profileFavCount','profileScreenFavBtn','detailGroupRarityCell','detailGroupRarity',
    'screenMainframe','mainframeGrid','mainframeSubtitle','mainframeStatsPigeons','mainframeStatsPhnixs','mainframeStatsTeddybg','mainframeStatsSeal','mainframeStatsFuzzy','mainframeStatsConspiracy',
    'mainframeStatsThirdeye','mainframeStatsBear','mainframeStatsCult','mainframeStatsSmoki','mainframeStatsKing',
    'conspiracyPickerModal','screenConspiracyPicker','conspiracyPickAreaBtn','conspiracyPickRabbitBtn','conspiracyPickerBackBtn',
@@ -15846,6 +15859,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         document.body.classList.add('collection-non-pigeons');
         document.body.classList.toggle('collection-group-all', !!presetMeta.groupAll);
         renderCollGroupSelect();
+        syncTraitFlipButtons();
         // state's own literal defaults (sort: 'SCYLLA_PRICE_ASC', scyllaListedOnly:
         // true) are P!GE0NS-specific — a P!GE0NS-denominated ONLY SH0W
         // L!STED filter against a collection with zero real Σκύλλα $CNS/
@@ -17164,7 +17178,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // own filter API), same value/label split as the F!LTER BY TRA!TS
       // panel's own NAKED/BALD chips (see getTraitCategoriesWithPercent).
       var displayValue = match && match.label ? match.label : a.value;
-      return '<div class="card-trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="SH0W 0NLY P!GE0NS W!TH TH!S TRA!T, RAREST F!RST"><div class="card-tc-label">' + escapeHtml(a.trait_type) + '</div><div class="card-tc-value">' + escapeHtml(displayValue) + '</div>' + pctHtml + '</div>';
+      return '<div class="card-trait-cell" data-trait="' + escapeHtml(a.trait_type) + '" data-value="' + escapeHtml(a.value) + '" title="SH0W 0NLY P!GE0NS W!TH TH!S TRA!T, RAREST F!RST"><div class="card-tc-label">' + escapeHtml(tDisp(a.trait_type)) + '</div><div class="card-tc-value">' + escapeHtml(tDisp(displayValue)) + '</div>' + pctHtml + '</div>';
     }).join('') + '</div>';
   }
   // Full-width OFFER $PIGEONS strip, shared by both the boxed and
@@ -18432,19 +18446,19 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (row.category && row.value){
         var appliedVal = ((state.traitCategories[row.category] || []).find(function(v){ return v.value === row.value; }) || {}).label || row.value;
         return '<div class="trait-row trait-row-tag" data-id="' + row.id + '">' +
-          '<span class="trait-tag-label">' + escapeHtml(row.category.toUpperCase()) + ' :: ' + escapeHtml(appliedVal.toUpperCase()) + '</span>' +
+          '<span class="trait-tag-label">' + escapeHtml(tDisp(row.category).toUpperCase()) + ' :: ' + escapeHtml(tDisp(appliedVal).toUpperCase()) + '</span>' +
           '<button class="trait-row-remove" data-id="' + row.id + '">&times;</button>' +
         '</div>';
       }
       var catOptions = cats.map(function(c){
-        return '<option value="' + escapeHtml(c) + '"' + (row.category === c ? ' selected' : '') + '>' + escapeHtml(c.toUpperCase()) + '</option>';
+        return '<option value="' + escapeHtml(c) + '"' + (row.category === c ? ' selected' : '') + '>' + escapeHtml(tDisp(c).toUpperCase()) + '</option>';
       }).join('');
       var vals = ((row.category && state.traitCategories[row.category]) || []).slice().sort(function(a, b){
         return (a.percent || 0) - (b.percent || 0);
       });
       var chips = vals.map(function(v){
         var pct = v.percent !== null && v.percent !== undefined ? ' (' + v.percent.toFixed(3) + '%)' : '';
-        return '<button type="button" class="trait-chip' + (row.value === v.value ? ' selected' : '') + '" data-id="' + row.id + '" data-value="' + escapeHtml(v.value) + '">' + escapeHtml((v.label || v.value).toUpperCase()) + pct + '</button>';
+        return '<button type="button" class="trait-chip' + (row.value === v.value ? ' selected' : '') + '" data-id="' + row.id + '" data-value="' + escapeHtml(v.value) + '">' + escapeHtml(tDisp(v.label || v.value).toUpperCase()) + pct + '</button>';
       }).join('');
       return '<div class="trait-row" data-id="' + row.id + '">' +
         '<select class="trait-cat-select" data-id="' + row.id + '"><option value="">CATEG0RY ▼</option>' + catOptions + '</select>' +
@@ -18499,7 +18513,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var selectedCats = {};
     state.traitFilters.forEach(function(r){ if (r.category) selectedCats[r.category] = true; });
     el.traitsFlyoutCats.innerHTML = cats.map(function(c){
-      return '<button type="button" class="traits-flyout-cat' + (selectedCats[c] ? ' has-selection' : '') + '" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c.toUpperCase()) + '</button>';
+      return '<button type="button" class="traits-flyout-cat' + (selectedCats[c] ? ' has-selection' : '') + '" data-cat="' + escapeHtml(c) + '">' + escapeHtml(tDisp(c).toUpperCase()) + '</button>';
     }).join('');
     updateTraitsCatsHscrollArrows();
   }
@@ -18512,7 +18526,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var rows = state.traitFilters.filter(function(r){ return r.category; });
     el.traitsFlyoutSelected.innerHTML = rows.map(function(r){
       return '<button type="button" class="tfs-chip" data-cat="' + escapeHtml(r.category) + '" data-value="' + escapeHtml(r.value) + '">' +
-        '<span>' + escapeHtml(r.category.toUpperCase()) + ' :: ' + escapeHtml(r.value.toUpperCase()) + '</span>' +
+        '<span>' + escapeHtml(tDisp(r.category).toUpperCase()) + ' :: ' + escapeHtml(tDisp(r.value).toUpperCase()) + '</span>' +
         '<span class="tfs-chip-remove">✕</span>' +
       '</button>';
     }).join('');
@@ -18630,11 +18644,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Search results prefix the category (e.g. "BACKGROUND ::") ahead of
     // the value itself — a flat cross-category list is meaningless without
     // it, since the value alone no longer implies which category it's from.
-    var catPrefix = isSearchResult ? '<span class="tfv-search-cat">' + escapeHtml(category.toUpperCase()) + ' ::</span>' : '';
+    var catPrefix = isSearchResult ? '<span class="tfv-search-cat">' + escapeHtml(tDisp(category).toUpperCase()) + ' ::</span>' : '';
     return '<button type="button" class="traits-flyout-val' + (exampleImg ? ' has-preview' : '') + (isSelected ? ' selected' : '') + '" data-cat="' + escapeHtml(category) + '" data-value="' + escapeHtml(v.value) + '"' + style + '>' +
       (exampleImg && isSelected ? '<span class="tfv-select-badge">✓</span>' : '') +
       textOpen +
-      '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + catPrefix + escapeHtml((v.label || v.value).toUpperCase()) + '</span>' +
+      '<span>' + (!exampleImg && isSelected ? '✓ ' : '') + catPrefix + escapeHtml(tDisp(v.label || v.value).toUpperCase()) + '</span>' +
       '<span class="tfv-count">' + count + ' :: ' + pct + '</span>' +
       textClose +
     '</button>';
@@ -18644,7 +18658,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // S0RT/SEARCH toolbar wired further down.
   function sortTraitVals(vals){
     return state.traitsFlyoutSort === 'az'
-      ? vals.slice().sort(function(a, b){ return (a.label || a.value).localeCompare(b.label || b.value); })
+      ? vals.slice().sort(function(a, b){ return tDisp(a.label || a.value).localeCompare(tDisp(b.label || b.value)); })
       : vals.slice().sort(function(a, b){ return (a.percent || 0) - (b.percent || 0); });
   }
   function renderTraitsFlyoutVals(category){
@@ -18666,7 +18680,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     var matches = [];
     Object.keys(cats).forEach(function(cat){
       (cats[cat] || []).forEach(function(v){
-        if ((v.label || v.value).toLowerCase().indexOf(q) !== -1 || cat.toLowerCase().indexOf(q) !== -1){
+        if ((v.label || v.value).toLowerCase().indexOf(q) !== -1 || cat.toLowerCase().indexOf(q) !== -1 ||
+            tDisp(v.label || v.value).toLowerCase().indexOf(q) !== -1 || tDisp(cat).toLowerCase().indexOf(q) !== -1){
           matches.push({ category: cat, val: v });
         }
       });
@@ -18905,6 +18920,37 @@ const SWAP_HTML = `<!DOCTYPE html>
     runQuery();
   });
 
+  // yzzuf's traits are published backwards ("ruF", "paC dekaeP"). FL!P
+  // TEXT (2026-09-29) shows them forwards — display only; filters and
+  // links keep the real published text.
+  var traitsFlipped = (function(){ try { return localStorage.getItem('skyllaFlipTraits') === '1'; } catch (e){ return false; } })();
+  function flipsTraits(key){ var m = COLLECTION_META[key || state.collection]; return !!(m && m.reversedTraits); }
+  function tDisp(t, key){
+    t = String(t === null || t === undefined ? '' : t);
+    return traitsFlipped && flipsTraits(key) ? t.split('').reverse().join('') : t;
+  }
+  function syncTraitFlipButtons(){
+    var show = flipsTraits();
+    document.querySelectorAll('.trait-flip-btn').forEach(function(b){
+      b.style.display = show ? '' : 'none';
+      b.classList.toggle('active', traitsFlipped);
+      b.textContent = traitsFlipped ? '⇄ SH0W AS PUBL!SHED' : '⇄ READ F0RWARDS';
+    });
+  }
+  function toggleTraitFlip(){
+    traitsFlipped = !traitsFlipped;
+    try { localStorage.setItem('skyllaFlipTraits', traitsFlipped ? '1' : '0'); } catch (e){}
+    syncTraitFlipButtons();
+    renderTraitRows();
+    if (el.traitsFlyoutCats){ renderTraitsFlyoutCats(); renderTraitsFlyoutSelected(); }
+    var activeCat = el.traitsFlyoutCats && el.traitsFlyoutCats.querySelector('.traits-flyout-cat.active');
+    if (activeCat) renderTraitsFlyoutVals(activeCat.getAttribute('data-cat'));
+    if (state.currentDetail && el.screenDetail.style.display !== 'none') el.detailTraits.innerHTML = detailTraitsHtml(state.currentDetail.attributes);
+    if (state.items && state.items.length && typeof renderResultsReplace === 'function') renderResultsReplace(state.items);
+  }
+  document.addEventListener('click', function(e){
+    if (e.target.closest('.trait-flip-btn')){ e.preventDefault(); e.stopPropagation(); toggleTraitFlip(); }
+  }, true);
   function activeFilters(){
     return state.traitFilters.filter(function(r){ return r.category && r.value; }).map(function(r){ return { trait: r.category, value: r.value }; });
   }
@@ -23959,6 +24005,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // tradeable — every OTHER collection hides both, PHN!X included.
     document.body.classList.toggle('collection-non-pigeons', newCollection !== 'pigeons');
     renderCollGroupSelect();
+    syncTraitFlipButtons();
     // FL00R (real Scylla listings sorted by real price) only makes sense
     // as the DEFAULT landing view for P!GE0NS specifically — it has an
     // established market with real listings to actually show. A newly
@@ -26623,7 +26670,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       textOpen +
       // Value first, category second — "G0LDEN FEATHERS" reads as one
       // phrase describing the trait, not a label/value form field.
-      '<div class="tc-value">' + escapeHtml(cellDisplayValue) + '</div><div class="tc-label">' + escapeHtml(a.trait_type) + '</div>' + sub +
+      '<div class="tc-value">' + escapeHtml(tDisp(cellDisplayValue)) + '</div><div class="tc-label">' + escapeHtml(tDisp(a.trait_type)) + '</div>' + sub +
       textClose +
     '</div>';
   }
@@ -26733,8 +26780,14 @@ const SWAP_HTML = `<!DOCTYPE html>
   }
   function updateDetailRarity(p){
     var info = p ? rarityDisplay(p) : null;
+    // An ALL-view item carries the combined rank in ourRarity*; its own
+    // collection's rank is kept as ownRarity*.
+    if (p && p.ownRarityRank) info = { rank: p.ownRarityRank, total: p.ownRarityTotal };
     if (info){ el.detailRarityRow.style.display = ''; el.detailRarity.innerHTML = greenNum(info.rank) + ' / ' + info.total; }
     else el.detailRarityRow.style.display = 'none';
+    var g = p && p.groupRarity;
+    el.detailGroupRarityCell.style.display = g ? '' : 'none';
+    if (g) el.detailGroupRarity.innerHTML = greenNum(g.rank) + ' / ' + g.total;
     // Named Set badge — a real, hand-confirmed match only (see
     // RARITY_NAMED_SETS in _shared.js), never inferred. 1 0F 1 badge only
     // shows when THIS Pigeon is the only one matching that confirmed set
@@ -27190,6 +27243,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (curMeta.groupAll && !state.groupAllReturn) state.groupAllReturn = state.collection;
       if (state.groupAllReturn) state.collection = known.collectionKey;
     }
+    syncTraitFlipButtons();
     el.detailNum.innerHTML = known && known.number !== null ? collectionItemLabel() + ' #' +greenNum(known.number) : (known && known.name ? collectionItemLabel() + ' ' + escapeHtml(known.name) : collectionItemLabel() + ' ...');
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : 'IMAGE';
     // Keep the fullscreen lightbox's own picture in sync when PREV/NEXT is
@@ -27414,6 +27468,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   function goBackFromDetail(){
     showScreen('browse');
     if (state.groupAllReturn){ state.collection = state.groupAllReturn; state.groupAllReturn = null; }
+    syncTraitFlipButtons();
     // Came from the 0FFER pop-up's Pigeon picture: back into that pop-up.
     if (offerConfirmReturn && offerTarget){
       offerConfirmReturn = false;

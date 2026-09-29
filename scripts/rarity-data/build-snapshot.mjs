@@ -36,6 +36,24 @@ const COLLECTIONS = {
     // Metadata names look like "KING #120".
     numberFromName: name => { const m = String(name || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : null; },
   },
+  // FUZZY (2026-09-29). Names "Fuzzybear #2289", "raebyzzuF #56",
+  // "Fuzzy Bar #2740". yzzuf's own metadata is written backwards
+  // ("ruF", "dnuorgkcaB") and is stored exactly as published.
+  fuzzy: {
+    issuer: 'rw1R8cfHGMySmbj7gJ1HkiCqTY1xhLGYAs',
+    taxon: 1,
+    numberFromName: name => { const m = String(name || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : null; },
+  },
+  yzzuf: {
+    issuer: 'r3NftTqH2hv3skuWAEDWKvqnxjtuqcFWYR',
+    taxon: 0,
+    numberFromName: name => { const m = String(name || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : null; },
+  },
+  fuzzybars: {
+    issuer: 'rPK77tBNduykbofMU91uffeRSUvtEkadbx',
+    taxon: 1,
+    numberFromName: name => { const m = String(name || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : null; },
+  },
 };
 
 const CLIO = 'https://s2-clio.ripple.com';
@@ -99,7 +117,9 @@ async function fetchMetadata(uri) {
   for (let round = 0; round < 6; round++) {
     for (const g of GATEWAYS) {
       try {
-        const res = await fetch(g + path, { signal: AbortSignal.timeout(30000) });
+        // Each path part URL-encoded — some file names have spaces or "#"
+        // ("raebyzzuF #56.json"), which would otherwise cut the address.
+        const res = await fetch(g + path.split('/').map(encodeURIComponent).join('/'), { signal: AbortSignal.timeout(30000) });
         if (!res.ok) throw new Error(g + ' HTTP ' + res.status);
         const text = await res.text();
         const json = JSON.parse(text);

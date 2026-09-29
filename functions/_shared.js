@@ -5101,7 +5101,72 @@ function namedSetMatchForItem(attrs, collectionKey) {
 const RARITY_SNAPSHOT_FILES = {
   pigeons: '/assets/rarity-data/pigeons-traits.json',
   king: '/assets/rarity-data/king-traits.json',
+  fuzzy: '/assets/rarity-data/fuzzy-traits.json',
+  yzzuf: '/assets/rarity-data/yzzuf-traits.json',
+  fuzzybars: '/assets/rarity-data/fuzzybars-traits.json',
 };
+
+// yzzuf (sraebyzzuF) publishes every trait backwards ("ruF" / "paC
+// dekaeP"). Its own score uses them as published; anything combining it
+// with Fuzzybears flips them forwards first so the same trait matches.
+export const REVERSED_TRAIT_COLLECTIONS = { yzzuf: true };
+export function reverseTraitText(t) {
+  const s = String(t === null || t === undefined ? '' : t);
+  return s.startsWith('__') ? s : s.split('').reverse().join('');
+}
+// Combined rarity (2026-09-29): one population across several
+// collections, scored with the same formula as each collection's own.
+// fuzzyall = Fuzzybears + yzzuf (4,430 bears); Fuzzy Bars stay apart.
+export const RARITY_GROUPS = { fuzzyall: ['fuzzy', 'yzzuf'] };
+export function rarityGroupOf(collectionKey) {
+  return Object.keys(RARITY_GROUPS).find(g => RARITY_GROUPS[g].includes(collectionKey)) || null;
+}
+export async function maybeRescoreGroupRarity(kv, groupKey, loadAsset) {
+  const members = RARITY_GROUPS[groupKey];
+  if (!members || !loadAsset) return false;
+  const seals = [];
+  for (const m of members) {
+    const path = RARITY_SNAPSHOT_FILES[m];
+    if (!path) return false;
+    const sealRes = await loadAsset(path + '.sha256').catch(() => null);
+    if (!sealRes || !sealRes.ok) return false;
+    const seal = (await sealRes.text()).trim().split(/\s+/)[0];
+    if (!/^[0-9a-f]{64}$/.test(seal)) return false;
+    seals.push(seal);
+  }
+  const signature = rarityFormulaSignature(groupKey) + ':' + seals.map(s => s.slice(0, 12)).join('.');
+  const statsRaw = await kv.get(kvKeyFor(RARITY_STATS_KEY, groupKey));
+  const stats = statsRaw ? JSON.parse(statsRaw) : null;
+  if (stats && stats.signature === signature) return true;
+  const files = await Promise.all(members.map(m => loadAsset(RARITY_SNAPSHOT_FILES[m]).then(r => r.json())));
+  const items = [];
+  const memberOf = {};
+  let ledgerIndex = 0;
+  files.forEach((f, i) => {
+    const m = members[i];
+    const rev = !!REVERSED_TRAIT_COLLECTIONS[m];
+    ledgerIndex = Math.max(ledgerIndex, f.ledgerIndex || 0);
+    for (const it of f.items) {
+      memberOf[it.nftId] = m;
+      items.push({
+        nftId: it.nftId,
+        number: it.number,
+        attributes: rev ? it.attributes.map(a => ({ trait_type: reverseTraitText(a.trait_type), value: reverseTraitText(a.value) })) : it.attributes,
+      });
+    }
+  });
+  const snapshot = snapshotFromSealedFile({ items, ledgerIndex });
+  const finalMap = scoreStoredTraits(snapshot, groupKey, items.length);
+  Object.keys(finalMap).forEach(id => { finalMap[id].c = memberOf[id]; });
+  const now = Math.floor(Date.now() / 1000);
+  const count = Object.keys(finalMap).length;
+  await safeKvPut(kv, kvKeyFor(RARITY_MAP_KEY, groupKey), JSON.stringify(finalMap));
+  await safeKvPut(kv, kvKeyFor(RARITY_STATS_KEY, groupKey), JSON.stringify({
+    inProgress: false, completedAt: now, updatedAt: now, count, total: count,
+    signature, snapshotAt: ledgerIndex, source: 'xrpl+ipfs', members, seals,
+  }));
+  return true;
+}
 
 // The sealed file -> the same { items, dist, completedAt } shape the
 // Deeptide crawl produces. dist is counted from the file itself: every

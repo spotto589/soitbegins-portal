@@ -212,6 +212,19 @@ function renderRarityHtml() {
       <div class="layer-example">The seal is a fingerprint of the file: change a single letter and it no longer matches. Anyone can rebuild the file from the ledger, check the seal, and recompute every score &mdash; the scripts are public in <code>scripts/rarity-data/</code> (build-snapshot.mjs and verify.mjs).</div>
     </div>
 
+    <h2><span class="step">07</span>FUZZY :: TW0 WAYS T0 RANK</h2>
+    <p>Every FUZZY collection gets its own RARITY SCORE with the exact same rule above &mdash; Fuzzybears ranked against Fuzzybears, sraebyzzuF against sraebyzzuF, Fuzzy Bars against Fuzzy Bars.</p>
+    <p>Fuzzybears and sraebyzzuF are also ranked <strong>together</strong>, as one population of every bear in both collections. sraebyzzuF writes its traits backwards (<code>paC dekaeP</code>), so they're read forwards first (<code>Peaked Cap</code>) to match Fuzzybears', then every trait's % is counted across both collections and the same <code>100 &divide; %</code> rule is added up. A trait only one collection has (Aura, Mask) makes the bears that have it rarer across the two. Each bear's page shows both ranks; the FUZZY ALL view sorts by the combined one. Fuzzy Bars are never mixed in.</p>
+    <div class="layer-card">
+      <div class="layer-name">THE FUZZY DATA</div>
+      <div class="layer-desc">
+        <a href="/assets/rarity-data/fuzzy-traits.json" style="color:#3df3ec;">fuzzy-traits.json</a> &mdash; Fuzzybears<br>
+        <a href="/assets/rarity-data/yzzuf-traits.json" style="color:#3df3ec;">yzzuf-traits.json</a> &mdash; sraebyzzuF (traits exactly as published, backwards)<br>
+        <a href="/assets/rarity-data/fuzzybars-traits.json" style="color:#3df3ec;">fuzzybars-traits.json</a> &mdash; Fuzzy Bars<br>
+        Each has a <code>.sha256</code> seal beside it, same as the Pigeons file.
+      </div>
+    </div>
+
     <a class="back-link" href="/static">&larr; BACK T0 Σκύλλα</a>
   </div>
 
