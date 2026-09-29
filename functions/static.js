@@ -2486,6 +2486,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   .profile-box-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.5rem; margin-top:0.75rem; margin-bottom:0.75rem; }
   @media (max-width:700px){ .profile-box-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
   @media (max-width:460px){ .profile-box-grid{ grid-template-columns:minmax(0, 1fr); } }
+  /* Phones, Σκύλλα://SYSTEM (reported live 2026-09-29): bigger black box
+     with only a thin static edge, buttons centred in it with room for
+     every label (they were squeezed to 34px and clipped). */
+  @media (max-width:700px){
+    body.paws-view{ padding:calc(var(--global-ticker-h) + 0.3rem) 5px 5px; }
+    body.paws-view .page{ height:calc(100vh - var(--global-ticker-h) - 0.3rem - 10px); }
+    .scylla-nav-panel{ padding:0.9rem 0.7rem 1rem; }
+    .scylla-nav-panel > #profileBoxGrid{ align-content:center; gap:0.6rem; overflow-y:auto; scrollbar-width:none; margin-top:0.5rem; margin-bottom:0.5rem; }
+    .scylla-nav-panel > #profileBoxGrid::-webkit-scrollbar{ display:none; }
+    #profileBoxGrid > .flock-account-box{ margin:0 !important; min-height:54px; padding-top:0.6rem; padding-bottom:0.6rem; }
+    #profileBoxGrid .flock-account-box-soon .flock-account-box-label{ font-size:14px; line-height:1.15; }
+  }
   /* PR0F!LES/0FFERS/C0LLECT!0NS/CR0WN etc all use the same strong magenta
      "currently open" glitch treatment once picked — the reference's own
      "active page" look. A continuous but subtle flicker (reusing
@@ -9999,6 +10011,24 @@ const SWAP_HTML = `<!DOCTYPE html>
   .th-row-medal .th2-rank{ color:rgb(var(--medal)); text-shadow:0 0 8px rgba(var(--medal), 0.55); }
   .th-row-medal .th2-rank .pigeons-green-num{ color:rgb(var(--medal)) !important; }
   #thFullListWrap .th-header-row{ display:none; }
+  /* Desktop T0P 123: every column a fixed width so thumbnails line up
+     (medal rows used to widen their own columns), and everything centred.
+     Default profile = address on top + "What if?"; a set profile = name +
+     quote, no address (reported live 2026-09-29). Phones keep their own
+     layout (max-width:700px block). */
+  @media (min-width:701px){
+    #topHoldersModal .th2-row, #topHoldersModal .th-row-medal.th2-row{ grid-template-columns:90px 110px minmax(0, 1fr) 210px !important; column-gap:1rem !important; }
+    #topHoldersModal .th2-rank{ justify-self:center; text-align:center; }
+    #topHoldersModal .th2-avatar{ justify-self:center; }
+    #topHoldersModal .th2-id{ align-items:center; text-align:center; gap:0.3rem; }
+    #topHoldersModal .th2-id > span{ max-width:100%; }
+    #topHoldersModal .th2-quote{ font-size:0.72em; letter-spacing:0.06em; opacity:0.95; }
+    #topHoldersModal .th2-default .th2-name{ display:none; }
+    #topHoldersModal .th2-default .th2-addr{ order:-1; color:#fff; opacity:1; font-size:0.95em; font-weight:700; letter-spacing:0.06em; }
+    #topHoldersModal .th2-profile .th2-addr{ display:none; }
+    #topHoldersModal .th2-row .th-count{ justify-content:center; gap:0.6rem !important; }
+    #topHoldersModal .th2-row .th-count-amt, #topHoldersModal .th2-row .th-count-pct{ min-width:0; text-align:center; }
+  }
   @media (max-width:820px){
     .th2-row, .th-row-medal.th2-row{ grid-template-columns:40px 52px 1fr !important; row-gap:0.2rem; }
     .th2-avatar{ width:48px; height:48px; }
@@ -17147,7 +17177,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Sorted by RAR!TY — same label/value stack, but the Pigeon's own
     // rarity score instead of its average sale (falls back to the normal
     // line when there's no score yet).
-    var floorSort = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
+    var floorSort = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || state.sort === 'RECENT_XRP' || state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
     var marketBuyHtml = '';
     var cheapest = floorSort && p.marketListings && p.marketListings.length ? p.marketListings[0]
       : (p.xrpListing && p.xrpListing.priceXrp && (p.xrpListing.internal || p.xrpListing.url)) ? p.xrpListing : null;
@@ -17864,7 +17894,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     var isSalesSort = state.sort === 'HIGHEST_SALE' || state.sort === 'SALES_LOW' || state.sort === 'AVG_SALE_XRP_ASC' || state.sort === 'AVG_SALE_XRP_DESC' || state.sort === 'AVG_SALE_PIGEONS_ASC';
     var isNumericSort = state.sort === 'NAME_ASC' || state.sort === 'NAME_DESC';
     var isXrpCafeFloor = state.sort === 'XRPCAFE_PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_DESC';
-    var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || isXrpCafeFloor;
+    var isCrossListing = state.sort === 'PRICE_ASC' || state.sort === 'PRICE_DESC' || state.sort === 'RECENT_XRP' || isXrpCafeFloor;
     // The exact shape the exhaustion-fallback below always uses (skip 0,
     // no filters/edition — the first-page-of-a-fresh-landing case). Used
     // both to decide whether to kick off the speculative prefetch just
@@ -17884,7 +17914,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       // alongside any of these three sort modes silently showed the whole
       // collection instead of just that edition's slice, since only the
       // two dedicated edition branches further down ever sent it.
-      reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined, numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined };
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, scyllaListed: 1, dir: state.sort === 'SCYLLA_RECENT' ? 'recent' : state.sort === 'SCYLLA_PRICE_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined, numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined };
       // Kick the guaranteed-next fallback off in parallel right now,
       // rather than waiting for this request to come back small/empty
       // first — see scyllaFallbackPrefetch's own comment above. Only for
@@ -17908,7 +17938,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     } else if (isCrossListing){
       // Real lowest/highest across BOTH Deeptide and xrp.cafe, not just
       // whichever platform happens to have the cheaper API.
-      reqParams = { skip: state.skip, limit: PAGE_SIZE, crossListing: (state.sort === 'PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_ASC') ? 'asc' : 'desc', marketplace: isXrpCafeFloor ? 'xrpcafe' : undefined, filters: filters.length ? JSON.stringify(filters) : undefined, numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined };
+      reqParams = { skip: state.skip, limit: PAGE_SIZE, crossListing: state.sort === 'RECENT_XRP' ? 'recent' : (state.sort === 'PRICE_ASC' || state.sort === 'XRPCAFE_PRICE_ASC') ? 'asc' : 'desc', marketplace: isXrpCafeFloor ? 'xrpcafe' : undefined, filters: filters.length ? JSON.stringify(filters) : undefined, numberRange: isEdition ? (state.edition === 'LOW' ? 'low' : 'high') : undefined };
     } else if (isEdition && isNumericSort){
       // Direct slice of the number map restricted to this range — no scan needed.
       reqParams = { skip: state.skip, limit: PAGE_SIZE, numberRange: state.edition === 'LOW' ? 'low' : 'high', numericOrder: state.sort === 'NAME_DESC' ? 'desc' : 'asc', filters: filters.length ? JSON.stringify(filters) : undefined };
@@ -18777,8 +18807,11 @@ const SWAP_HTML = `<!DOCTYPE html>
     var prof = profileCache[h.wallet] || null;
     var img = (prof && prof.pfpImage) || (h.rarestPigeon && h.rarestPigeon.image) || '';
     var name = prof && prof.username ? escapeHtml(prof.username) : '<span class="th2-bin">' + escapeHtml(defaultProfileName(h.wallet, h.rarestPigeon)) + '</span>';
-    var quote = prof && prof.quote ? escapeHtml(prof.quote) : '<span class="th2-bin">' + escapeHtml(toBinaryText(DEFAULT_PROFILE_QUOTE)) + '</span>';
-    return '<a class="th-row th2-row' + (rank < 15 ? ' th-row-top' : '') + (rank < 3 ? ' th-row-medal th-row-medal-' + (rank + 1) : '') + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
+    var quote = prof && prof.quote ? escapeHtml(prof.quote) : escapeHtml(DEFAULT_PROFILE_QUOTE);
+    // Desktop: a set profile shows name + quote (no address); a default
+    // one shows address + "What if?" (reported live 2026-09-29).
+    var hasProfile = !!(prof && prof.username);
+    return '<a class="th-row th2-row ' + (hasProfile ? 'th2-profile' : 'th2-default') + (rank < 15 ? ' th-row-top' : '') + (rank < 3 ? ' th-row-medal th-row-medal-' + (rank + 1) : '') + '" href="' + escapeHtml(walletHrefFor(h.wallet)) + '" data-wallet="' + escapeHtml(h.wallet) + '" data-short="' + escapeHtml(h.ownerShort) + '">' +
       '<span class="th2-rank">#' + greenNum(rank + 1) + '</span>' +
       '<span class="th2-avatar">' + (img ? '<img src="' + escapeHtml(img) + '" alt="" loading="lazy">' : '') + '</span>' +
       '<span class="th2-id">' +
@@ -25595,7 +25628,18 @@ const SWAP_HTML = `<!DOCTYPE html>
       // floor, cheapest or dearest first (reported live 2026-09-23: keep
       // it to these two, not per-marketplace sorts).
       { value: 'PRICE_ASC', label: 'L0WEST (XRP)' },
-      { value: 'PRICE_DESC', label: 'H!GHEST (XRP)' }
+      { value: 'PRICE_DESC', label: 'H!GHEST (XRP)' },
+      // Newest listing first (2026-09-29): XRP = any marketplace, by the
+      // ledger its offer was made in; $TOKEN = Σκύλλα token listings.
+      { value: 'RECENT_XRP', label: 'RECENTLY L!STED (XRP)' },
+      { value: 'SCYLLA_RECENT', label: 'RECENTLY L!STED ($P!GE0NS)' }
+    ],
+    'RAR!TY': [
+      { value: 'RARITY_ASC', label: 'H!GHEST' },
+      { value: 'RARITY_DESC', label: 'L0WEST' },
+      // Lore Score — C0M!NG S00N for now (2026-09-29).
+      { value: 'LORE_ASC', label: 'L0RE SC0RE H!GHEST', disabled: true },
+      { value: 'LORE_DESC', label: 'L0RE SC0RE L0WEST', disabled: true }
     ],
     // Past sales, not current listings (reported live 2026-09-24): every
     // AVG SALE sort plus H!GHEST REC0RDED SALE.
@@ -25604,14 +25648,6 @@ const SWAP_HTML = `<!DOCTYPE html>
       { value: 'AVG_SALE_XRP_DESC', label: 'H!GHEST AVG SALE (XRP)' },
       { value: 'AVG_SALE_XRP_ASC', label: 'L0WEST AVG SALE (XRP)' },
       { value: 'AVG_SALE_PIGEONS_ASC', label: 'L0WEST AVG SALE ($P!GE0NS)' }
-    ],
-    'RAR!TY': [
-      { value: 'RARITY_ASC', label: 'H!GHEST' },
-      { value: 'RARITY_DESC', label: 'L0WEST' },
-      // Lore Score (the full layered formula: sets, number, 1 0F N, rare
-      // traits) — still its own ranking, just listed under RAR!TY now.
-      { value: 'LORE_ASC', label: 'L0RE H!GHEST' },
-      { value: 'LORE_DESC', label: 'L0RE L0WEST' }
     ],
     'ALPHABET!CAL': [
       { value: 'NAME_ASC', label: 'A-Z' },
@@ -25629,6 +25665,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     SORT_CATEGORIES['PR!CE'].concat(SORT_CATEGORIES['SALES']).forEach(function(o){
       if (o.value === 'SCYLLA_PRICE_ASC') o.label = 'L0WEST ' + tokenLabel;
       else if (o.value === 'SCYLLA_PRICE_DESC') o.label = 'H!GHEST ' + tokenLabel;
+      else if (o.value === 'SCYLLA_RECENT') o.label = 'RECENTLY L!STED (' + tokenLabel + ')';
       else if (o.value === 'AVG_SALE_PIGEONS_ASC') o.label = 'L0WEST AVG SALE (' + tokenLabel + ')';
     });
     // This only ever mutates the SORT_CATEGORIES data itself — the actual
@@ -25746,7 +25783,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       html += '<div class="sort-cat-heading">' + escapeHtml(cat) + '</div>';
       SORT_CATEGORIES[cat].forEach(function(o){
         // No token of its own (K!NG): no token price / token average sorts.
-        if (COLLECTION_META[state.collection].xrpOnly && (o.value === 'SCYLLA_PRICE_ASC' || o.value === 'SCYLLA_PRICE_DESC' || o.value === 'AVG_SALE_PIGEONS_ASC')) return;
+        if (COLLECTION_META[state.collection].xrpOnly && (o.value === 'SCYLLA_PRICE_ASC' || o.value === 'SCYLLA_PRICE_DESC' || o.value === 'SCYLLA_RECENT' || o.value === 'AVG_SALE_PIGEONS_ASC')) return;
         html += '<button type="button" class="traits-flyout-val' + ((state.pickedSort || state.sort) === o.value ? ' selected' : '') + (o.disabled ? ' tfv-disabled' : '') + '" data-value="' + o.value + '"' + (o.disabled ? ' disabled' : '') + '>' +
           '<span>' + escapeHtml(o.label) + '</span>' +
           (o.disabled ? '<span class="db-soon">C0M!NG S00N</span>' : '') +
@@ -25789,7 +25826,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // left the OLD option still visually highlighted even though the tag
     // above it, and the actual applied sort, had both already changed.
     renderSortFlyoutList();
-    var isScyllaSort = value === 'SCYLLA_PRICE_ASC' || value === 'SCYLLA_PRICE_DESC';
+    var isScyllaSort = isScyllaSortValue(value);
     if (isScyllaSort){
       setScyllaListedOnly(true); // also runs the query
     } else if (state.scyllaListedOnly){
@@ -27047,6 +27084,15 @@ const SWAP_HTML = `<!DOCTYPE html>
   // ledger scan; floor from BOTH marketplaces separately since each has
   // its own liquidity; volume/listed% from xrp.cafe's own stats API) ----
   function fmtXrp(n){ return n === null || n === undefined ? '—' : n.toLocaleString(undefined, { maximumFractionDigits: n < 100 ? 2 : 0 }); }
+  // Stats-carousel numbers as 174K / 1.2M (reported live 2026-09-29).
+  function fmtKNum(n){
+    if (n === null || n === undefined || !isFinite(n)) return '—';
+    var a = Math.abs(n), unit = '', v = n;
+    if (a >= 1e6){ v = n / 1e6; unit = 'M'; } else if (a >= 1e3){ v = n / 1e3; unit = 'K'; }
+    if (!unit) return fmtXrp(n);
+    var r = Math.abs(v) < 10 ? Math.round(v * 10) / 10 : Math.round(v);
+    return r + unit;
+  }
   // Real $PIGEONS sale figures default to 0 (never hidden) — a Pigeon that
   // has never sold through Σκύλλα's own marketplace genuinely has a 0
   // $PIGEONS sale history, distinct from "no data available." Accepts a
@@ -27782,7 +27828,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     Object.keys(SORT_CATEGORIES).forEach(function(cat){
       var group = '';
       SORT_CATEGORIES[cat].forEach(function(o){
-        if (!sortComparatorFor(o.value)) return; // SCYLLA_PRICE etc — live-collection-only, not in the owned list
+        if (o.disabled || !sortComparatorFor(o.value)) return; // SCYLLA_PRICE etc — live-collection-only, not in the owned list
         group += '<option value="' + escapeHtml(o.value) + '">' + escapeHtml(cat + ' :: ' + o.label) + '</option>';
       });
       if (group) optionsHtml += '<optgroup label="' + escapeHtml(cat) + '">' + group + '</optgroup>';
@@ -30949,14 +30995,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     (function(){
       el.statItems.textContent = data.items !== null && data.items !== undefined ? data.items.toLocaleString() : '—';
       el.statHolders.textContent = data.holders !== null && data.holders !== undefined ? data.holders.toLocaleString() : '—';
-      el.statVolume.textContent = data.totalVolumeXrp !== null && data.totalVolumeXrp !== undefined ? fmtXrp(data.totalVolumeXrp) + ' XRP' : '—';
+      el.statVolume.textContent = data.totalVolumeXrp !== null && data.totalVolumeXrp !== undefined ? fmtKNum(data.totalVolumeXrp) + ' XRP' : '—';
       el.statListed.textContent = data.listedPercent !== null && data.listedPercent !== undefined ? data.listedPercent + '%' : '—';
       // XRP FL00R: the lowest XRP listing anywhere (server's xrpFloorXrp).
       var externalFloors = [data.xrpFloorXrp, data.xrpCafeFloorXrp, data.deeptideFloorXrp].filter(function(v){ return typeof v === 'number' && isFinite(v) && v > 0; });
-      el.statFloorExternal.textContent = externalFloors.length ? fmtXrp(Math.min.apply(null, externalFloors)) + ' XRP' : '—';
-      el.statScyllaListedCount.innerHTML = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? greenNum(data.scyllaFloorPigeons.toLocaleString()) + ' ' + COLLECTION_META[state.collection].tokenLabel : 'N0T L!STED';
+      el.statFloorExternal.textContent = externalFloors.length ? fmtKNum(Math.min.apply(null, externalFloors)) + ' XRP' : '—';
+      el.statScyllaListedCount.innerHTML = data.scyllaFloorPigeons !== null && data.scyllaFloorPigeons !== undefined ? greenNum(fmtKNum(data.scyllaFloorPigeons)) + ' ' + COLLECTION_META[state.collection].tokenLabel : 'N0T L!STED';
       el.statTraded24h.textContent = data.traded24hCount !== null && data.traded24hCount !== undefined ? data.traded24hCount.toLocaleString() : '—';
-      el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtXrp(data.volume24hXrp) + ' XRP' : '—';
+      el.statVolume24h.textContent = data.volume24hXrp !== null && data.volume24hXrp !== undefined ? fmtKNum(data.volume24hXrp) + ' XRP' : '—';
       el.statSales24h.textContent = data.sales24hCount !== null && data.sales24hCount !== undefined ? data.sales24hCount.toLocaleString() : '—';
       // Real numbers can wrap/size slightly differently than the "…"
       // placeholders — resync the viewport height (see
@@ -31083,6 +31129,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   // by picking a $PIGEONS sort option (the only sort that means anything
   // in this view). Whole-collection only, per its own scope — exits any
   // target-wallet scope first. ----
+  function isScyllaSortValue(v){ return v === 'SCYLLA_PRICE_ASC' || v === 'SCYLLA_PRICE_DESC' || v === 'SCYLLA_RECENT'; }
   function setScyllaListedOnly(on){
     // FL0CK only ever shows your own Pigeons, no exceptions — this is a
     // whole-COLLECTION filter (see the comment above), reachable from
@@ -31093,7 +31140,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     state.scyllaListedOnly = on;
     el.statScyllaListedTile.classList.toggle('scylla-active', on);
     if (on){
-      if (state.sort !== 'SCYLLA_PRICE_ASC' && state.sort !== 'SCYLLA_PRICE_DESC'){
+      if (!isScyllaSortValue(state.sort)){
         // Highest-first is the default entry into LISTED — the main
         // attraction of the site, not a niche filter.
         state.sort = 'SCYLLA_PRICE_DESC';
@@ -31108,7 +31155,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         refreshSearchPanelSubtitle();
         renderTradeBuilder();
       }
-    } else if (state.sort === 'SCYLLA_PRICE_ASC' || state.sort === 'SCYLLA_PRICE_DESC'){
+    } else if (isScyllaSortValue(state.sort)){
       state.sort = 'RARITY_ASC';
       state.pickedSort = null;
       renderSortTag();

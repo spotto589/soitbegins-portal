@@ -5859,7 +5859,10 @@ export async function maybeRefreshFloorIndex(kv, collectionKey = 'pigeons') {
   let candidates = staging.candidates || [];
 
   const batch = allIds.slice(nextIndex, nextIndex + FLOOR_INDEX_TOKENS_PER_RUN);
-  const found = await mapWithConcurrency(batch, FLOOR_INDEX_CONCURRENCY, nftId => floorEntryForNft(nftId, idToNumber[nftId] || null));
+  // Last pass's entries, so each offer's listing ledger (listedSeq) is
+  // only ever looked up once.
+  const prevById = await floorEntriesById(kv, collectionKey);
+  const found = await mapWithConcurrency(batch, FLOOR_INDEX_CONCURRENCY, nftId => floorEntryForNft(nftId, idToNumber[nftId] || null, prevById[nftId]));
   candidates = candidates.concat(found.filter(Boolean));
 
   nextIndex += batch.length;
@@ -5879,8 +5882,24 @@ export async function maybeRefreshFloorIndex(kv, collectionKey = 'pigeons') {
   await safeKvPut(kv, statsKey, JSON.stringify({ inProgress: true, nextIndex, startedAt: (stats && stats.inProgress && stats.startedAt) || now, updatedAt: now }));
 }
 
+export async function floorEntriesById(kv, collectionKey) {
+  const index = await getFloorIndex(kv, collectionKey);
+  const out = {};
+  ((index && index.items) || []).forEach(c => { out[c.nftId] = c; });
+  return out;
+}
+
+// The ledger an NFT offer was created in (NFT offers are never modified,
+// so PreviousTxnLgrSeq is its creation). null on failure.
+async function fetchOfferLedgerSeq(offerIndex) {
+  const data = await fetchXrplClusterJson({ method: 'ledger_entry', params: [{ index: offerIndex, ledger_index: 'validated' }] }, ['entryNotFound']);
+  const node = data && data.result && data.result.node;
+  return node && typeof node.PreviousTxnLgrSeq === 'number' ? node.PreviousTxnLgrSeq : null;
+}
+
 // One Pigeon's floor entry (null = not listed in XRP by its current owner).
-export async function floorEntryForNft(nftId, number) {
+// prev = its entry from the last index (reuses known offer ledgers).
+export async function floorEntryForNft(nftId, number, prev) {
     const offers = await fetchNftSellOffers(nftId); // tolerant [] on failure/not-listed
     // Cheapest XRP sell offer per marketplace (the offer's destination is
     // the marketplace's broker account), kept separately so an xrp.cafe-
@@ -5899,8 +5918,20 @@ export async function floorEntryForNft(nftId, number) {
     if (!listings.length) return null;
     const markets = {};
     for (const l of listings) markets[l.key] = l.priceXrp;
+    // RECENTLY L!STED (XRP) — newest counted offer's creation ledger
+    // (2026-09-29). Same offer filter as marketListingsFromOffers.
+    const counted = xrpOffers.filter(o => o.amount !== '0' && (!owner || o.owner === owner) && (o.destination ? NFT_MARKETPLACES[o.destination] : true) && o.nft_offer_index);
+    const prevSeqs = (prev && prev.offerSeqs) || {};
+    const offerSeqs = {};
+    for (const o of counted) {
+      const seq = prevSeqs[o.nft_offer_index] || await fetchOfferLedgerSeq(o.nft_offer_index).catch(() => null);
+      if (seq) offerSeqs[o.nft_offer_index] = seq;
+    }
+    const seqs = Object.values(offerSeqs);
     return {
       nftId, number,
+      listedSeq: seqs.length ? Math.max.apply(null, seqs) : null,
+      offerSeqs,
       priceXrp: listings[0].priceXrp, venue: listings[0].key,
       markets,
       xrpcafeXrp: markets.xrpcafe !== undefined ? markets.xrpcafe : null,

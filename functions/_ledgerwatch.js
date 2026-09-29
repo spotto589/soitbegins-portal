@@ -1,6 +1,6 @@
 import {
   fetchXrplClusterJson, getPigeonNumberMap, TRADEABLE_COLLECTIONS, safeKvPut,
-  mapWithConcurrency, floorEntryForNft, patchFloorIndex, FLOOR_INDEX_COLLECTIONS, fetchDeeptideNftDetail
+  mapWithConcurrency, floorEntryForNft, floorEntriesById, patchFloorIndex, FLOOR_INDEX_COLLECTIONS, fetchDeeptideNftDetail
 } from './_shared.js';
 import { pushEventsToDevices } from './_webpush.js';
 
@@ -203,7 +203,8 @@ export async function runLedgerWatch(kv, opts) {
       if (!touched.size || opts.skipFloor) continue;
       const ids = Array.from(touched);
       const entries = {};
-      const results = await mapWithConcurrency(ids, 4, id => floorEntryForNft(id, idx.numbers[id] || null).catch(() => undefined));
+      const prevById = await floorEntriesById(kv, floorKey);
+      const results = await mapWithConcurrency(ids, 4, id => floorEntryForNft(id, idx.numbers[id] || null, prevById[id]).catch(() => undefined));
       ids.forEach((id, i) => { if (results[i] !== undefined) entries[id] = results[i]; });
       await patchFloorIndex(kv, entries, floorKey);
     }

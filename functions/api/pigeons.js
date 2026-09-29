@@ -1249,6 +1249,8 @@ export async function onRequestGet(context) {
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
     const asc = params.get('dir') !== 'desc';
+    // dir=recent: RECENTLY L!STED ($TOKEN) — newest Σκύλλα listing first.
+    const recent = params.get('dir') === 'recent';
     // scyllaListingsMap carries no trait data of its own — a trait filter
     // (previously ignored entirely here) means first learning the real
     // set of matching nftIds, then restricting to that. If none of the
@@ -1266,6 +1268,7 @@ export async function onRequestGet(context) {
       idPool = idPool.filter(id => editionSet.has(id));
     }
     const sortedIds = idPool.sort((a, b) => {
+      if (recent) return (scyllaListingsMap[b].listedAt || 0) - (scyllaListingsMap[a].listedAt || 0);
       const av = parseFloat(scyllaListingsMap[a].price) || 0;
       const bv = parseFloat(scyllaListingsMap[b].price) || 0;
       return asc ? av - bv : bv - av;
@@ -1512,7 +1515,10 @@ export async function onRequestGet(context) {
   // each candidate's live display data (image/traits/current price) on
   // top of it.
   const crossListing = params.get('crossListing');
-  if (crossListing === 'asc' || crossListing === 'desc') {
+  // crossListing=recent: RECENTLY L!STED (XRP) — newest offer first, by
+  // the ledger it was created in (listedSeq, see floorEntryForNft).
+  const recentListing = crossListing === 'recent';
+  if (crossListing === 'asc' || crossListing === 'desc' || recentListing) {
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
     const limit = Math.min(60, Math.max(1, parseInt(params.get('limit') || '36', 10) || 36));
     // marketplace=xrpcafe / deeptide: that marketplace's own floor only.
@@ -1539,7 +1545,7 @@ export async function onRequestGet(context) {
     // Whole listed set sorted by the index's price, then one page at a
     // time — only that page gets live details/listing lookups (the full
     // listed set is hundreds of Pigeons, far past a request's budget).
-    candidates.sort((a, b) => crossListing === 'asc' ? indexPrice(a) - indexPrice(b) : indexPrice(b) - indexPrice(a));
+    candidates.sort((a, b) => recentListing ? (b.listedSeq || 0) - (a.listedSeq || 0) : crossListing === 'asc' ? indexPrice(a) - indexPrice(b) : indexPrice(b) - indexPrice(a));
     const totalListed = candidates.length;
     const pageCandidates = candidates.slice(skip, skip + limit);
     const details = await resolveDetailsCached(context, coll.key, pageCandidates.map(c => c.nftId));
@@ -1570,7 +1576,7 @@ export async function onRequestGet(context) {
     // price on either marketplace's own live lookup either — drop rather
     // than show an impossible null-priced "lowest" result.
     items = items.filter(it => it.bestListingXrp !== null);
-    items.sort((a, b) => crossListing === 'asc' ? a.bestListingXrp - b.bestListingXrp : b.bestListingXrp - a.bestListingXrp);
+    if (!recentListing) items.sort((a, b) => crossListing === 'asc' ? a.bestListingXrp - b.bestListingXrp : b.bestListingXrp - a.bestListingXrp);
     // skip is the position in the sorted listed set (not how many items
     // survived the live check), so the next page never repeats or skips.
     return json({
