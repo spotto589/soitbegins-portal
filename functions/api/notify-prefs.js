@@ -1,11 +1,11 @@
 import { BOARD_COOKIE_NAME, getCookie, verifyToken, safeKvPut, TRADEABLE_COLLECTIONS } from '../_shared.js';
-import { cleanWatch } from '../_webpush.js';
+import { cleanWatch, cleanUnder } from '../_webpush.js';
 
 // Per-wallet notification settings (2026-09-25): which collections, and
 // which kinds of activity (from the ledger watcher's event feed, see
 // functions/_ledgerwatch.js), should pop up for this wallet.
 // Shape: { collections: { <key>: { listing: true, sale: true, ..., watchOnly?: true, watch?: [nftIds] } } }
-export const NOTIFY_TYPES = ['listing', 'sale', 'offer', 'delist', 'transfer', 'mint', 'burn'];
+export const NOTIFY_TYPES = ['listing', 'sale', 'offer', 'delist', 'transfer', 'mint', 'burn', 'floor_down', 'floor_up'];
 const PREFS_PREFIX = 'pswap:notify:v1:';
 
 function json(body, status) {
@@ -39,6 +39,9 @@ export async function onRequestPost(context) {
     if (!TRADEABLE_COLLECTIONS[key]) return;
     const t = {};
     NOTIFY_TYPES.forEach(type => { if (cols[key] && cols[key][type] === true) t[type] = true; });
+    // PR!CE ALERT: listings at or under this many XRP (2026-09-29).
+    const under = cleanUnder(cols[key] && cols[key].under);
+    if (under) t.under = under;
     if (!Object.keys(t).length) return;
     // WATCHL!ST 0NLY (2026-09-28): only events on the NFTs in watch.
     if (cols[key].watchOnly === true) { t.watchOnly = true; t.watch = cleanWatch(cols[key].watch); }

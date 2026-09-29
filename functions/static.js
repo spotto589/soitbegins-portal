@@ -6987,6 +6987,9 @@ const SWAP_HTML = `<!DOCTYPE html>
   #notifyModal .history-title{ text-align:center; font-size:32px; font-weight:700; letter-spacing:0.03em; color:var(--white); }
   #notifyModal .node-eyebrow{ text-align:center; color:var(--collection-accent); font-size:18px; letter-spacing:0.12em; margin:0.2rem 0 1rem; }
   .notify-toggles{ display:flex; flex-direction:column; gap:0.5rem; text-align:left; }
+  .notify-row-under{ cursor:default; }
+  .notify-under-input{ width:6.5em; margin:0 0.35em; padding:0.2em 0.4em; background:#000; color:var(--white); border:1px solid var(--border-dim); border-radius:var(--radius); font:inherit; font-size:15px; text-align:right; }
+  .notify-row-under.on .notify-under-input{ border-color:var(--cyan); }
   .notify-row{ display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.75em 1em; border:1px solid var(--border-dim); border-radius:var(--radius); background:rgba(255,255,255,0.02); cursor:pointer; font-size:17px; font-weight:700; letter-spacing:0.05em; color:var(--white); }
   .notify-row:hover{ border-color:rgba(var(--collection-accent-rgb), 0.6); }
   .notify-row .notify-sub{ display:block; font-size:12px; font-weight:400; letter-spacing:0.04em; color:var(--grey); margin-top:0.15rem; }
@@ -25279,8 +25282,16 @@ const SWAP_HTML = `<!DOCTYPE html>
     { type: 'delist', label: 'DEL!ST!NGS', sub: 'A L!ST!NG !S CANCELLED' },
     { type: 'transfer', label: 'TRANSFERS', sub: 'AN NFT M0VES WALLETS W!TH0UT A SALE' },
     { type: 'mint', label: 'M!NTS', sub: 'A NEW NFT !S M!NTED' },
-    { type: 'burn', label: 'BURNS', sub: 'AN NFT !S DESTR0YED' }
+    { type: 'burn', label: 'BURNS', sub: 'AN NFT !S DESTR0YED' },
+    // FL00R ALERTS (2026-09-29): the collection's XRP floor moves 5%+.
+    { type: 'floor_down', label: 'FL00R DR0PS', sub: 'XRP FL00R FALLS 5% 0R M0RE' },
+    { type: 'floor_up', label: 'FL00R R!SES', sub: 'XRP FL00R CL!MBS 5% 0R M0RE' }
   ];
+  // PR!CE ALERT: a listing at or under c.under XRP (see _webpush.js).
+  function isUnderAlert(c, e){
+    return !!(c && c.under && e.type === 'listing' && e.price && e.price.xrp !== undefined && Number(e.price.xrp) <= c.under);
+  }
+  function notifyIsFloor(e){ return e.type === 'floor_down' || e.type === 'floor_up'; }
   var NOTIFY_PREFS_LS = 'skyllaNotifyPrefs';
   var NOTIFY_SEEN_LS = 'skyllaNotifySeen';
   function lsGet(k, fallback){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch (e){ return fallback; } }
@@ -25426,7 +25437,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var notifyHeldCounts = null;
   function notifyCollChipHtml(k, key, count){
     var m = COLLECTION_META[k], c = (notifyPrefs.collections && notifyPrefs.collections[k]) || {};
-    var live = notifyTypesOf(c).length > 0;
+    var live = notifyTypesOf(c).length > 0 || !!c.under;
     return '<button type="button" class="notify-coll' + (k === key ? ' on' : '') + (live ? ' live' : '') + '" data-coll="' + escapeHtml(k) + '">' +
       (m.thumb ? '<img src="' + escapeHtml(m.thumb) + '" alt="">' : '') + '<span>' + escapeHtml(m.label) + '</span>' +
       (count ? '<span class="notify-coll-n">' + count + '</span>' : '') + (live ? '<i class="notify-coll-dot"></i>' : '') + '</button>';
@@ -25460,6 +25471,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // fire for NFTs you've starred in this collection.
     var watchedHere = watchedIdsFor(key).length;
     el.notifyToggles.innerHTML = '<div class="notify-row notify-row-watch' + (on.watchOnly ? ' on' : '') + '" data-type="watchOnly"><span>★ WATCHL!ST 0NLY <small>' + watchedHere + ' STARRED HERE</small></span><span class="notify-switch"></span></div>' +
+      // PR!CE ALERT — its own row with a price box.
+      '<div class="notify-row notify-row-under' + (on.under ? ' on' : '') + '" data-type="under"><span>💰 L!ST!NGS UNDER <input type="number" inputmode="decimal" min="0" step="any" class="notify-under-input" placeholder="—" value="' + (on.under ? escapeHtml(String(on.under)) : '') + '"> XRP</span></div>' +
       NOTIFY_OPTIONS.map(function(o){
       // Title only (reported live 2026-09-25: no descriptions, make it fit).
       return '<div class="notify-row' + (on[o.type] ? ' on' : '') + '" data-type="' + o.type + '"><span>' + o.label + '</span><span class="notify-switch"></span></div>';
@@ -25495,13 +25508,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     var row = e.target.closest('.notify-row');
     if (!row) return;
     var key = notifySettingsCollection(), type = row.getAttribute('data-type');
+    if (type === 'under') return; // the price box saves on its own (below)
     notifyPrefs.collections = notifyPrefs.collections || {};
     var c = notifyPrefs.collections[key] = notifyPrefs.collections[key] || {};
     if (type === 'watchOnly'){
       if (c.watchOnly){ delete c.watchOnly; delete c.watch; }
       else { c.watchOnly = true; c.watch = watchedIdsFor(key); }
     } else if (c[type]) delete c[type]; else c[type] = true;
-    if (!notifyTypesOf(c).length && !c.watchOnly) delete notifyPrefs.collections[key];
+    if (!notifyTypesOf(c).length && !c.watchOnly && !c.under) delete notifyPrefs.collections[key];
     // Start from now — no flood of older activity the moment it's switched on.
     if (!notifySeen[key]){ notifySeen[key] = Math.floor(Date.now() / 1000); lsSet(NOTIFY_SEEN_LS, notifySeen); }
     row.classList.toggle('on', !!c[type]);
@@ -25511,22 +25525,42 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Keep the collection chips' green "on" dots current.
     renderNotifyCollMenu();
   });
+  // PR!CE ALERT box: any price saves it, empty clears it.
+  el.notifyToggles.addEventListener('change', function(e){
+    var input = e.target.closest('.notify-under-input');
+    if (!input) return;
+    var key = notifySettingsCollection();
+    notifyPrefs.collections = notifyPrefs.collections || {};
+    var c = notifyPrefs.collections[key] = notifyPrefs.collections[key] || {};
+    var v = parseFloat(input.value);
+    if (isFinite(v) && v > 0) c.under = v; else delete c.under;
+    if (!notifyTypesOf(c).length && !c.watchOnly && !c.under) delete notifyPrefs.collections[key];
+    if (!notifySeen[key]){ notifySeen[key] = Math.floor(Date.now() / 1000); lsSet(NOTIFY_SEEN_LS, notifySeen); }
+    input.closest('.notify-row').classList.toggle('on', !!c.under);
+    el.notifyNote.textContent = c.under ? 'Y0U W!LL HEAR AB0UT ANY L!ST!NG AT 0R UNDER ' + fmtXrp(c.under) + ' XRP.' : 'PR!CE ALERT 0FF.';
+    saveNotifyPrefs();
+    pollNotifications();
+    renderNotifyCollMenu();
+  });
   function notifyPriceText(e, key){
     if (!e.price) return '';
     if (e.price.xrp !== undefined) return fmtXrp(e.price.xrp) + ' XRP';
     var meta = COLLECTION_META[key] || {};
     return compactPigeonsNumber(Number(e.price.value)) + ' ' + (meta.tokenLabel || '');
   }
-  var NOTIFY_VERBS = { listing: 'L!STED F0R', sale: 'S0LD F0R', offer: 'G0T AN 0FFER 0F', delist: 'WAS DEL!STED', transfer: 'WAS TRANSFERRED', mint: 'WAS M!NTED', burn: 'WAS BURNED' };
+  var NOTIFY_VERBS = { listing: 'L!STED F0R', sale: 'S0LD F0R', offer: 'G0T AN 0FFER 0F', delist: 'WAS DEL!STED', transfer: 'WAS TRANSFERRED', mint: 'WAS M!NTED', burn: 'WAS BURNED', floor_down: 'FL00R DR0PPED T0', floor_up: 'FL00R R0SE T0' };
   function showNotifyToast(e, key){
     var meta = COLLECTION_META[key] || {};
-    var href = nftHrefFor({ number: e.number, collectionKey: key });
+    var href = notifyIsFloor(e) ? '/' + key : nftHrefFor({ number: e.number, collectionKey: key });
     var price = notifyPriceText(e, key);
+    var cfg = (notifyPrefs.collections || {})[key];
+    if (notifyIsFloor(e) && e.prev && e.prev.xrp !== undefined) price += ' (WAS ' + fmtXrp(e.prev.xrp) + ' XRP)';
+    if (isUnderAlert(cfg, e)) price += ' — UNDER Y0UR ' + fmtXrp(cfg.under) + ' XRP ALERT';
     var t = document.createElement(href ? 'a' : 'div');
     t.className = 'notify-toast nt-' + e.type;
     if (href) t.href = href;
     t.innerHTML = (meta.thumb ? '<img src="' + escapeHtml(meta.thumb) + '" alt="">' : '') +
-      '<span>' + escapeHtml((meta.itemLabel || key) + (e.number ? ' #' + e.number : '')) + ' ' + (NOTIFY_VERBS[e.type] || 'UPDATED') + (price ? ' ' + escapeHtml(price) : '') + (e.type === 'offer' && e.to ? ' FR0M ' + escapeHtml(chatName(e.to)) : '') +
+      '<span>' + escapeHtml(notifyIsFloor(e) ? (meta.label || key) : (meta.itemLabel || key) + (e.number ? ' #' + e.number : '')) + ' ' + (NOTIFY_VERBS[e.type] || 'UPDATED') + (price ? ' ' + escapeHtml(price) : '') + (e.type === 'offer' && e.to ? ' FR0M ' + escapeHtml(chatName(e.to)) : '') +
       '<span class="nt-sub">' + escapeHtml(meta.label || key) + ' :: ' + escapeHtml(relativeTimeText(new Date(e.time * 1000).toISOString())) + '</span></span>' +
       '<button type="button" class="nt-x" title="CLEAR" aria-label="CLEAR">&times;</button>';
     el.notifyToasts.appendChild(t);
@@ -25587,18 +25621,22 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (document.hidden) return;
     var cols = (notifyPrefs && notifyPrefs.collections) || {};
     Object.keys(cols).forEach(function(key){
-      var types = notifyTypesOf(cols[key] || {});
-      if (!types.length) return;
-      var watch = cols[key].watchOnly ? watchedIdsFor(key) : null;
+      var cfg = cols[key] || {};
+      var types = notifyTypesOf(cfg);
+      // The PR!CE ALERT needs listings fetched even with L!ST!NGS off.
+      var fetchTypes = cfg.under && types.indexOf('listing') === -1 ? types.concat(['listing']) : types;
+      if (!fetchTypes.length) return;
+      var watch = cfg.watchOnly ? watchedIdsFor(key) : null;
       if (!notifySeen[key]){ notifySeen[key] = Math.floor(Date.now() / 1000); lsSet(NOTIFY_SEEN_LS, notifySeen); return; }
-      fetch('/api/pigeons?events=1&collection=' + encodeURIComponent(key) + '&since=' + notifySeen[key] + '&types=' + types.join(','))
+      fetch('/api/pigeons?events=1&collection=' + encodeURIComponent(key) + '&since=' + notifySeen[key] + '&types=' + fetchTypes.join(','))
         .then(function(r){ return r.json(); })
         .then(function(d){
           var items = (d && d.items) || [];
           if (!items.length) return;
           notifySeen[key] = Math.max.apply(null, items.map(function(x){ return x.time; }).concat([notifySeen[key]]));
           lsSet(NOTIFY_SEEN_LS, notifySeen);
-          if (watch) items = items.filter(function(ev){ return watch.indexOf(String(ev.nftId || '').toUpperCase()) !== -1; });
+          items = items.filter(function(ev){ return cfg[ev.type] || isUnderAlert(cfg, ev); });
+          if (watch) items = items.filter(function(ev){ return notifyIsFloor(ev) || watch.indexOf(String(ev.nftId || '').toUpperCase()) !== -1; });
           if (!items.length) return;
           // Everything piles up in Σκύλλα://N0T!F!CAT!0NS; up to 5 pop up.
           notifFromEvents(items, key);
@@ -25662,8 +25700,12 @@ const SWAP_HTML = `<!DOCTYPE html>
         title = nft + ' S0LD';
         if (e.to) who.push({ l: 'BUYER', w: e.to });
         if (e.from) who.push({ l: 'SELLER', w: e.from });
+      } else if (notifyIsFloor(e)){
+        title = (meta.label || key) + ' ' + NOTIFY_VERBS[e.type] + ' ' + price + (e.prev && e.prev.xrp !== undefined ? ' (WAS ' + fmtXrp(e.prev.xrp) + ' XRP)' : '');
+        price = '';
       } else if (e.type === 'listing'){
-        title = nft + ' L!STED';
+        var cfgL = (notifyPrefs.collections || {})[key];
+        title = nft + ' L!STED' + (isUnderAlert(cfgL, e) ? ' UNDER Y0UR ' + fmtXrp(cfgL.under) + ' XRP ALERT' : '');
         if (e.from) who.push({ l: 'BY', w: e.from });
       } else {
         title = nft + ' ' + (NOTIFY_VERBS[e.type] || 'UPDATED');
@@ -25674,7 +25716,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         id: 'ev:' + (e.hash || e.time) + ':' + e.type + ':' + e.nftId,
         cat: cat, time: e.time, read: false, collection: key,
         title: title, amount: price || '', who: who,
-        href: nftHrefFor({ number: e.number, collectionKey: key }) || null
+        href: notifyIsFloor(e) ? '/' + key : (nftHrefFor({ number: e.number, collectionKey: key }) || null)
       };
     }));
   }

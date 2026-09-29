@@ -13,6 +13,7 @@
 // whether anyone is on the site.
 import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshRarityScores, rarityNeedsWork, maybeRefreshFloorIndex, recomputeCrownHolder, maybeRefreshCollectionHolders, TRADEABLE_COLLECTIONS, FLOOR_INDEX_COLLECTIONS } from '../functions/_shared.js';
 import { runLedgerWatch } from '../functions/_ledgerwatch.js';
+import { runFloorWatch } from '../functions/_floorwatch.js';
 import { stepPopularCoins } from '../functions/_coins.js';
 
 // xaman-proxy (../xaman-proxy, deployed separately on Render) spins down
@@ -53,6 +54,10 @@ export default {
       ctx.waitUntil(stepPopularCoins(env.coin)
         .then(r => console.log('popular-coins', JSON.stringify(r)))
         .catch(e => console.log('popular-coins failed', String(e && e.message || e))));
+      // FL00R ALERTS — every collection's XRP floor vs the last alert.
+      ctx.waitUntil(runFloorWatch(env.coin, { vapid: env.VAPID_PRIVATE_JWK })
+        .then(r => console.log('floor-watch', JSON.stringify(r)))
+        .catch(e => console.log('floor-watch failed', String(e && e.message || e))));
       return;
     }
     // Every real tradeable collection, not just P!GE0NS (the implicit

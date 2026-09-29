@@ -1,5 +1,5 @@
 import { BOARD_COOKIE_NAME, getCookie, verifyToken, TRADEABLE_COLLECTIONS } from '../_shared.js';
-import { pushSubId, getPushSubs, putPushSubs, sendWebPush, cleanWatch } from '../_webpush.js';
+import { pushSubId, getPushSubs, putPushSubs, sendWebPush, cleanWatch, cleanUnder } from '../_webpush.js';
 
 // Phone/desktop push sign-up for the installable site (2026-09-25).
 // POST { subscription, collections }  -> save/refresh this device
@@ -7,7 +7,7 @@ import { pushSubId, getPushSubs, putPushSubs, sendWebPush, cleanWatch } from '..
 // POST { test: true, endpoint }        -> send this device a test notification
 // Works logged in or out (a device, not a wallet, is what gets pushed to);
 // the wallet is kept alongside when there is one.
-const TYPES = ['listing', 'sale', 'offer', 'delist', 'transfer', 'mint', 'burn'];
+const TYPES = ['listing', 'sale', 'offer', 'delist', 'transfer', 'mint', 'burn', 'floor_down', 'floor_up'];
 const MAX_DEVICES = 5000;
 
 function json(body, status) {
@@ -19,6 +19,9 @@ function cleanCollections(cols) {
     if (!TRADEABLE_COLLECTIONS[key]) return;
     const t = {};
     TYPES.forEach(type => { if (cols[key] && cols[key][type] === true) t[type] = true; });
+    // PR!CE ALERT: listings at or under this many XRP (2026-09-29).
+    const under = cleanUnder(cols[key] && cols[key].under);
+    if (under) t.under = under;
     if (!Object.keys(t).length) return;
     if (cols[key].watchOnly === true) { t.watchOnly = true; t.watch = cleanWatch(cols[key].watch); }
     out[key] = t;

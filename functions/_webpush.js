@@ -107,15 +107,36 @@ export function cleanWatch(list) {
   return Array.isArray(list) ? list.filter(id => typeof id === 'string' && NFT_ID_RE.test(id)).map(id => id.toUpperCase()).slice(0, 50) : [];
 }
 
+// PR!CE ALERT (2026-09-29): "L!ST!NGS UNDER x XRP" per collection.
+export function cleanUnder(v) {
+  const n = Number(v);
+  return isFinite(n) && n > 0 && n < 1e9 ? Math.round(n * 1e6) / 1e6 : null;
+}
+// Does this event fire for one collection's settings? A listing at or
+// under the price alert fires even with L!ST!NGS off; floor moves have no
+// NFT, so WATCHL!ST 0NLY doesn't apply to them.
+export function eventMatchesPrefs(on, e) {
+  if (!on) return false;
+  const isFloor = e.type === 'floor_down' || e.type === 'floor_up';
+  const deal = isUnderAlert(on, e);
+  if (!on[e.type] && !deal) return false;
+  if (!isFloor && on.watchOnly && (on.watch || []).indexOf(String(e.nftId || '').toUpperCase()) === -1) return false;
+  return true;
+}
+export function isUnderAlert(on, e) {
+  return !!(on && on.under && e.type === 'listing' && e.price && e.price.xrp !== undefined && Number(e.price.xrp) <= on.under);
+}
+
 // Notification text for one ledger-watcher event.
-const VERBS = { listing: 'L!STED F0R', sale: 'S0LD F0R', offer: 'G0T AN 0FFER 0F', delist: 'WAS DEL!STED', transfer: 'WAS TRANSFERRED', mint: 'WAS M!NTED', burn: 'WAS BURNED' };
-export function eventNotification(e, collectionLabel, tokenLabel) {
+const VERBS = { listing: 'L!STED F0R', sale: 'S0LD F0R', offer: 'G0T AN 0FFER 0F', delist: 'WAS DEL!STED', transfer: 'WAS TRANSFERRED', mint: 'WAS M!NTED', burn: 'WAS BURNED', floor_down: 'FL00R DR0PPED T0', floor_up: 'FL00R R0SE T0' };
+export function eventNotification(e, collectionLabel, tokenLabel, deal) {
   let price = '';
   if (e.price && e.price.xrp !== undefined) price = ' ' + Number(e.price.xrp).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' XRP';
   else if (e.price && e.price.value !== undefined) price = ' ' + Number(e.price.value).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' ' + (tokenLabel || '');
+  const was = e.prev && e.prev.xrp !== undefined ? ' (WAS ' + Number(e.prev.xrp).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' XRP)' : '';
   return {
     title: collectionLabel + (e.number ? ' #' + e.number : ''),
-    body: (VERBS[e.type] || e.type) + price,
+    body: (VERBS[e.type] || e.type) + price + was + (deal ? ' — UNDER Y0UR ' + Number(deal).toLocaleString('en-US') + ' XRP ALERT' : ''),
     url: e.number ? '/' + e.collection + '/' + e.number : '/' + e.collection,
     tag: e.hash + ':' + e.type,
     icon: '/assets/icons/icon-192.png'
@@ -138,18 +159,14 @@ export async function pushEventsToDevices(kv, freshByCollection, privateJwkJson,
     Object.keys(freshByCollection).forEach(key => {
       const on = d.collections && d.collections[key];
       if (!on) return;
-      // WATCHL!ST 0NLY: just the NFTs this device's owner has starred.
-      const watch = on.watchOnly ? (on.watch || []) : null;
-      freshByCollection[key].forEach(e => {
-        if (!on[e.type]) return;
-        if (watch && watch.indexOf(String(e.nftId || '').toUpperCase()) === -1) return;
-        matching.push(e);
-      });
+      // Types switched on, WATCHL!ST 0NLY, and the PR!CE ALERT.
+      freshByCollection[key].forEach(e => { if (eventMatchesPrefs(on, e)) matching.push(e); });
     });
     if (!matching.length) continue;
     const payloads = matching.length <= 3
       ? await Promise.all(matching.map(async e => {
-          const p = eventNotification(e, (labels[e.collection] || {}).label || e.collection, (labels[e.collection] || {}).token);
+          const on = d.collections[e.collection];
+          const p = eventNotification(e, (labels[e.collection] || {}).label || e.collection, (labels[e.collection] || {}).token, isUnderAlert(on, e) ? on.under : null);
           // The NFT's own picture (Android/desktop show it; iPhone only
           // ever shows the home-screen app icon — Apple's rule).
           const img = opts.imageFor ? await opts.imageFor(e).catch(() => null) : null;

@@ -32,6 +32,13 @@ export async function getCollectionEvents(kv, collectionKey) {
   const raw = await kv.get(eventsKey(collectionKey));
   return raw ? JSON.parse(raw) : [];
 }
+// Events made outside the ledger scan (floor moves, see _floorwatch.js),
+// added to the same newest-first feed the site polls.
+export async function appendCollectionEvents(kv, collectionKey, events) {
+  if (!events.length) return;
+  const existing = await getCollectionEvents(kv, collectionKey);
+  await safeKvPut(kv, eventsKey(collectionKey), JSON.stringify(events.slice().reverse().concat(existing).slice(0, LW_EVENTS_MAX)));
+}
 
 // NFTokenID layout: flags(4 hex) fee(4) issuer(40) scrambled taxon(8) seq(8).
 export function nftIssuerHex(id) { return id.slice(8, 48).toUpperCase(); }
