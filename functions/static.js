@@ -2967,23 +2967,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   /* N0T!F!CAT!0NS pile (2026-09-28) */
   #profileTabPanelNotifications.notif-panel{ display:flex; flex-direction:column; overflow:hidden; }
   #profileTabPanelNotifications[style*="none"]{ display:none !important; }
-  .notif-toolbar{ flex:0 0 auto; display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:space-between; align-items:center; margin:0.25rem 0 0.6rem; }
-  .notif-chips, .notif-actions{ display:flex; flex-wrap:wrap; gap:0.35rem; }
+  .notif-toolbar{ flex:0 0 auto; display:flex; flex-direction:column; gap:0.55rem; margin:0.25rem 0 0.6rem; }
+  .notif-head{ display:flex; align-items:baseline; gap:0.6rem; }
+  .notif-head-title{ color:#fff; font-size:15px; font-weight:700; letter-spacing:0.12em; }
+  .notif-head-count{ color:var(--magenta); font-size:11px; font-weight:700; letter-spacing:0.08em; }
+  .notif-actions{ display:flex; gap:0.35rem; }
+  .notif-chips{ display:flex; flex-wrap:nowrap; gap:0.35rem; overflow-x:auto; scrollbar-width:none; padding-bottom:1px; }
+  .notif-chips::-webkit-scrollbar{ display:none; }
   .notif-chip, .notif-action-btn{
-    background:#000; color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:999px;
-    font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.08em; padding:0.45em 0.85em; cursor:pointer;
+    flex:0 0 auto; background:#000; color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:999px;
+    font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.08em; padding:0.5em 0.85em; cursor:pointer; white-space:nowrap;
   }
   .notif-chip:hover, .notif-action-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
   .notif-chip.on{ border-color:var(--cyan); color:#000; background:var(--cyan); box-shadow:0 0 10px var(--cyan-glow); }
   .notif-chip-n{ opacity:0.75; font-weight:400; }
-  .notif-action-danger:hover{ border-color:var(--red); color:var(--red); }
+  .notif-action-btn:disabled{ opacity:0.4; cursor:default; border-color:rgba(255,255,255,0.3); color:#fff; }
+  .notif-action-danger{ margin-left:auto; border-color:rgba(255,59,92,0.8); color:#ff3b5c; }
+  .notif-action-danger:hover{ border-color:#ff3b5c; color:#000; background:#ff3b5c; }
+  .notif-action-danger.armed{ background:#ff3b5c; color:#000; border-color:#ff3b5c; box-shadow:0 0 12px rgba(255,59,92,0.6); }
   .notif-list{
     flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem;
     border:1px solid rgba(var(--collection-accent-rgb), 0.75); box-shadow:0 0 8px rgba(var(--collection-accent-rgb), 0.35);
     background:#000; padding:0.5rem;
   }
+  .notif-day{ color:rgba(255,255,255,0.55); font-size:10.5px; font-weight:700; letter-spacing:0.14em; padding:0.35rem 0.2rem 0.05rem; }
+  .notif-day:first-child{ padding-top:0; }
   .notif-row{
-    position:relative; display:flex; align-items:center; gap:0.75rem; padding:0.6rem 2.4rem 0.6rem 0.65rem;
+    position:relative; display:flex; align-items:flex-start; gap:0.7rem; padding:0.65rem 2.3rem 0.65rem 0.65rem;
     border:1px solid rgba(255,255,255,0.12); border-left:3px solid rgba(255,255,255,0.3); border-radius:12px;
     background:#000; color:#fff; text-decoration:none; cursor:pointer; transition:background 0.12s ease, border-color 0.12s ease;
   }
@@ -2993,25 +3003,33 @@ const SWAP_HTML = `<!DOCTYPE html>
   .notif-row.nr-sale{ border-left-color:var(--green); }
   .notif-row.nr-listing{ border-left-color:rgba(var(--collection-accent-rgb), 1); }
   .notif-row.unread{ background:rgba(255,51,204,0.06); }
+  .notif-thumb-wrap{ position:relative; flex:0 0 auto; }
+  .notif-thumb{ width:44px; height:44px; border-radius:10px; object-fit:cover; display:block; }
+  .notif-thumb-icon{ display:inline-flex; align-items:center; justify-content:center; font-size:20px; border:1px solid rgba(255,255,255,0.2); box-sizing:border-box; }
+  .notif-thumb-badge{ position:absolute; right:-6px; bottom:-6px; width:22px; height:22px; border-radius:50%; background:#000; border:1px solid rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; font-size:11px; }
+  .notif-dot{ position:absolute; top:-3px; left:-3px; width:10px; height:10px; border-radius:50%; background:var(--magenta); box-shadow:0 0 8px var(--magenta-glow); }
+  .notif-row-text{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:0.2rem; }
+  .notif-row-top{ display:flex; align-items:baseline; justify-content:space-between; gap:0.6rem; }
+  .notif-row-title{ font-size:13px; font-weight:700; letter-spacing:0.03em; color:rgba(255,255,255,0.85); line-height:1.3; }
   .notif-row.unread .notif-row-title{ color:#fff; }
-  .notif-thumb{ width:40px; height:40px; border-radius:10px; object-fit:cover; flex:0 0 auto; }
-  .notif-thumb-icon{ display:inline-flex; align-items:center; justify-content:center; font-size:20px; border:1px solid rgba(255,255,255,0.2); }
-  .notif-row-text{ flex:1 1 auto; min-width:0; }
-  .notif-row-title{ font-size:13px; font-weight:700; letter-spacing:0.03em; color:rgba(255,255,255,0.85); }
-  .notif-row-sub{ font-size:12px; color:rgba(255,255,255,0.7); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.15rem; }
-  .notif-row-meta{ font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:0.06em; margin-top:0.2rem; }
-  .notif-dot{ width:9px; height:9px; border-radius:50%; background:var(--magenta); box-shadow:0 0 8px var(--magenta-glow); flex:0 0 auto; }
+  .notif-row-time{ flex:0 0 auto; font-size:10px; font-weight:700; color:rgba(255,255,255,0.5); letter-spacing:0.06em; white-space:nowrap; }
+  .notif-row-amt{ color:rgb(52,255,133); font-size:15px; font-weight:700; letter-spacing:0.02em; }
+  .notif-row-who{ display:flex; flex-wrap:wrap; gap:0.25rem 0.8rem; font-size:11.5px; }
+  .notif-who{ display:inline-flex; align-items:baseline; gap:0.35em; min-width:0; }
+  .notif-who-l{ color:rgba(255,255,255,0.5); font-size:10px; font-weight:700; letter-spacing:0.1em; }
+  .notif-who-name{ background:none; border:none; padding:0; font:inherit; font-weight:700; color:var(--cyan); cursor:pointer; text-decoration:underline; text-decoration-color:rgba(0,255,255,0.35); text-underline-offset:2px; max-width:14em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .notif-who-name:hover{ text-decoration-color:var(--cyan); }
+  .notif-who-me{ color:var(--magenta); cursor:default; text-decoration:none; }
+  .notif-row-sub{ font-size:12px; color:rgba(255,255,255,0.7); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-word; }
   .notif-row-x{
-    position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); width:1.6em; height:1.6em; border-radius:50%;
+    position:absolute; right:0.5rem; top:0.55rem; width:1.6em; height:1.6em; border-radius:50%;
     background:#000; border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:13px; line-height:1; cursor:pointer; opacity:0.55;
   }
   .notif-row-x:hover{ opacity:1; border-color:var(--red); color:var(--red); }
   .notif-empty{ margin:auto; text-align:center; font-size:12px; color:rgba(255,255,255,0.65); letter-spacing:0.08em; line-height:1.7; padding:2rem 1rem; }
   .notif-empty-glyph{ font-size:40px; margin-bottom:0.5rem; animation:chat-float 3s ease-in-out infinite; }
   @media (max-width:640px){
-    .notif-toolbar{ flex-direction:column; align-items:stretch; }
-    .notif-chips{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
-    .notif-chip{ flex:0 0 auto; }
+    .notif-action-btn{ padding:0.5em 0.7em; font-size:10.5px; letter-spacing:0.05em; }
   }
   .notify-row-watch small{ font-size:11px; font-weight:400; opacity:0.7; margin-left:0.4em; }
   .notify-row-watch{ border-color:rgba(245,197,24,0.55) !important; }
@@ -12540,14 +12558,22 @@ const SWAP_HTML = `<!DOCTYPE html>
            that's all the sorting (user: "make it very simple"). Stored per
            wallet on this device (skyllaNotifLog:<wallet>). -->
       <div class="profile-tab-panel notif-panel" id="profileTabPanelNotifications" style="display:none;">
+        <!-- Header: title + unread count, then the actions on one row
+             (CLEAR ALL always visible), then the filter chips on one
+             swipeable line (reported live 2026-09-29: "layout is poor, I
+             need to be able to clear all"). -->
         <div class="notif-toolbar">
-          <div class="notif-chips" id="notifChips"></div>
+          <div class="notif-head">
+            <span class="notif-head-title">N0T!F!CAT!0NS</span>
+            <span class="notif-head-count" id="notifHeadCount"></span>
+          </div>
           <div class="notif-actions">
             <button type="button" class="notif-action-btn" id="notifSortBtn">NEWEST F!RST</button>
-            <button type="button" class="notif-action-btn" id="notifReadAllBtn">MARK ALL READ</button>
-            <button type="button" class="notif-action-btn" id="notifSettingsBtn">⚙ SETT!NGS</button>
-            <button type="button" class="notif-action-btn notif-action-danger" id="notifClearBtn">CLEAR</button>
+            <button type="button" class="notif-action-btn" id="notifReadAllBtn">✓ READ ALL</button>
+            <button type="button" class="notif-action-btn" id="notifSettingsBtn" title="SETT!NGS">⚙</button>
+            <button type="button" class="notif-action-btn notif-action-danger" id="notifClearBtn">CLEAR ALL</button>
           </div>
+          <div class="notif-chips" id="notifChips"></div>
         </div>
         <div class="notif-list" id="notifList"></div>
         <button type="button" class="profile-holdings-viewmore" id="profileNotifBack">← BACK</button>
@@ -14967,7 +14993,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'myNftsSearchInput','myNftsSearchClearBtn','myNftsEditionToggle','myNftsSortSelect','myNftsTraitCatSelect','myNftsTraitValSelect','myNftsTraitAddBtn','myNftsTraitChips',
    'profileTabPanelProfiles','profilesSubNav','profilesHubBanner','profilesEditView','profilesBackBtn','profileSearchInput','profileSearchResults','profileMessagesBack','profileOffersBack',
    'chatApp','chatSideTabs','chatTabCountChats','chatTabCountGroups','chatSearchInput','chatNewBtn','chatSideList','chatMain',
-   'profileTabNotifBadge','profileTabPanelNotifications','notifChips','notifSortBtn','notifReadAllBtn','notifSettingsBtn','notifClearBtn','notifList','profileNotifBack',
+   'profileTabNotifBadge','profileTabPanelNotifications','notifHeadCount','notifChips','notifSortBtn','notifReadAllBtn','notifSettingsBtn','notifClearBtn','notifList','profileNotifBack',
    'profileWatchlistSection','profileWatchlistGrid','profileWatchlistBack','profileWatchlistTitle','profileWatchlistClearFilter',
    'cartModal','cartCloseBtn','cartSweepCurrency','cartSweepTokenTab','cartSweepBtn','cartSweepNote','cartList','cartTotal','cartStatus','cartClearBtn','cartBuyBtn','cartPill','cartPillCount','openCartBtn','openCartLabel','openCartCount','cartDuration','cartBalances','cartSortBar','sweepModal','sweepCloseBtn','sweepSub','sweepAvail','sweepN','sweepMinus','sweepPlus','sweepMax',
    'coinModal','coinChartModes','coinCloseBtn','coinTitle','coinImg','coinPrice','coinChange','coinChart','coinChartRanges','coinChartChange','coinChartPlot','coinStats','coinLinks','coinSwapBtn',
@@ -25024,7 +25050,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     t.className = 'notify-toast nt-' + e.type;
     if (href) t.href = href;
     t.innerHTML = (meta.thumb ? '<img src="' + escapeHtml(meta.thumb) + '" alt="">' : '') +
-      '<span>' + escapeHtml((meta.itemLabel || key) + (e.number ? ' #' + e.number : '')) + ' ' + NOTIFY_VERBS[e.type] + (price ? ' ' + escapeHtml(price) : '') +
+      '<span>' + escapeHtml((meta.itemLabel || key) + (e.number ? ' #' + e.number : '')) + ' ' + (NOTIFY_VERBS[e.type] || 'UPDATED') + (price ? ' ' + escapeHtml(price) : '') + (e.type === 'offer' && e.to ? ' FR0M ' + escapeHtml(chatName(e.to)) : '') +
       '<span class="nt-sub">' + escapeHtml(meta.label || key) + ' :: ' + escapeHtml(relativeTimeText(new Date(e.time * 1000).toISOString())) + '</span></span>' +
       '<button type="button" class="nt-x" title="CLEAR" aria-label="CLEAR">&times;</button>';
     el.notifyToasts.appendChild(t);
@@ -25146,10 +25172,32 @@ const SWAP_HTML = `<!DOCTYPE html>
     return notifAdd(items.map(function(e){
       var price = notifyPriceText(e, key);
       var cat = e.type === 'sale' || e.type === 'listing' || e.type === 'offer' ? e.type : 'other';
+      // Who did what to which NFT, spelled out (reported live 2026-09-29:
+      // "I need a way of seeing who offered on what"). Names are looked up
+      // when the row is drawn, so a username set later still shows.
+      var nft = (meta.itemLabel || key) + (e.number ? ' #' + e.number : '');
+      var mine = MY_WALLET && e.from === MY_WALLET;
+      var title, who = [];
+      if (e.type === 'offer'){
+        title = '0FFER 0N ' + (mine ? 'Y0UR ' : '') + nft;
+        if (e.to) who.push({ l: 'FR0M', w: e.to });
+        if (e.from && !mine) who.push({ l: '0WNER', w: e.from });
+      } else if (e.type === 'sale'){
+        title = nft + ' S0LD';
+        if (e.to) who.push({ l: 'BUYER', w: e.to });
+        if (e.from) who.push({ l: 'SELLER', w: e.from });
+      } else if (e.type === 'listing'){
+        title = nft + ' L!STED';
+        if (e.from) who.push({ l: 'BY', w: e.from });
+      } else {
+        title = nft + ' ' + (NOTIFY_VERBS[e.type] || 'UPDATED');
+        if (e.from) who.push({ l: 'FR0M', w: e.from });
+        if (e.to) who.push({ l: 'T0', w: e.to });
+      }
       return {
         id: 'ev:' + (e.hash || e.time) + ':' + e.type + ':' + e.nftId,
         cat: cat, time: e.time, read: false, collection: key,
-        title: (meta.itemLabel || key) + (e.number ? ' #' + e.number : '') + ' ' + NOTIFY_VERBS[e.type] + (price ? ' ' + price : ''),
+        title: title, amount: price || '', who: who,
         href: nftHrefFor({ number: e.number, collectionKey: key }) || null
       };
     }));
@@ -25184,8 +25232,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       var meta = COLLECTION_META[item.collection] || COLLECTION_META.pigeons;
       (item.offers || []).forEach(function(o){
         if (o.buyer === MY_WALLET || declinedOfferIds[o.offerId]) return;
-        entries.push({ id: 'offer:' + o.offerId, cat: 'offer', time: Math.floor(Date.now() / 1000), read: false,
-          title: 'NEW 0FFER 0N ' + meta.itemLabel + (item.number !== null && item.number !== undefined ? ' #' + item.number : ''),
+        entries.push({ id: 'offer:' + o.offerId, cat: 'offer', time: Math.floor(Date.now() / 1000), read: false, collection: item.collection,
+          title: '0FFER 0N Y0UR ' + meta.itemLabel + (item.number !== null && item.number !== undefined ? ' #' + item.number : ''),
+          amount: fmtOfferCompact(o, item.collection), who: [{ l: 'FR0M', w: o.buyer }],
           sub: fmtOfferCompact(o, item.collection) + ' FR0M ' + chatName(o.buyer), open: { kind: 'offers' } });
       });
     });
@@ -25237,15 +25286,44 @@ const SWAP_HTML = `<!DOCTYPE html>
     }
     if (n.href) window.location.href = n.href;
   }
+  // 5M / 3H / 2D, then the date.
+  function notifAgo(t){
+    var sec = Math.max(0, Math.floor(Date.now() / 1000) - t);
+    if (sec < 60) return 'N0W';
+    if (sec < 3600) return Math.floor(sec / 60) + 'M';
+    if (sec < 86400) return Math.floor(sec / 3600) + 'H';
+    if (sec < 7 * 86400) return Math.floor(sec / 86400) + 'D';
+    return new Date(t * 1000).toLocaleDateString([], { day: 'numeric', month: 'short' }).toUpperCase();
+  }
+  function notifDayLabel(t){
+    var d = new Date(t * 1000), now = new Date();
+    var start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000;
+    if (t >= start) return 'T0DAY';
+    if (t >= start - 86400) return 'YESTERDAY';
+    return d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+  }
+  function notifWhoHtml(who){
+    return who.map(function(p){
+      var me = p.w === MY_WALLET;
+      return '<span class="notif-who"><span class="notif-who-l">' + escapeHtml(p.l) + '</span>' +
+        (me ? '<span class="notif-who-name notif-who-me">Y0U</span>'
+            : '<button type="button" class="notif-who-name" data-wallet="' + escapeHtml(p.w) + '" title="' + escapeHtml(p.w) + '">' + escapeHtml(chatName(p.w)) + '</button>') +
+      '</span>';
+    }).join('');
+  }
   function renderNotifPanel(){
     var log = notifLoad();
     var counts = { all: log.length, unread: 0, message: 0, offer: 0, sale: 0, listing: 0, other: 0 };
     log.forEach(function(n){ if (!n.read) counts.unread++; counts[n.cat] = (counts[n.cat] || 0) + 1; });
+    el.notifHeadCount.textContent = counts.unread ? counts.unread + ' UNREAD' : '';
+    el.notifReadAllBtn.disabled = !counts.unread;
+    el.notifClearBtn.disabled = !log.length;
+    disarmNotifClear();
     el.notifChips.innerHTML = NOTIF_FILTERS.map(function(f){
       return '<button type="button" class="notif-chip' + (notifView.filter === f.f ? ' on' : '') + '" data-filter="' + f.f + '">' + f.label +
         (counts[f.f] ? ' <span class="notif-chip-n">' + counts[f.f] + '</span>' : '') + '</button>';
     }).join('');
-    el.notifSortBtn.textContent = notifView.oldestFirst ? '0LDEST F!RST' : 'NEWEST F!RST';
+    el.notifSortBtn.textContent = notifView.oldestFirst ? '⇅ 0LDEST' : '⇅ NEWEST';
     var rows = log.filter(function(n){
       if (notifView.filter === 'all') return true;
       if (notifView.filter === 'unread') return !n.read;
@@ -25257,19 +25335,36 @@ const SWAP_HTML = `<!DOCTYPE html>
         (log.length ? 'N0TH!NG HERE F0R TH!S F!LTER.' : 'N0 N0T!F!CAT!0NS YET.<br>SW!TCH 0N ALERTS F0R A C0LLECT!0N W!TH ⚙ SETT!NGS — NEW MESSAGES AND 0FFERS SH0W UP HERE AUT0MAT!CALLY.') + '</div>';
       return;
     }
+    var lastDay = null;
     el.notifList.innerHTML = rows.map(function(n){
+      var day = notifDayLabel(n.time);
+      var head = day !== lastDay ? '<div class="notif-day">' + escapeHtml(day) + '</div>' : '';
+      lastDay = day;
       var meta = n.collection ? (COLLECTION_META[n.collection] || {}) : null;
-      var thumb = meta && meta.thumb ? '<img class="notif-thumb" src="' + escapeHtml(meta.thumb) + '" alt="">' : '<span class="notif-thumb notif-thumb-icon">' + (NOTIF_ICONS[n.cat] || '⚡') + '</span>';
-      var tag = n.href ? 'a' : 'div';
-      return '<' + tag + ' class="notif-row nr-' + n.cat + (n.read ? '' : ' unread') + '" data-id="' + escapeHtml(n.id) + '"' + (n.href ? ' href="' + escapeHtml(n.href) + '"' : '') + '>' +
-        thumb +
-        '<div class="notif-row-text"><div class="notif-row-title">' + escapeHtml(n.title) + '</div>' +
-        (n.sub ? '<div class="notif-row-sub">' + escapeHtml(n.sub) + '</div>' : '') +
-        '<div class="notif-row-meta">' + (NOTIF_ICONS[n.cat] || '') + ' ' + (meta && meta.label ? escapeHtml(meta.label) + ' · ' : '') + escapeHtml(relativeTimeText(new Date(n.time * 1000).toISOString())) + '</div></div>' +
-        (n.read ? '' : '<span class="notif-dot"></span>') +
+      var icon = NOTIF_ICONS[n.cat] || '⚡';
+      var thumb = meta && meta.thumb
+        ? '<img class="notif-thumb" src="' + escapeHtml(meta.thumb) + '" alt=""><span class="notif-thumb-badge">' + icon + '</span>'
+        : '<span class="notif-thumb notif-thumb-icon">' + icon + '</span>';
+      var who = n.who && n.who.length ? n.who : null;
+      return head + '<div class="notif-row nr-' + n.cat + (n.read ? '' : ' unread') + '" data-id="' + escapeHtml(n.id) + '">' +
+        '<span class="notif-thumb-wrap">' + thumb + (n.read ? '' : '<span class="notif-dot"></span>') + '</span>' +
+        '<div class="notif-row-text">' +
+          '<div class="notif-row-top"><span class="notif-row-title">' + escapeHtml(n.title) + '</span><span class="notif-row-time">' + escapeHtml(notifAgo(n.time)) + '</span></div>' +
+          (n.amount ? '<div class="notif-row-amt">' + escapeHtml(n.amount) + '</div>' : '') +
+          (who ? '<div class="notif-row-who">' + notifWhoHtml(who) + '</div>' : '') +
+          (!who && n.sub ? '<div class="notif-row-sub">' + escapeHtml(n.sub) + '</div>' : '') +
+        '</div>' +
         '<button type="button" class="notif-row-x" title="REM0VE">&times;</button>' +
-      '</' + tag + '>';
+      '</div>';
     }).join('');
+  }
+  // CLEAR ALL: tap twice (no browser confirm box — those are silently
+  // blocked inside some wallet in-app browsers, so the button did nothing).
+  var notifClearTimer = null;
+  function disarmNotifClear(){
+    if (notifClearTimer){ clearTimeout(notifClearTimer); notifClearTimer = null; }
+    el.notifClearBtn.classList.remove('armed');
+    el.notifClearBtn.textContent = 'CLEAR ALL';
   }
   el.notifChips.addEventListener('click', function(e){
     var b = e.target.closest('.notif-chip');
@@ -25283,9 +25378,18 @@ const SWAP_HTML = `<!DOCTYPE html>
     notifSave(); updateNotifBadge(); renderNotifPanel();
   });
   el.notifClearBtn.addEventListener('click', function(){
-    if (!notifLoad().length || !confirm('CLEAR ALL N0T!F!CAT!0NS?')) return;
+    if (!notifLoad().length) return;
+    if (!el.notifClearBtn.classList.contains('armed')){
+      el.notifClearBtn.classList.add('armed');
+      el.notifClearBtn.textContent = 'TAP AGA!N T0 CLEAR';
+      notifClearTimer = setTimeout(disarmNotifClear, 4000);
+      return;
+    }
     notifLog = [];
-    notifSave(); updateNotifBadge(); renderNotifPanel();
+    notifSave(); updateNotifBadge();
+    // The pop-ups on screen go too.
+    el.notifyToasts.innerHTML = '';
+    renderNotifPanel();
   });
   el.notifSettingsBtn.addEventListener('click', function(){
     renderNotifyModal();
@@ -25301,9 +25405,17 @@ const SWAP_HTML = `<!DOCTYPE html>
       notifSave(); updateNotifBadge(); renderNotifPanel();
       return;
     }
+    // A name opens that wallet's profile.
+    var name = e.target.closest('.notif-who-name[data-wallet]');
+    if (name){
+      e.preventDefault();
+      notifMarkRead(id);
+      var w = name.getAttribute('data-wallet');
+      openWalletProfile(w, shortAddr(w));
+      return;
+    }
     var n = notifLoad().filter(function(x){ return x.id === id; })[0];
     if (!n) return;
-    if (n.href){ notifMarkRead(id); return; } // the link itself navigates
     e.preventDefault();
     notifOpen(n);
   });
