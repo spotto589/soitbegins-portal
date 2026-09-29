@@ -5192,6 +5192,9 @@ const RARITY_SNAPSHOT_FILES = {
   phnixs: '/assets/rarity-data/phnixs-traits.json',
   teddybg: '/assets/rarity-data/teddybg-traits.json',
   fuzzybars: '/assets/rarity-data/fuzzybars-traits.json',
+  conspiracy: '/assets/rarity-data/conspiracy-traits.json',
+  // Bear: a few of its IPFS files can't be fetched from any gateway that
+  // still serves scripts (2026-09-29), so it stays on the crawl.
 };
 
 // yzzuf (sraebyzzuF) publishes every trait backwards ("ruF" / "paC
