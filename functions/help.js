@@ -11,7 +11,7 @@ import { BOARD_COOKIE_NAME, getCookie, verifyToken, TRADEABLE_COLLECTIONS } from
 // Label/thumb match COLLECTION_META in static.js; issuer + currency always
 // come from TRADEABLE_COLLECTIONS so there's one source of truth.
 const HELP_TOKENS = [
-  { key: 'pigeons', label: '$P!GE0NS', thumb: '/assets/mainframe/pigeons.jpeg?v=2', accent: '136,72,248' },
+  { key: 'pigeons', label: '$P!GE0NS', thumb: '/assets/mainframe/pigeons-coin.webp', accent: '136,72,248' },
   { key: 'phnixs', label: '$PHN!X', thumb: '/assets/mainframe/phnix.jpeg?v=2', accent: '255,90,31' },
   { key: 'conspiracy', label: '$CNS', thumb: '/assets/mainframe/conspiracy.jpeg?v=2', accent: '240,0,228' },
   { key: 'teddybg', label: '$TEDDY', thumb: '/assets/mainframe/teddy.jpeg?v=2', accent: '166,99,46' },

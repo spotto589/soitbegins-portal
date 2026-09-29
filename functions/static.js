@@ -3065,8 +3065,44 @@ const SWAP_HTML = `<!DOCTYPE html>
      a row above it), so the title moves up. */
   .scylla-nav-panel.notif-open > .scylla-back-slot{ position:absolute; left:1rem; top:2.35rem; margin:0; z-index:3; }
   .scylla-nav-panel.notif-open > .scylla-system-header{ margin:0.1rem 0 0.7rem; }
+  /* Pop-ups the top bar stays above (z-index under #globalTopBar's
+     2200): start below the bar and fit the rest of the screen, so the
+     top of the box is never hidden under it (reported live 2026-09-29).
+     Phones already do this in their own blocks. */
+  @media (min-width:701px){
+    #sweepModal, #pigeonsCalcModal, #topHoldersModal, #salesModal, #notifyModal, #nftDataModal, #rarityModal, #coinModal, #extBuyModal{
+      padding-top:calc(var(--global-ticker-h, 66px) + 0.75rem) !important; padding-bottom:0.75rem !important;
+    }
+    #sweepModal > div, #pigeonsCalcModal > div, #topHoldersModal > div, #salesModal > div, #notifyModal > div, #nftDataModal > div, #rarityModal > div, #coinModal > div, #extBuyModal > div{
+      max-height:calc(100dvh - var(--global-ticker-h, 66px) - 1.5rem) !important;
+    }
+  }
   /* Alert settings: collection picker. */
-  .notify-colls{ display:flex; flex-wrap:wrap; justify-content:center; gap:0.4rem; margin:0.2rem 0 1rem; }
+  #notifyModal .node-eyebrow:empty{ display:none; }
+  #notifyModal .history-title{ margin-bottom:0.8rem; }
+  .notify-coll-dd{ margin:0 0 1rem; text-align:left; }
+  .notify-coll-dd-btn{
+    width:100%; display:flex; align-items:center; gap:0.7rem; cursor:pointer; background:#000; color:#fff;
+    border:1px solid rgba(var(--collection-accent-rgb), 0.75); border-radius:var(--radius); padding:0.55rem 0.9rem 0.55rem 0.55rem;
+    font-family:var(--font-mono); font-size:17px; font-weight:700; letter-spacing:0.06em; box-shadow:0 0 12px rgba(var(--collection-accent-rgb), 0.25);
+  }
+  .notify-coll-dd-btn img{ width:36px; height:36px; border-radius:50%; object-fit:cover; display:block; }
+  .notify-coll-dd-btn:hover, .notify-coll-dd-btn.open{ border-color:var(--cyan); }
+  .notify-coll-dd-arrow{ margin-left:auto; color:var(--cyan); font-size:14px; transition:transform 0.15s ease; }
+  .notify-coll-dd-btn.open .notify-coll-dd-arrow{ transform:rotate(180deg); }
+  .notify-coll-dd-menu{ margin-top:0.4rem; padding:0.7rem; background:#000; border:1px solid rgba(61,243,236,0.5); border-radius:var(--radius); display:flex; flex-direction:column; gap:0.7rem; }
+  .notify-coll-dd-menu[style*="none"]{ display:none !important; }
+  .notify-coll-search{
+    width:100%; box-sizing:border-box; background:#050506; color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:999px;
+    font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:0.06em; padding:0.6em 1em; outline:none;
+  }
+  .notify-coll-search:focus{ border-color:var(--cyan); box-shadow:0 0 8px var(--cyan-glow); }
+  .notify-coll-sec-l{ color:rgba(255,255,255,0.5); font-size:10.5px; font-weight:700; letter-spacing:0.14em; margin-bottom:0.4rem; }
+  .notify-colls-row{ flex-wrap:nowrap !important; overflow-x:auto; scrollbar-width:none; }
+  .notify-colls-row::-webkit-scrollbar{ display:none; }
+  .notify-colls-row .notify-coll{ flex:0 0 auto; }
+  .notify-coll-n{ color:rgb(52,255,133); font-size:11px; }
+  .notify-colls{ display:flex; flex-wrap:wrap; justify-content:flex-start; gap:0.4rem; padding:3px; }
   .notify-coll{
     position:relative; display:inline-flex; align-items:center; gap:0.45em; cursor:pointer;
     background:#000; color:#fff; border:1px solid rgba(255,255,255,0.25); border-radius:999px;
@@ -12321,8 +12357,17 @@ const SWAP_HTML = `<!DOCTYPE html>
         <img class="buyswap-thumb" id="notifyCoinThumb" src="" alt="" style="display:none;">
         <div class="history-title">ALERT SETT!NGS</div>
         <div class="node-eyebrow" id="notifyEyebrow"></div>
-        <!-- Pick which collection's alerts to set (2026-09-29). -->
-        <div class="notify-colls" id="notifyColls"></div>
+        <!-- Pick which collection's alerts to set — a dropdown with a
+             search bar, your top 10 holdings in a row, then every
+             collection (2026-09-29). -->
+        <div class="notify-coll-dd" id="notifyCollDd">
+          <button type="button" class="notify-coll-dd-btn" id="notifyCollDdBtn"></button>
+          <div class="notify-coll-dd-menu" id="notifyCollDdMenu" style="display:none;">
+            <input type="search" class="notify-coll-search" id="notifyCollSearch" placeholder="SEARCH C0LLECT!0NS..." autocomplete="off">
+            <div class="notify-coll-sec" id="notifyCollTopWrap"><div class="notify-coll-sec-l">Y0UR T0P H0LD!NGS</div><div class="notify-colls notify-colls-row" id="notifyCollsTop"></div></div>
+            <div class="notify-coll-sec"><div class="notify-coll-sec-l" id="notifyCollAllLabel">ALL C0LLECT!0NS</div><div class="notify-colls" id="notifyColls"></div></div>
+          </div>
+        </div>
         <div class="notify-phone" id="notifyPhone"></div>
         <div class="notify-toggles" id="notifyToggles"></div>
         <div class="notify-note" id="notifyNote"></div>
@@ -14978,7 +15023,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // _shared.js). tokenLabel 'XRP' so every label that names "the
     // currency" reads right; xrpOnly hides the token-only controls.
     king: { label: 'K!NG', itemLabel: 'K!NG', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'rKingAa11yp4eCuxVraesW2UAvz5THWNCy', hasAmm: false, accent: '#f2b705', accentRgb: '242,183,5', thumb: '/assets/cards/king.png' },
-    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248', thumb: '/assets/mainframe/pigeons.jpeg?v=2' },
+    pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248', thumb: '/assets/mainframe/pigeons-coin.webp' },
     phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: true, accent: '#ff5a1f', accentRgb: '255,90,31', thumb: '/assets/mainframe/phnix.jpeg?v=2' },
     teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: true, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
     seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2' },
@@ -15071,7 +15116,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'mainframeDexThirdeye','mainframeDexBear','mainframeDexCult','mainframeDexSmoki',
    'topTabs','topTabsWrap','flockTabLabel','scyllaWalletWrap','walletSwitchDropdown','myPigeonsPanel','myPigeonsList','pigeonsMergedPanel',
    'myOffersList','outgoingOffersList',
-   'scyllaNavStaticBg','scyllaNavReadout','notifColls','notifyColls',
+   'scyllaNavStaticBg','scyllaNavReadout','notifColls','notifyColls','notifyCollDdBtn','notifyCollDdMenu','notifyCollSearch','notifyCollsTop','notifyCollTopWrap','notifyCollAllLabel',
    'profileBoxGrid','profileTabOffersBadge','profileTabMessagesBadge','profileTabPanelMessages','profileTabPanelOffers','profileTabPanelCollections','profileTabPanelWatchlist','profileTabPanelCrown',
    'profileTabPanelMyNfts','myNftsPicker','myNftsPickerGrid','myNftsGrid','myNftsGridBackBtn','myNftsGridStatus','myNftsGridItems','myNftsBackBtn',
    'myNftsSearchInput','myNftsSearchClearBtn','myNftsEditionToggle','myNftsSortSelect','myNftsTraitCatSelect','myNftsTraitValSelect','myNftsTraitAddBtn','myNftsTraitChips',
@@ -25087,18 +25132,39 @@ const SWAP_HTML = `<!DOCTYPE html>
     var k = notifySettingsKey || state.collection;
     return COLLECTION_META[k] && COLLECTION_META[k].tradeable ? k : 'pigeons';
   }
+  var notifyHeldCounts = null;
+  function notifyCollChipHtml(k, key, count){
+    var m = COLLECTION_META[k], c = (notifyPrefs.collections && notifyPrefs.collections[k]) || {};
+    var live = notifyTypesOf(c).length > 0;
+    return '<button type="button" class="notify-coll' + (k === key ? ' on' : '') + (live ? ' live' : '') + '" data-coll="' + escapeHtml(k) + '">' +
+      (m.thumb ? '<img src="' + escapeHtml(m.thumb) + '" alt="">' : '') + '<span>' + escapeHtml(m.label) + '</span>' +
+      (count ? '<span class="notify-coll-n">' + count + '</span>' : '') + (live ? '<i class="notify-coll-dot"></i>' : '') + '</button>';
+  }
+  // Search matches P!GE0NS for "pigeons" too (! = i, 0 = o).
+  function notifyNorm(t){ return String(t).toLowerCase().replace(/!/g, 'i').replace(/0/g, 'o'); }
+  function renderNotifyCollMenu(){
+    var key = notifySettingsCollection();
+    var q = notifyNorm(el.notifyCollSearch.value.trim());
+    var all = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; });
+    var matches = all.filter(function(k){ return !q || notifyNorm(COLLECTION_META[k].label).indexOf(q) !== -1 || k.indexOf(q) !== -1; });
+    var counts = notifyHeldCounts || {};
+    // Your top 10 holdings first (only while not searching).
+    var top = all.filter(function(k){ return counts[k] > 0; }).sort(function(a, b){ return counts[b] - counts[a]; }).slice(0, 10);
+    el.notifyCollTopWrap.style.display = !q && top.length ? '' : 'none';
+    el.notifyCollsTop.innerHTML = top.map(function(k){ return notifyCollChipHtml(k, key, counts[k]); }).join('');
+    el.notifyCollAllLabel.textContent = q ? (matches.length ? 'RESULTS' : 'N0 C0LLECT!0NS MATCH') : 'ALL C0LLECT!0NS';
+    el.notifyColls.innerHTML = matches.map(function(k){ return notifyCollChipHtml(k, key, 0); }).join('');
+  }
   function renderNotifyModal(){
     var key = notifySettingsCollection();
-    el.notifyColls.innerHTML = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; }).map(function(k){
-      var m = COLLECTION_META[k], c = (notifyPrefs.collections && notifyPrefs.collections[k]) || {};
-      var live = notifyTypesOf(c).length > 0;
-      return '<button type="button" class="notify-coll' + (k === key ? ' on' : '') + (live ? ' live' : '') + '" data-coll="' + escapeHtml(k) + '">' +
-        (m.thumb ? '<img src="' + escapeHtml(m.thumb) + '" alt="">' : '') + '<span>' + escapeHtml(m.label) + '</span>' + (live ? '<i class="notify-coll-dot"></i>' : '') + '</button>';
-    }).join('');
+    var km = COLLECTION_META[key] || {};
+    el.notifyCollDdBtn.innerHTML = (km.thumb ? '<img src="' + escapeHtml(km.thumb) + '" alt="">' : '') + '<span>' + escapeHtml(km.label || key) + '</span><span class="notify-coll-dd-arrow">▾</span>';
+    renderNotifyCollMenu();
+    if (notifyHeldCounts === null && MY_WALLET) fetchMyNftCounts().then(function(c){ notifyHeldCounts = c || {}; renderNotifyCollMenu(); }).catch(function(){});
     var meta = COLLECTION_META[key] || {};
     var on = (notifyPrefs.collections && notifyPrefs.collections[key]) || {};
     if (meta.thumb){ el.notifyCoinThumb.src = meta.thumb; el.notifyCoinThumb.style.display = ''; } else el.notifyCoinThumb.style.display = 'none';
-    el.notifyEyebrow.textContent = 'ALERTS F0R ' + (meta.label || key);
+    el.notifyEyebrow.textContent = '';
     // WATCHL!ST 0NLY (2026-09-28) on top: when on, the switches below only
     // fire for NFTs you've starred in this collection.
     var watchedHere = watchedIdsFor(key).length;
@@ -25110,15 +25176,25 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.notifyNote.textContent = (MY_WALLET ? 'SAVED T0 Y0UR WALLET.' : 'SAVED 0N TH!S DEV!CE — L0G !N T0 KEEP THEM EVERYWHERE.') + ' P0P-UPS SH0W WH!LE TH!S S!TE !S 0PEN.';
     refreshPushState().then(function(){ renderPhoneSection(); });
   }
-  el.notifyColls.addEventListener('click', function(e){
+  function closeNotifyCollMenu(){ el.notifyCollDdMenu.style.display = 'none'; el.notifyCollDdBtn.classList.remove('open'); }
+  el.notifyCollDdBtn.addEventListener('click', function(){
+    var open = el.notifyCollDdMenu.style.display === 'none';
+    el.notifyCollDdMenu.style.display = open ? '' : 'none';
+    el.notifyCollDdBtn.classList.toggle('open', open);
+    if (open){ el.notifyCollSearch.value = ''; renderNotifyCollMenu(); if (window.innerWidth > 700) el.notifyCollSearch.focus(); }
+  });
+  el.notifyCollSearch.addEventListener('input', renderNotifyCollMenu);
+  el.notifyCollDdMenu.addEventListener('click', function(e){
     var b = e.target.closest('.notify-coll');
     if (!b) return;
     notifySettingsKey = b.getAttribute('data-coll');
+    closeNotifyCollMenu();
     renderNotifyModal();
   });
   el.openNotifyBtn.addEventListener('click', function(e){
     e.stopPropagation();
     notifySettingsKey = null;
+    closeNotifyCollMenu();
     renderNotifyModal();
     el.notifyModal.style.display = 'flex';
   });
@@ -25142,14 +25218,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     saveNotifyPrefs();
     pollNotifications();
     // Keep the collection chips' green "on" dots current.
-    var chip = el.notifyColls.querySelector('.notify-coll[data-coll="' + key + '"]');
-    if (chip){
-      var live = !!notifyPrefs.collections[key] && notifyTypesOf(notifyPrefs.collections[key]).length > 0;
-      chip.classList.toggle('live', live);
-      var dot = chip.querySelector('.notify-coll-dot');
-      if (live && !dot) chip.insertAdjacentHTML('beforeend', '<i class="notify-coll-dot"></i>');
-      if (!live && dot) dot.parentNode.removeChild(dot);
-    }
+    renderNotifyCollMenu();
   });
   function notifyPriceText(e, key){
     if (!e.price) return '';
@@ -25525,6 +25594,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     renderNotifPanel();
   });
   el.notifSettingsBtn.addEventListener('click', function(){
+    closeNotifyCollMenu();
     notifySettingsKey = notifView.collection !== 'all' && COLLECTION_META[notifView.collection] && COLLECTION_META[notifView.collection].tradeable ? notifView.collection : null;
     renderNotifyModal();
     el.notifyModal.style.display = 'flex';
