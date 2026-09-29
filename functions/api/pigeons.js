@@ -6,7 +6,7 @@ import { marketListingsFromOffers, marketMeta,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex, hasFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
-  getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, RARITY_GROUPS, REVERSED_TRAIT_COLLECTIONS, reverseTraitText, rarityGroupOf, maybeRescoreGroupRarity, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
+  getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, RARITY_GROUPS, REVERSED_TRAIT_COLLECTIONS, reverseTraitText, rarityGroupOf, maybeRescoreGroupRarity, loadGroupPool, poolItemMatches, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
   fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply, fetchNftDetails, COLLECTION_DESCRIPTIONS
 } from '../_shared.js';
 
@@ -328,6 +328,7 @@ async function callMember(context, params, member, overrides) {
   const p = new URLSearchParams(params);
   p.set('collection', member);
   p.delete('gcur');
+  Object.keys(overrides || {}).forEach(k => { if (overrides[k] === null) p.delete(k); else p.set(k, String(overrides[k])); });
   // Group views speak forwards trait text; yzzuf's own data is backwards.
   if (REVERSED_TRAIT_COLLECTIONS[member] && p.get('filters')) {
     try {
@@ -335,7 +336,6 @@ async function callMember(context, params, member, overrides) {
       p.set('filters', JSON.stringify(f.map(x => ({ ...x, trait: reverseTraitText(x.trait), value: reverseTraitText(x.value) }))));
     } catch (e) {}
   }
-  Object.keys(overrides || {}).forEach(k => { if (overrides[k] === null) p.delete(k); else p.set(k, String(overrides[k])); });
   const u = new URL(context.request.url);
   u.search = p.toString();
   const res = await onRequestGet({ ...context, request: new Request(u.toString(), { headers: context.request.headers }) });
@@ -379,11 +379,30 @@ function applyGroupRarity(it, gmap) {
   it.groupRarity = { rank: e.rank, total: e.total, score: e.score };
   return it;
 }
+// ALL-view filters as one member understands them: the group trait
+// (Direction) and "no <category>" on a category the member doesn't have
+// are answered here; null = nothing in this member can match.
+function filtersForMember(filterList, m, pool) {
+  const cats = pool.memberCategories[m];
+  const out = [];
+  for (const f of filterList) {
+    if (pool.extra && f.trait === pool.extra.category) {
+      if (pool.extra.values[m] !== f.value) return null;
+      continue;
+    }
+    if (!cats.has(f.trait)) {
+      if (f.value !== '__no_trait__') return null;
+      continue;
+    }
+    out.push(f);
+  }
+  return out;
+}
 async function groupResponse(context, coll, params) {
   const members = coll.members;
   const isRarityGroup = !!RARITY_GROUPS[coll.key];
-  if (isRarityGroup && context.env.ASSETS) {
-    const loadAsset = path => context.env.ASSETS.fetch(new URL(path, context.request.url));
+  const loadAsset = context.env.ASSETS ? (path => context.env.ASSETS.fetch(new URL(path, context.request.url))) : null;
+  if (isRarityGroup && loadAsset) {
     context.waitUntil(maybeRescoreGroupRarity(context.env.coin, coll.key, loadAsset).catch(() => {}));
   }
   const gmap = isRarityGroup ? await getRarityMap(context.env.coin, coll.key) : null;
@@ -442,6 +461,24 @@ async function groupResponse(context, coll, params) {
       out[cat] = Object.values(categories[cat]).map(e => ({ ...e, percent: size ? Math.round(e.count / size * 100000) / 1000 : null })).sort((a, b) => String(a.label).localeCompare(String(b.label)));
     });
     Object.keys(noTraitCounts).forEach(cat => { noTraitCounts[cat].percent = size ? Math.round(noTraitCounts[cat].count / size * 100000) / 1000 : null; });
+    // FUZZY ALL: every count straight from the pooled sealed data the
+    // combined rarity is scored from, so the % shown is the % scored —
+    // incl. Direction and a filterable "No <category>" for every category.
+    const pool = isRarityGroup ? await loadGroupPool(coll.key, loadAsset).catch(() => null) : null;
+    if (pool) {
+      const n = pool.items.length;
+      const pct = c => Math.round(c / n * 100000) / 1000;
+      Object.keys(out).forEach(cat => { delete out[cat]; });
+      Object.keys(noTraitCounts).forEach(cat => { delete noTraitCounts[cat]; });
+      const dist = pool.snapshot.dist;
+      Object.keys(dist).forEach(cat => {
+        out[cat] = Object.keys(dist[cat]).map(v => ({
+          value: v, label: v === '__no_trait__' ? 'No ' + cat : v, count: dist[cat][v], percent: pct(dist[cat][v]),
+        })).sort((a, b) => String(a.label).localeCompare(String(b.label)));
+        if (dist[cat].__no_trait__) noTraitCounts[cat] = { count: dist[cat].__no_trait__, percent: pct(dist[cat].__no_trait__) };
+      });
+      return json({ categories: out, noTraitCounts, examples, collectionSizeApprox: n, numberMapStats: all[0] ? all[0].numberMapStats : null, rarityStats: all[0] ? all[0].rarityStats : null });
+    }
     return json({ categories: out, noTraitCounts, examples, collectionSizeApprox: size, numberMapStats: all[0] ? all[0].numberMapStats : null, rarityStats: all[0] ? all[0].rarityStats : null });
   }
   if (params.get('topHolders') === '1') {
@@ -474,14 +511,20 @@ async function groupResponse(context, coll, params) {
   const raritySort = params.get('sort') || 'RARITY_ASC';
   let filterList = [];
   try { filterList = JSON.parse(params.get('filters') || '[]') || []; } catch (e) { filterList = []; }
-  if (hasGmap && plainListSort && !filterList.length && (raritySort === 'RARITY_ASC' || raritySort === 'RARITY_DESC')) {
+  const pool = (isRarityGroup && filterList.length) ? await loadGroupPool(coll.key, loadAsset).catch(() => null) : null;
+  if (hasGmap && plainListSort && (!filterList.length || pool) && (raritySort === 'RARITY_ASC' || raritySort === 'RARITY_DESC')) {
     const skip = Math.max(0, parseInt(params.get('skip') || '0', 10) || 0);
-    const ids = Object.keys(gmap).sort((a, b) => raritySort === 'RARITY_ASC' ? gmap[a].rank - gmap[b].rank : gmap[b].rank - gmap[a].rank);
+    let idList = Object.keys(gmap);
+    if (filterList.length) {
+      const hit = new Set(pool.items.filter(it => filterList.every(f => poolItemMatches(it, f))).map(it => it.nftId));
+      idList = idList.filter(id => hit.has(id));
+    }
+    const ids = idList.sort((a, b) => raritySort === 'RARITY_ASC' ? gmap[a].rank - gmap[b].rank : gmap[b].rank - gmap[a].rank);
     const pageIds = ids.slice(skip, skip + limit);
     const byMember = {};
     pageIds.forEach(id => { const m = gmap[id].c; (byMember[m] = byMember[m] || []).push(id); });
     const got = {};
-    await Promise.all(Object.keys(byMember).map(m => callMember(context, params, m, { ids: byMember[m].join(','), skip: null, sort: null, gcur: null }).then(j => {
+    await Promise.all(Object.keys(byMember).map(m => callMember(context, params, m, { ids: byMember[m].join(','), skip: null, sort: null, gcur: null, filters: null }).then(j => {
       ((j && j.items) || []).forEach(it => { got[it.nftId] = { ...it, collectionKey: m }; });
     })));
     const items = pageIds.map(id => got[id] ? applyGroupRarity(got[id], gmap) : null).filter(Boolean);
@@ -490,7 +533,10 @@ async function groupResponse(context, coll, params) {
   // Lists — merged in sort order, one cursor per member.
   let cur = {};
   try { cur = JSON.parse(params.get('gcur') || '{}') || {}; } catch (e) { cur = {}; }
-  const results = await Promise.all(members.map(m => cur[m] === -1 ? null : callMember(context, params, m, { skip: cur[m] || 0, limit })));
+  const memberFilters = {};
+  members.forEach(m => { memberFilters[m] = (pool && filterList.length) ? filtersForMember(filterList, m, pool) : filterList; });
+  const results = await Promise.all(members.map(m => (cur[m] === -1 || !memberFilters[m]) ? null
+    : callMember(context, params, m, { skip: cur[m] || 0, limit, filters: memberFilters[m].length ? JSON.stringify(memberFilters[m]) : null })));
   const pools = members.map((m, i) => ({ m, res: results[i], items: ((results[i] && results[i].items) || []).map(it => applyGroupRarity({ ...it, collectionKey: m }, hasGmap ? gmap : null)), taken: 0 }));
   const key = groupSortKey(params);
   const merged = [];

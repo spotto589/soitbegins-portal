@@ -5117,44 +5117,72 @@ export function reverseTraitText(t) {
 // collections, scored with the same formula as each collection's own.
 // fuzzyall = Fuzzybears + yzzuf (4,430 bears); Fuzzy Bars stay apart.
 export const RARITY_GROUPS = { fuzzyall: ['fuzzy', 'yzzuf'] };
+// A trait only the group has (2026-09-29): which collection a bear comes
+// from. Scored like any other trait, filterable in the ALL view.
+export const RARITY_GROUP_TRAITS = {
+  fuzzyall: { category: 'Direction', values: { fuzzy: 'Original', yzzuf: 'Reverse' } },
+};
 export function rarityGroupOf(collectionKey) {
   return Object.keys(RARITY_GROUPS).find(g => RARITY_GROUPS[g].includes(collectionKey)) || null;
 }
-export async function maybeRescoreGroupRarity(kv, groupKey, loadAsset) {
+// Every member's sealed file as one population: traits read forwards,
+// the group trait added, and every category an item lacks written in as
+// __no_trait__ (no hat, no clothes, ...) so counts, filters and scores all
+// see the same thing. Cached per worker by the files' seals.
+const groupPoolCache = {};
+export async function loadGroupPool(groupKey, loadAsset) {
   const members = RARITY_GROUPS[groupKey];
-  if (!members || !loadAsset) return false;
+  if (!members || !loadAsset) return null;
   const seals = [];
   for (const m of members) {
     const path = RARITY_SNAPSHOT_FILES[m];
-    if (!path) return false;
+    if (!path) return null;
     const sealRes = await loadAsset(path + '.sha256').catch(() => null);
-    if (!sealRes || !sealRes.ok) return false;
+    if (!sealRes || !sealRes.ok) return null;
     const seal = (await sealRes.text()).trim().split(/\s+/)[0];
-    if (!/^[0-9a-f]{64}$/.test(seal)) return false;
+    if (!/^[0-9a-f]{64}$/.test(seal)) return null;
     seals.push(seal);
   }
-  const signature = rarityFormulaSignature(groupKey) + ':' + seals.map(s => s.slice(0, 12)).join('.');
-  const statsRaw = await kv.get(kvKeyFor(RARITY_STATS_KEY, groupKey));
-  const stats = statsRaw ? JSON.parse(statsRaw) : null;
-  if (stats && stats.signature === signature) return true;
+  const sealKey = seals.join('.');
+  if (groupPoolCache[groupKey] && groupPoolCache[groupKey].sealKey === sealKey) return groupPoolCache[groupKey];
   const files = await Promise.all(members.map(m => loadAsset(RARITY_SNAPSHOT_FILES[m]).then(r => r.json())));
+  const extra = RARITY_GROUP_TRAITS[groupKey] || null;
   const items = [];
-  const memberOf = {};
+  const memberCategories = {};
   let ledgerIndex = 0;
   files.forEach((f, i) => {
     const m = members[i];
     const rev = !!REVERSED_TRAIT_COLLECTIONS[m];
+    const cats = memberCategories[m] = new Set();
     ledgerIndex = Math.max(ledgerIndex, f.ledgerIndex || 0);
     for (const it of f.items) {
-      memberOf[it.nftId] = m;
-      items.push({
-        nftId: it.nftId,
-        number: it.number,
-        attributes: rev ? it.attributes.map(a => ({ trait_type: reverseTraitText(a.trait_type), value: reverseTraitText(a.value) })) : it.attributes,
-      });
+      const attributes = rev ? it.attributes.map(a => ({ trait_type: reverseTraitText(a.trait_type), value: reverseTraitText(a.value) })) : it.attributes.slice();
+      attributes.forEach(a => cats.add(a.trait_type));
+      if (extra && extra.values[m]) attributes.push({ trait_type: extra.category, value: extra.values[m] });
+      items.push({ nftId: it.nftId, number: it.number, c: m, attributes });
     }
   });
   const snapshot = snapshotFromSealedFile({ items, ledgerIndex });
+  const pool = { sealKey, seals, members, items, snapshot, memberCategories, extra, ledgerIndex };
+  groupPoolCache[groupKey] = pool;
+  return pool;
+}
+// Does a pooled item have this { trait, value }? A category it lacks
+// counts as __no_trait__.
+export function poolItemMatches(it, f) {
+  const a = it.attributes.find(x => x.trait_type === f.trait);
+  return (a ? a.value : '__no_trait__') === f.value;
+}
+export async function maybeRescoreGroupRarity(kv, groupKey, loadAsset) {
+  const pool = await loadGroupPool(groupKey, loadAsset);
+  if (!pool) return false;
+  const { members, seals, items, snapshot, ledgerIndex } = pool;
+  const signature = rarityFormulaSignature(groupKey) + ':' + seals.map(s => s.slice(0, 12)).join('.') + ':' + JSON.stringify(pool.extra || null);
+  const statsRaw = await kv.get(kvKeyFor(RARITY_STATS_KEY, groupKey));
+  const stats = statsRaw ? JSON.parse(statsRaw) : null;
+  if (stats && stats.signature === signature) return true;
+  const memberOf = {};
+  items.forEach(it => { memberOf[it.nftId] = it.c; });
   const finalMap = scoreStoredTraits(snapshot, groupKey, items.length);
   Object.keys(finalMap).forEach(id => { finalMap[id].c = memberOf[id]; });
   const now = Math.floor(Date.now() / 1000);

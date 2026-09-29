@@ -15176,8 +15176,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     sealscrolls: { label: 'SEAL SCR0LLS', itemLabel: 'SCR0LL', tradeable: true, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', nftIssuer: 'rUSdvkwdGnU8qpfRR2sa1h7JExzBi7fUHr', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2', group: 'seal', groupLabel: 'SCR0LLS' },
     // ALL = Fuzzybears + yzzuf together (FUZZY BARS only ever by itself).
     fuzzyall: { label: 'FUZZY', itemLabel: 'FUZZYBEAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'ALL', groupAll: true },
-    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZYBEAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', nftIssuer: 'rw1R8cfHGMySmbj7gJ1HkiCqTY1xhLGYAs', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'FUZZYBEARS' },
-    yzzuf: { label: 'YZZUF', itemLabel: 'RAEBYZZUF', reversedTraits: true, tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'r3NftTqH2hv3skuWAEDWKvqnxjtuqcFWYR', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'YZZUF' },
+    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZYBEAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', nftIssuer: 'rw1R8cfHGMySmbj7gJ1HkiCqTY1xhLGYAs', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'FUZZYBEARS', groupTrait: ['Direction', 'Original'] },
+    yzzuf: { label: 'YZZUF', itemLabel: 'RAEBYZZUF', reversedTraits: true, tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'r3NftTqH2hv3skuWAEDWKvqnxjtuqcFWYR', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'YZZUF', groupTrait: ['Direction', 'Reverse'] },
     fuzzybars: { label: 'FUZZY BARS', itemLabel: 'FUZZY BAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', nftIssuer: 'rPK77tBNduykbofMU91uffeRSUvtEkadbx', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'FUZZY BARS' },
     conspiracy: { label: 'C0NSP!RACY AREA 589', itemLabel: 'C0NSP!RACY', tradeable: true, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' },
     // WH!TE RABB!T — Deeptide's second real C0NSP!RACY-brand shop, shares
@@ -18934,11 +18934,27 @@ const SWAP_HTML = `<!DOCTYPE html>
   // A yzzuf bear shown against a forwards trait list (FUZZY ALL): read its
   // traits forwards too, or every category shows twice ("seyE" plus a
   // NO "Eyes" box).
+  // In an ALL view each item also gets the group's own trait (FUZZY ALL:
+  // Direction = Original / Reverse), which the combined rarity scores.
   function traitAttrsForView(attrs, itemKey){
     attrs = attrs || [];
-    if (!flipsTraits(itemKey) || flipsTraits(traitsViewKey())) return attrs;
-    var r = function(t){ t = String(t === null || t === undefined ? '' : t); return t.indexOf('__') === 0 ? t : t.split('').reverse().join(''); };
-    return attrs.map(function(a){ var o = {}; for (var k in a) o[k] = a[k]; o.trait_type = r(a.trait_type); o.value = r(a.value); return o; });
+    var viewMeta = COLLECTION_META[traitsViewKey()] || {};
+    if (flipsTraits(itemKey) && !flipsTraits(traitsViewKey())){
+      var r = function(t){ t = String(t === null || t === undefined ? '' : t); return t.indexOf('__') === 0 ? t : t.split('').reverse().join(''); };
+      attrs = attrs.map(function(a){ var o = {}; for (var k in a) o[k] = a[k]; o.trait_type = r(a.trait_type); o.value = r(a.value); return o; });
+    }
+    var gt = viewMeta.groupAll && (COLLECTION_META[itemKey] || {}).groupTrait;
+    if (gt && !attrs.some(function(a){ return a.trait_type === gt[0]; })) attrs = attrs.concat([{ trait_type: gt[0], value: gt[1] }]);
+    // ...and the ALL view's own %s (a detail fetch brings its own
+    // collection's), so every box matches the combined score.
+    if (viewMeta.groupAll && state.traitCategories){
+      attrs = attrs.map(function(a){
+        var m = (state.traitCategories[a.trait_type] || []).filter(function(v){ return v.value === a.value; })[0];
+        if (!m) return a;
+        var o = {}; for (var k in a) o[k] = a[k]; o.percent = m.percent; o.count = m.count; return o;
+      });
+    }
+    return attrs;
   }
   function tDisp(t, key){
     t = String(t === null || t === undefined ? '' : t);
