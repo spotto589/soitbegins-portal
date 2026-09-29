@@ -5432,6 +5432,12 @@ const SWAP_HTML = `<!DOCTYPE html>
      just sitting as a couple of small lines at the top of a lot of empty
      space — a zero-result query should be unmistakable, not something
      you have to notice. */
+  .tsh-list{ display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center; max-width:900px; margin-top:1rem; }
+  .tsh-chip{ display:flex; flex-direction:column; align-items:center; gap:0.15rem; min-width:9rem; padding:0.6em 0.9em; background:#000; color:var(--white); border:1px solid var(--border-dim); border-radius:var(--radius); cursor:pointer; font:inherit; }
+  .tsh-chip:hover{ border-color:var(--cyan); }
+  .tsh-cat{ font-size:11px; color:var(--grey); letter-spacing:0.08em; }
+  .tsh-val{ font-size:15px; font-weight:700; }
+  .tsh-pct{ font-size:12px; }
   .empty-state{ text-align:center; min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1rem; }
   .empty-state .es-title{
     font-size:22px;
@@ -13508,7 +13514,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
           <div class="results-header-row">
             <div class="search-row db-search-row">
-              <input class="search-input" id="searchInput" placeholder="# 0R WALLET">
+              <input class="search-input" id="searchInput" placeholder="#, WALLET 0R TRA!T">
               <button class="input-clear-btn" type="button" tabindex="-1" title="CLEAR">×</button>
               <button class="bar-btn" id="searchBtn">GO</button>
             </div>
@@ -19053,12 +19059,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       return;
     }
     var isNumber = /^#?\\d+$/.test(q);
-    if (!isNumber){
-      el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
-      el.resultsArea.innerHTML = emptyStateHtml('// !NVAL!D QUERY', ['ENTER A ' + collectionItemLabel() + ' NUMBER (E.G. 589) 0R A WALLET ADDRESS.'], true);
-      wireClearSearch();
-      return;
-    }
+    if (!isNumber){ searchTraitsByName(q); return; }
     el.resultsArea.innerHTML = '<div class="loading-note">SEARCH!NG...</div>';
     el.statusLine.textContent = '';
     api({ number: q.replace('#', '') }).then(function(data){
@@ -19079,6 +19080,56 @@ const SWAP_HTML = `<!DOCTYPE html>
     });
   }
 
+  // Words in the search box (2026-09-29): find matching trait values
+  // ("golden", "top hat", "naked") in this collection's trait list. One
+  // match filters straight to it; several show as chips to pick from.
+  function searchTraitsByName(q){
+    el.resultsArea.innerHTML = '<div class="loading-note">SEARCH!NG TRA!TS...</div>';
+    el.statusLine.textContent = '';
+    var norm = function(t){ return String(t || '').toLowerCase().replace(/!/g, 'i').replace(/0/g, 'o').replace(/\\s+/g, ' ').trim(); };
+    var nq = norm(q);
+    ensureTraitsLoaded().then(function(cats){
+      var hits = [];
+      Object.keys(cats || {}).forEach(function(cat){
+        (cats[cat] || []).forEach(function(v){
+          var label = v.label || v.value;
+          // yzzuf: match what's shown forwards as well as the published text.
+          var fwd = flipsTraits() ? String(label).split('').reverse().join('') : label;
+          var fwdCat = flipsTraits() ? String(cat).split('').reverse().join('') : cat;
+          if ([label, fwd, cat + ' ' + label, fwdCat + ' ' + fwd].some(function(t){ return norm(t).indexOf(nq) !== -1; })) hits.push({ cat: cat, v: v });
+        });
+      });
+      hits.sort(function(a, b){ return (a.v.percent || 0) - (b.v.percent || 0); });
+      if (hits.length === 1){ applySearchTrait(hits[0].cat, hits[0].v.value); return; }
+      if (!hits.length){
+        el.statusLine.innerHTML = 'RESULTS :: <span class="hi">0</span>';
+        el.resultsArea.innerHTML = emptyStateHtml('// N0 MATCH', ['N0 ' + collectionItemLabel() + ' NUMBER, WALLET 0R TRA!T MATCHES "' + q + '".', 'TRY A NUMBER (E.G. 589), A WALLET, 0R A TRA!T L!KE "G0LDEN".'], true);
+        wireClearSearch();
+        return;
+      }
+      el.statusLine.innerHTML = 'TRA!TS MATCH!NG "' + escapeHtml(q) + '" :: <span class="hi">' + hits.length + '</span>';
+      el.resultsArea.innerHTML = '<div class="empty-state trait-search-hits"><div class="es-title">// P!CK A TRA!T</div><div class="tsh-list">' +
+        hits.slice(0, 40).map(function(h){
+          return '<button type="button" class="tsh-chip" data-cat="' + escapeHtml(h.cat) + '" data-value="' + escapeHtml(h.v.value) + '">' +
+            '<span class="tsh-cat">' + escapeHtml(tDisp(h.cat)) + '</span><span class="tsh-val">' + escapeHtml(tDisp(h.v.label || h.v.value)) + '</span>' +
+            '<span class="tsh-pct">' + (h.v.percent !== undefined && h.v.percent !== null ? greenNum(Number(h.v.percent).toFixed(2)) + '%' : '') + '</span></button>';
+        }).join('') + '</div></div>';
+    }).catch(function(){
+      el.resultsArea.innerHTML = emptyStateHtml('// S!GNAL_L0ST', ['SEARCH FA!LED. TRY AGA!N.'], false);
+    });
+  }
+  function applySearchTrait(cat, value){
+    state.traitFilters = [{ id: state.nextTraitRowId++, category: cat, value: value }];
+    renderTraitRows();
+    el.searchInput.value = '';
+    pendingTraitScroll = true;
+    runQuery();
+  }
+  el.resultsArea.addEventListener('click', function(e){
+    var chip = e.target.closest('.tsh-chip');
+    if (!chip) return;
+    applySearchTrait(chip.getAttribute('data-cat'), chip.getAttribute('data-value'));
+  });
   function wireClearSearch(){
     var btn = document.getElementById('clearSearchBtn');
     if (btn) btn.addEventListener('click', function(){

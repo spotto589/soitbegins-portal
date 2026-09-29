@@ -4726,7 +4726,7 @@ const RARITY_CRAWL_KEY = 'pswap:raritycrawl:v1';
 // flat layer (RARITY_NUMBER_MULTIPLIER), and doesn't count toward 1 0F N.
 // '6': RANK and headline score are now the Trait Score (Layer 1 only);
 // the full layered formula is kept as the separate Lore Score.
-const RARITY_FORMULA_VERSION = '8'; // 7: category names matched ignoring case/spaces, real population; 8: Fuzzy Bars number order (2026-09-29)
+const RARITY_FORMULA_VERSION = '9'; // 7: category names matched ignoring case/spaces, real population; 8: Fuzzy Bars number order; 9: + Scrolls, Cult (2026-09-29)
 // Layer 3 multiplier by how many Pigeons share a set combination (see
 // maybeRefreshRarityScores' own Layer 3 comment).
 const LAYER3_MULTIPLIERS = { 1: 5.89, 2: 3.21, 3: 1.23 };
@@ -5433,7 +5433,10 @@ function normalizeSnapshot(snapshot) {
 // within one trait group the LOWER number is rarer — each bar adds
 // 1 − number ÷ 10,000 (always under 1, so it never jumps a bar past one
 // with rarer traits: the smallest trait gap there is 1.5).
-const RARITY_NUMBER_ORDER = { fuzzybars: true };
+// Same for the collections whose traits can't separate items on their
+// own: SEAL Scrolls (3 scroll types, gap 1.37) and Cult (every one a
+// unique 1/1, so all tie).
+const RARITY_NUMBER_ORDER = { fuzzybars: true, sealscrolls: true, cult: true };
 function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
   const raw = {};
   snapshot = normalizeSnapshot(snapshot);
