@@ -4,7 +4,23 @@
 // references, so any visitor (not just someone reading _shared.js) can
 // actually understand how a Pigeon's rarity number came from. Linked from
 // DETAIL's own RARITY SCORE box (see updateDetailRarity in static.js).
-function renderRarityHtml() {
+import { getRarityHealth, TRADEABLE_COLLECTIONS } from './_shared.js';
+
+// Section 08 — the daily self-check's last result (see
+// maybeCheckRarityHealth in _shared.js).
+function healthHtml(h) {
+  if (!h || !h.results) return '<p>The first daily check has not run yet.</p>';
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const label = k => k === 'fuzzyall' ? 'FUZZY ALL (C0MB!NED)' : ((TRADEABLE_COLLECTIONS[k] && TRADEABLE_COLLECTIONS[k].label) || k.toUpperCase());
+  const rows = Object.keys(h.results).map(k => {
+    const r = h.results[k];
+    return '<div class="hc-row' + (r.ok ? '' : ' hc-bad') + '"><span class="hc-name">' + esc(label(k)) + '</span><span class="hc-n">' + (r.items || 0).toLocaleString('en-US') + '</span><span class="hc-st">' + (r.ok ? '&#10003; 0K' : r.problems.map(esc).join(' &middot; ')) + '</span></div>';
+  }).join('');
+  const when = new Date(h.checkedAt * 1000).toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+  return '<p>Every day the site re-checks the stored scores of every collection: every item scored, every item has a row for every trait category, the count of every trait matches a fresh recount, and every score is exactly the sum of its rows. Last check: <strong>' + when + '</strong>.</p><div class="hc-list">' + rows + '</div>';
+}
+
+function renderRarityHtml(health) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +30,13 @@ function renderRarityHtml() {
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
   *{ margin:0; padding:0; box-sizing:border-box; }
+  .hc-list{ display:flex; flex-direction:column; gap:4px; margin:0.75rem 0 1.5rem; }
+  .hc-row{ display:grid; grid-template-columns:1fr auto; gap:0.25rem 1rem; padding:0.55em 0.8em; background:#000; border:1px solid rgba(61,243,236,0.35); border-radius:6px; font-size:14px; }
+  .hc-row.hc-bad{ border-color:#ff3fb0; }
+  .hc-name{ font-weight:700; }
+  .hc-n{ text-align:right; color:rgba(232,232,232,0.6); }
+  .hc-st{ grid-column:1 / -1; color:#5dff8f; font-size:13px; }
+  .hc-bad .hc-st{ color:#ff3fb0; }
   html, body{ min-height:100%; background:#08080a; }
   body{
     font-family:'Chakra Petch',sans-serif;
@@ -225,6 +248,9 @@ function renderRarityHtml() {
       </div>
     </div>
 
+    <h2><span class="step">08</span>DA!LY SELF-CHECK</h2>
+    ${healthHtml(health)}
+
     <a class="back-link" href="/static">&larr; BACK T0 Σκύλλα</a>
   </div>
 
@@ -259,5 +285,6 @@ fetch('/assets/rarity-data/pigeons-traits.json.sha256').then(function(r){ return
 }
 
 export async function onRequestGet(context) {
-  return new Response(renderRarityHtml(), { headers: { 'Content-Type': 'text/html; charset=UTF-8' } });
+  const health = context.env && context.env.coin ? await getRarityHealth(context.env.coin).catch(() => null) : null;
+  return new Response(renderRarityHtml(health), { headers: { 'Content-Type': 'text/html; charset=UTF-8' } });
 }

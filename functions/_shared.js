@@ -3912,7 +3912,7 @@ async function fetchAllDeeptideTraitCards(shopSlug) {
     for (let skip = DEEPTIDE_LISTINGS_MAX_LIMIT; skip < Math.min(total, 1200); skip += DEEPTIDE_LISTINGS_MAX_LIMIT) skips.push(skip);
     const pages = [first].concat(await Promise.all(skips.map(skip => fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug))));
     for (const page of pages) for (const t of (page.traits || [])) {
-      if (t.trait_type && t.value) byKey.set(t.trait_type + ' ' + t.value, t);
+      if (t.trait_type && t.value) byKey.set(t.trait_type + '|' + t.value, t);
     }
     if (!total || byKey.size >= Math.min(total, 1200)) break;
   }
@@ -4748,6 +4748,63 @@ const RARITY_REFRESH_STALE_SECONDS = 6 * 3600;
 const RARITY_CONCURRENT_GUARD_SECONDS = 90; // was 10, then 30 — needs to clear Cloudflare KV's own ~60s worst-case cross-colo propagation window, not just this process's own runId check (see the v3->v4 KV key comment above)
 const RARITY_PAGES_PER_RUN = 15; // same 900-tokens/run budget as the number map crawl
 
+// RARITY SELF-CHECK (2026-09-29): once a day the cron worker re-checks
+// every collection's stored scores the way the manual audit did — every
+// item scored, every item has a row for every category, each trait's
+// count matches a recount, and each score is the sum of its rows. The
+// result is shown on /rarity (section 08).
+const RARITY_HEALTH_KEY = 'pswap:rarityhealth:v1';
+const RARITY_HEALTH_EVERY_SECONDS = 24 * 3600;
+export async function getRarityHealth(kv) {
+  const raw = await kv.get(RARITY_HEALTH_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+export function checkRarityMap(map, expectedCount) {
+  const entries = Object.values(map || {});
+  const problems = [];
+  if (!entries.length) return { items: 0, ok: false, problems: ['N0T SC0RED YET'] };
+  const cats = new Set();
+  entries.forEach(e => (e.breakdown || []).forEach(b => { if (b.count !== null && b.count !== undefined) cats.add(b.category); }));
+  let missing = 0, sumBad = 0;
+  const seen = {}, used = {};
+  entries.forEach(e => {
+    const rows = (e.breakdown || []);
+    const have = new Set(rows.map(b => b.category));
+    cats.forEach(c => { if (!have.has(c)) missing++; });
+    rows.forEach(b => {
+      if (b.count === null || b.count === undefined) return;
+      const k = b.category + '|' + b.value;
+      seen[k] = (seen[k] || 0) + 1;
+      used[k] = b.count;
+    });
+    const sum = rows.reduce((a, b) => a + (Number(b.contribution) || 0), 0);
+    if (Math.abs(sum - Number(e.score)) > 0.02 * rows.length + 0.05) sumBad++;
+  });
+  const countBad = Object.keys(seen).filter(k => seen[k] !== used[k]).length;
+  if (missing) problems.push(missing + ' M!SS!NG TRA!T R0WS');
+  if (countBad) problems.push(countBad + ' TRA!T C0UNTS D0 N0T MATCH A REC0UNT');
+  if (sumBad) problems.push(sumBad + ' SC0RES D0 N0T ADD UP');
+  if (expectedCount && entries.length < expectedCount * 0.99) problems.push('0NLY ' + entries.length + ' 0F ' + expectedCount + ' SC0RED');
+  return { items: entries.length, categories: cats.size, ok: !problems.length, problems };
+}
+export async function maybeCheckRarityHealth(kv, collectionKeys) {
+  const prev = await getRarityHealth(kv);
+  const now = Math.floor(Date.now() / 1000);
+  if (prev && now - prev.checkedAt < RARITY_HEALTH_EVERY_SECONDS) return { skipped: 'fresh' };
+  const results = {};
+  for (const key of collectionKeys.concat(Object.keys(RARITY_GROUPS))) {
+    const map = await getRarityMap(kv, key);
+    let expected = null;
+    if (!RARITY_GROUPS[key]) {
+      const nm = await getPigeonNumberMap(kv, key).catch(() => ({}));
+      expected = Object.keys(nm || {}).length || null;
+    }
+    if (!Object.keys(map || {}).length && !expected) continue; // nothing to score (no shop)
+    results[key] = checkRarityMap(map, expected);
+  }
+  await safeKvPut(kv, RARITY_HEALTH_KEY, JSON.stringify({ checkedAt: now, results }));
+  return { checked: Object.keys(results).length, bad: Object.keys(results).filter(k => !results[k].ok) };
+}
 export async function getRarityMap(kv, collectionKey) {
   const raw = await kv.get(kvKeyFor(RARITY_MAP_KEY, collectionKey));
   return raw ? JSON.parse(raw) : {};

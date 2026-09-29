@@ -11,7 +11,7 @@
 // reached yet showed as "not indexed" to whoever searched for it first.
 // This worker just keeps both indexes warm on its own, independent of
 // whether anyone is on the site.
-import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshRarityScores, rarityNeedsWork, maybeRefreshFloorIndex, recomputeCrownHolder, maybeRefreshCollectionHolders, TRADEABLE_COLLECTIONS, FLOOR_INDEX_COLLECTIONS } from '../functions/_shared.js';
+import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshRarityScores, rarityNeedsWork, maybeCheckRarityHealth, maybeRefreshFloorIndex, recomputeCrownHolder, maybeRefreshCollectionHolders, TRADEABLE_COLLECTIONS, FLOOR_INDEX_COLLECTIONS } from '../functions/_shared.js';
 import { runLedgerWatch } from '../functions/_ledgerwatch.js';
 import { runFloorWatch } from '../functions/_floorwatch.js';
 import { stepPopularCoins } from '../functions/_coins.js';
@@ -113,6 +113,8 @@ export default {
             await maybeRefreshRarityScores(env.coin, key, null, loadAsset).catch(() => {});
           }
         }
+        // Once a day: re-check every stored score (shown on /rarity).
+        await maybeCheckRarityHealth(env.coin, collectionKeys).catch(e => console.log('rarity-health failed', String(e && e.message || e)));
       })(),
       pingXamanProxy(env),
     ]));
