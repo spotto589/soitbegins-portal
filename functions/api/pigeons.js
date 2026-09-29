@@ -6,7 +6,7 @@ import { marketListingsFromOffers, marketMeta,
   getSwapListingsMap, removeSwapListing, fetchNftSellOffersOrNull, findCollectionOffer, getSwapSalesLog, identifySaleVenue, getFloorIndex, hasFloorIndex,
   resolveOwnerCollectionFast, resolveOwnerCollectionPending, fetchAllAccountNftsCheckedCached, findAllPigeons, findAllCollectionNfts, fetchPigeonsXrpRate, fetchPigeonsAccountLine, fetchAllAccountLines, matchAccountLinesToCollections, fetchXrpBalanceDrops, accountReserveDrops, spendableXrpDrops, quotePigeonsForXrpDrops, quoteXrpForTokenAmount, TRADEABLE_COLLECTIONS,
   proxyIpfsImage, PIGEON_COLLECTION_SIZE_APPROX, PIGEON_LOW_EDITION_MAX, DEEPTIDE_PIGEON_SHOP_SLUG, getTradeConfig, PIGEONS_TOKEN_CONFIG, isPopularCoinKey, ensurePopularCoinConfig,
-  getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, RARITY_GROUPS, REVERSED_TRAIT_COLLECTIONS, reverseTraitText, rarityGroupOf, maybeRescoreGroupRarity, loadGroupPool, poolItemMatches, noTraitFilterLabel, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
+  getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, RARITY_GROUPS, REVERSED_TRAIT_COLLECTIONS, reverseTraitText, rarityGroupOf, maybeRescoreGroupRarity, loadGroupPool, poolItemMatches, noTraitFilterLabel, traitCategoryKey, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
   fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply, fetchNftDetails, COLLECTION_DESCRIPTIONS
 } from '../_shared.js';
 
@@ -183,7 +183,15 @@ function toItem(nftId, meta, ownerOverride, highSaleMap, scyllaListingsMap, pige
   // every other trait cell already does. Skipped only if noTraitPercent's
   // own lookup came back empty (no trait crawl data yet for this
   // collection).
-  const attributes = (meta.attributes || []).slice();
+  let attributes = (meta.attributes || []).slice();
+  if (noTraitPercent && noTraitPercent.categoryNames) {
+    const byKey = {};
+    noTraitPercent.categoryNames.forEach(c => { byKey[traitCategoryKey(c)] = c; });
+    attributes = attributes.map(a => {
+      const c = byKey[traitCategoryKey(a.trait_type)];
+      return c && c !== a.trait_type ? { ...a, trait_type: c } : a;
+    });
+  }
   if (noTraitPercent) {
     for (const category of Object.keys(noTraitPercent)) {
       const percent = noTraitPercent[category];
@@ -636,6 +644,10 @@ export async function onRequestGet(context) {
     const v = (traitCategoriesForSynth[cat] || []).find(x => x.value === '__no_trait__');
     if (v) noTraitPercent[cat] = v.percent;
   });
+  // The trait list's own category names, for toItem to match item traits
+  // to ignoring case/spaces (TEDDY: "HEADWEAR" = "Headwear"). Non-
+  // enumerable so noTraitPercent's own keys stay just the no-trait ones.
+  Object.defineProperty(noTraitPercent, 'categoryNames', { value: Object.keys(traitCategoriesForSynth || {}) });
 
   const pigeonsSalesMap = {};
   for (const sale of salesLog) {

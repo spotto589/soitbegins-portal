@@ -11,7 +11,7 @@
 // reached yet showed as "not indexed" to whoever searched for it first.
 // This worker just keeps both indexes warm on its own, independent of
 // whether anyone is on the site.
-import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshFloorIndex, recomputeCrownHolder, maybeRefreshCollectionHolders, TRADEABLE_COLLECTIONS, FLOOR_INDEX_COLLECTIONS } from '../functions/_shared.js';
+import { maybeRefreshPigeonNumberMap, maybeRefreshHighSaleMap, maybeRefreshRarityScores, rarityNeedsWork, maybeRefreshFloorIndex, recomputeCrownHolder, maybeRefreshCollectionHolders, TRADEABLE_COLLECTIONS, FLOOR_INDEX_COLLECTIONS } from '../functions/_shared.js';
 import { runLedgerWatch } from '../functions/_ledgerwatch.js';
 import { stepPopularCoins } from '../functions/_coins.js';
 
@@ -97,6 +97,18 @@ export default {
       // T0P 123 H0LDERS for every other collection (2026-09-29) — one at a
       // time so the ledger server isn't hit with every scan at once.
       (async () => { for (const key of collectionKeys) await maybeRefreshCollectionHolders(env.coin, key); })(),
+      // RARITY — finish any collection that has never been scored or has a
+      // crawl left half-done (2026-09-29: TEDDY stuck at 900/2,600, Bear/
+      // Cult/Fuzzy Bars never scored — the crawl only moved when someone
+      // opened TRAITS). One at a time, only the unfinished ones.
+      (async () => {
+        const loadAsset = path => fetch(new URL(path, 'https://soitbegins.xyz'));
+        for (const key of collectionKeys) {
+          if (await rarityNeedsWork(env.coin, key).catch(() => false)) {
+            await maybeRefreshRarityScores(env.coin, key, null, loadAsset).catch(() => {});
+          }
+        }
+      })(),
       pingXamanProxy(env),
     ]));
   },

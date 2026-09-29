@@ -3897,6 +3897,28 @@ async function fetchDeeptideTraitCards(skip, limit, shopSlug = DEEPTIDE_PIGEON_S
   }
 }
 
+// Every trait card a shop has. Deeptide's `sort=rarest` pages aren't
+// stable across ties, so one pass can skip a card (and repeat another) —
+// found 2026-09-29: C0NSP!RACY's "Human Experiment Scrubs" (196 items)
+// was missing from its rarity counts, so those items scored 0 for Outfit.
+// Passes are repeated and merged until every card in `total` is seen.
+async function fetchAllDeeptideTraitCards(shopSlug) {
+  const byKey = new Map();
+  let total = 0;
+  for (let pass = 0; pass < 5; pass++) {
+    const first = await fetchDeeptideTraitCards(0, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug);
+    total = first.total || total;
+    const skips = [];
+    for (let skip = DEEPTIDE_LISTINGS_MAX_LIMIT; skip < Math.min(total, 1200); skip += DEEPTIDE_LISTINGS_MAX_LIMIT) skips.push(skip);
+    const pages = [first].concat(await Promise.all(skips.map(skip => fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug))));
+    for (const page of pages) for (const t of (page.traits || [])) {
+      if (t.trait_type && t.value) byKey.set(t.trait_type + ' ' + t.value, t);
+    }
+    if (!total || byKey.size >= Math.min(total, 1200)) break;
+  }
+  return Array.from(byKey.values());
+}
+
 // Real trait categories/values/percentages, grouped for the filter panel.
 // Cached for 1 hour (collection-wide trait distribution barely moves) so
 // opening the TRAITS panel doesn't re-crawl every card on every click, and
@@ -3962,24 +3984,7 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
     if (cached !== null) return JSON.parse(cached);
   }
 
-  // Page 0 first (sequentially) so we learn the real `total`, then fire
-  // every remaining page at once instead of awaiting them one at a time —
-  // a cold cache used to mean up to ~10 sequential round trips to Deeptide
-  // (the real collection's ~242 items is ~5 pages); this cuts that down to
-  // roughly the cost of a single page fetch.
-  const first = await fetchDeeptideTraitCards(0, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug);
-  const total = first.total || 0;
-  const all = [...(first.traits || [])];
-  const remainingSkips = [];
-  for (let skip = DEEPTIDE_LISTINGS_MAX_LIMIT; skip < Math.min(total, 600); skip += DEEPTIDE_LISTINGS_MAX_LIMIT) { // 600 is a generous ceiling well above the real ~242
-    remainingSkips.push(skip);
-  }
-  if (first.traits && first.traits.length) {
-    const pages = await Promise.all(remainingSkips.map(skip => fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug)));
-    for (const page of pages) {
-      if (page.traits && page.traits.length) all.push(...page.traits);
-    }
-  }
+  const all = await fetchAllDeeptideTraitCards(shopSlug);
 
   // Deeptide's own "no trait" placeholder (value `__no_trait__`, its own
   // `label: "None"`) is real, countable data — NAKED Pigeons are exactly
@@ -4029,8 +4034,12 @@ export async function getTraitCategoriesWithPercent(kv, shopSlug = DEEPTIDE_PIGE
   // imported next) without hardcoding a specific item's name — a real
   // category never has just one value in the first place, so this can't
   // accidentally remove a genuine one.
+  // ...unless it's a real yes/no trait: one value, held by more than one
+  // item, and the rest have none (Fuzzy Bars' Golden Ticket / Special).
   for (const cat of Object.keys(grouped)) {
-    if (grouped[cat].filter(v => v.value !== '__no_trait__').length <= 1) delete grouped[cat];
+    const real = grouped[cat].filter(v => v.value !== '__no_trait__');
+    if (real.length === 1 && noTrait[cat] && real[0].count > 1) continue;
+    if (real.length <= 1) delete grouped[cat];
   }
 
   await safeKvPut(kv, cacheKey, JSON.stringify(grouped), { expirationTtl: TRAIT_CARDS_CACHE_TTL_SECONDS });
@@ -4717,7 +4726,7 @@ const RARITY_CRAWL_KEY = 'pswap:raritycrawl:v1';
 // flat layer (RARITY_NUMBER_MULTIPLIER), and doesn't count toward 1 0F N.
 // '6': RANK and headline score are now the Trait Score (Layer 1 only);
 // the full layered formula is kept as the separate Lore Score.
-const RARITY_FORMULA_VERSION = '6';
+const RARITY_FORMULA_VERSION = '7'; // 7: category names matched ignoring case/spaces, real population (2026-09-29)
 // Layer 3 multiplier by how many Pigeons share a set combination (see
 // maybeRefreshRarityScores' own Layer 3 comment).
 const LAYER3_MULTIPLIERS = { 1: 5.89, 2: 3.21, 3: 1.23 };
@@ -4760,19 +4769,7 @@ export async function getRarityStats(kv, collectionKey) {
 // page fetches) is already amortized to roughly the same rarity as the
 // number-map crawl's own per-pass cost.
 async function fetchFullTraitDistribution(shopSlug, collectionSizeApprox) {
-  const first = await fetchDeeptideTraitCards(0, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug);
-  const total = first.total || 0;
-  const all = [...(first.traits || [])];
-  const remainingSkips = [];
-  for (let skip = DEEPTIDE_LISTINGS_MAX_LIMIT; skip < Math.min(total, 600); skip += DEEPTIDE_LISTINGS_MAX_LIMIT) {
-    remainingSkips.push(skip);
-  }
-  if (first.traits && first.traits.length) {
-    const pages = await Promise.all(remainingSkips.map(skip => fetchDeeptideTraitCards(skip, DEEPTIDE_LISTINGS_MAX_LIMIT, shopSlug)));
-    for (const page of pages) {
-      if (page.traits && page.traits.length) all.push(...page.traits);
-    }
-  }
+  const all = await fetchAllDeeptideTraitCards(shopSlug);
   const dist = {};
   for (const t of all) {
     if (!t.trait_type || !t.value) continue;
@@ -5261,6 +5258,18 @@ async function maybeRescoreFromSealedFile(kv, collectionKey, loadAsset, now) {
   return true;
 }
 
+// Never scored, a crawl left half-done, or no snapshot at all — the cron
+// worker finishes these on its own rather than waiting for someone to
+// open TRAITS (TEDDY sat at 900 / 2,600; Bear and Cult never started).
+// Routine 6-hourly refreshes stay traffic-driven (KV write budget).
+export async function rarityNeedsWork(kv, collectionKey) {
+  const [stats, crawl, meta] = await Promise.all([
+    kv.get(kvKeyFor(RARITY_STATS_KEY, collectionKey)),
+    kv.get(kvKeyFor(RARITY_CRAWL_KEY, collectionKey)),
+    kv.get(kvKeyFor(RARITY_TRAITS_KEY, collectionKey) + ':meta'),
+  ]);
+  return !stats || !!crawl || (!meta && !RARITY_SNAPSHOT_FILES[collectionKey || 'pigeons']);
+}
 export async function maybeRefreshRarityScores(kv, collectionKey, collectionSizeApprox = PIGEON_COLLECTION_SIZE_APPROX, loadAsset = null) {
   // Sealed XRPL+IPFS snapshot first (see RARITY_SNAPSHOT_FILES); the
   // Deeptide crawl below is only for collections without one yet.
@@ -5392,8 +5401,38 @@ async function writeScoresFromSnapshot(kv, collectionKey, collectionSizeApprox, 
 }
 
 // Pure scoring — every layer, over a stored traits snapshot, no network.
+// One category however it's spelled — TEDDY's NFTs say "HEADWEAR" and
+// "BACKGROUND " where Deeptide's trait cards say "Headwear".
+export function traitCategoryKey(t) { return String(t || '').trim().toLowerCase(); }
+// Counts always come from the items being scored (2026-09-29), exactly as
+// the sealed snapshots already did: Deeptide's trait cards were missing
+// values (C0NSP!RACY's Scrubs) and listed TEDDY's categories twice under
+// both spellings. Category spellings are merged; a category an item
+// lacks is its own "__no_trait__" value; % is over the items themselves.
+function normalizeSnapshot(snapshot) {
+  const canon = {};
+  const items = {};
+  for (const id of Object.keys(snapshot.items)) {
+    const it = snapshot.items[id];
+    const seen = new Set();
+    const attributes = [];
+    for (const a of (it.attributes || [])) {
+      if (!a.trait_type || !a.value || String(a.value).startsWith('__')) continue;
+      const k = traitCategoryKey(a.trait_type);
+      if (!canon[k]) canon[k] = String(a.trait_type).trim();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      attributes.push({ trait_type: canon[k], value: a.value });
+    }
+    items[id] = { ...it, attributes };
+  }
+  const dist = snapshotFromSealedFile({ items: Object.keys(items).map(id => ({ nftId: id, ...items[id] })) }).dist;
+  return { ...snapshot, items, dist };
+}
 function scoreStoredTraits(snapshot, collectionKey, collectionSizeApprox) {
   const raw = {};
+  snapshot = normalizeSnapshot(snapshot);
+  collectionSizeApprox = Object.keys(snapshot.items).length || collectionSizeApprox;
   for (const nftId of Object.keys(snapshot.items)) {
     const it = snapshot.items[nftId];
     // Layer 1 (see scoreAgainstDistribution's own comment).
