@@ -598,7 +598,44 @@ async function groupResponse(context, coll, params) {
   });
 }
 
+// DATABASE pages + trait lists, edge-cached (2026-09-29): each list page
+// did ~40 KV reads (per-NFT xrp.cafe prices) plus the big index reads, 2-4s
+// per page. Same approach as the banner stats: a shared copy is served at
+// once; one older than LIST_FRESH_S is rebuilt in the background; one older
+// than LIST_MAX_STALE_S is rebuilt before answering. Only plain list/trait
+// questions are cached — nothing per-wallet, per-NFT, live or signed-in.
+const LIST_FRESH_S = 60;
+const LIST_MAX_STALE_S = 15 * 60;
+const LIST_CACHE_PARAMS = new Set(['collection', 'limit', 'skip', 'sort', 'filters', 'crossListing', 'marketplace', 'numericOrder', 'numberRange', 'scyllaListed', 'dir', 'highestSale', 'metric', 'gcur', 'traits', '_']);
+function listCacheKey(params) {
+  const keys = Array.from(params.keys());
+  if (!keys.length || keys.some(k => !LIST_CACHE_PARAMS.has(k))) return null;
+  const p = new URLSearchParams();
+  keys.filter(k => k !== '_').sort().forEach(k => p.set(k, params.get(k)));
+  return new Request('https://soitbegins.xyz/__cache/list/v1?' + p.toString());
+}
 export async function onRequestGet(context) {
+  const cache = typeof caches !== 'undefined' ? caches.default : null;
+  const key = cache ? listCacheKey(new URL(context.request.url).searchParams) : null;
+  if (!key) return handleGet(context);
+  const build = async () => {
+    const res = await handleGet(context);
+    if (res.status !== 200) return { res, body: null };
+    const body = await res.text();
+    await cache.put(key, new Response(body, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=86400', 'X-Built-At': String(Date.now()) } })).catch(() => {});
+    return { res: null, body };
+  };
+  const hit = await cache.match(key).catch(() => null);
+  const age = hit ? (Date.now() - (Number(hit.headers.get('X-Built-At')) || 0)) / 1000 : Infinity;
+  if (hit && age <= LIST_MAX_STALE_S) {
+    if (age > LIST_FRESH_S) context.waitUntil(build().catch(() => {}));
+    return new Response(hit.body, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  }
+  const out = await build();
+  return out.res || new Response(out.body, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+}
+
+async function handleGet(context) {
   const { request, env } = context;
   if (!env.coin) return json({ error: 'server_misconfigured' }, 500);
 
