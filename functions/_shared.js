@@ -440,22 +440,64 @@ export const TRADEABLE_COLLECTIONS = {
     deeptideShopSlug: 'teddybg',
     tradeable: true
   },
+  // SEAL + FUZZY NFTs (2026-09-29). Each group is one database with a
+  // switch between its collections (see COLLECTION_META.group in
+  // static.js). 'seal' / 'fuzzy' keep their keys (so $SEAL/$FUZZY swaps,
+  // pools and MAINFRAME cards carry on) and are now the SEAL CTO NFTs and
+  // Fuzzybears. The SEAL CTO issuers are the xrp.cafe/Deeptide
+  // seal-on-xrpl-cto / seal-cto-scrolls shops — NOT Deeptide's older
+  // "seals"/"seal-scrolls" shops (a different issuer).
   seal: {
     key: 'seal',
     label: 'SEAL',
-    nftIssuer: null,
-    nftTaxon: null,
+    nftIssuer: 'rst9Sq8mVxK8b7BbgFs4VmnVtfm7N2qN4j',
+    nftTaxon: 1,
     tokenConfig: { currency: 'SEAL', issuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', configured: true },
-    deeptideShopSlug: null,
+    deeptideShopSlug: 'seal-on-xrpl-cto',
+    group: 'seal',
+    tradeable: true
+  },
+  sealscrolls: {
+    key: 'sealscrolls',
+    label: 'SEAL SCR0LLS',
+    nftIssuer: 'rUSdvkwdGnU8qpfRR2sa1h7JExzBi7fUHr',
+    nftTaxon: 2,
+    tokenConfig: { currency: 'SEAL', issuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', configured: true },
+    deeptideShopSlug: 'seal-cto-scrolls',
+    group: 'seal',
     tradeable: true
   },
   fuzzy: {
     key: 'fuzzy',
     label: 'FUZZY',
-    nftIssuer: null,
-    nftTaxon: null,
+    nftIssuer: 'rw1R8cfHGMySmbj7gJ1HkiCqTY1xhLGYAs',
+    nftTaxon: 1,
     tokenConfig: { currency: 'FUZZY', issuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', configured: true },
-    deeptideShopSlug: null,
+    deeptideShopSlug: 'fuzzybears',
+    group: 'fuzzy',
+    tradeable: true
+  },
+  // sraebyzzuF — the reverse Fuzzybears; no trustline, so XRP only (same
+  // placeholder tokenConfig as K!NG).
+  yzzuf: {
+    key: 'yzzuf',
+    label: 'YZZUF',
+    nftIssuer: 'r3NftTqH2hv3skuWAEDWKvqnxjtuqcFWYR',
+    nftTaxon: 0,
+    tokenConfig: { currency: null, issuer: null, configured: false },
+    xrpOnly: true,
+    deeptideShopSlug: 'sraebyzzuf',
+    group: 'fuzzy',
+    tradeable: true
+  },
+  fuzzybars: {
+    key: 'fuzzybars',
+    label: 'FUZZY BARS',
+    nftIssuer: 'rPK77tBNduykbofMU91uffeRSUvtEkadbx',
+    nftTaxon: 1,
+    tokenConfig: { currency: 'FUZZY', issuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', configured: true },
+    deeptideShopSlug: 'fuzzy-bars',
+    group: 'fuzzy',
     tradeable: true
   },
   // C0NSP!RACY AREA 589 — real NFT collection (Deeptide shop
@@ -1601,7 +1643,9 @@ const COLLECTION_AMM_ACCOUNTS = {
   phnixs: 'rLJMi56CJMUnELQ5XzSrefn2WuFAwKQmDt',
   teddybg: 'rU85ZJgHRniDYMfhq7QTcGZDSsggaXryzg',
   seal: 'rfqbzs3qQ7BEeBecZxUCU4sdaqeUkxrwdD',
+  sealscrolls: 'rfqbzs3qQ7BEeBecZxUCU4sdaqeUkxrwdD',
   fuzzy: 'rBudi9ArACZzLrReUWKFZmHve13LD7CbrM',
+  fuzzybars: 'rBudi9ArACZzLrReUWKFZmHve13LD7CbrM',
   conspiracy: 'rCYbfLe3DVpzan3aPmKoha7EukCP1CqCL'
 };
 
@@ -2263,7 +2307,9 @@ export async function fetchAllAccountLines(account) {
 // trustline") so the client can render "COULDN'T LOAD" instead of a
 // false 0 for a wallet that actually holds a real balance.
 export function matchAccountLinesToCollections(lines) {
-  return Object.values(TRADEABLE_COLLECTIONS).filter(hasCollectionToken).map(cfg => {
+  // Sister collections sharing their group's token (SEAL SCR0LLS, FUZZY
+  // BARS) would list the same coin twice — one row per token.
+  return Object.values(TRADEABLE_COLLECTIONS).filter(cfg => hasCollectionToken(cfg) && !(cfg.group && cfg.group !== cfg.key)).map(cfg => {
     if (lines === null) return { key: cfg.key, label: cfg.label, hasTrustline: null, balance: null };
     const wantCurrency = encodeCurrencyCode(cfg.tokenConfig.currency);
     const line = lines.find(l => l.currency === wantCurrency && l.account === cfg.tokenConfig.issuer);
@@ -5748,7 +5794,7 @@ const FLOOR_INDEX_CONCURRENT_GUARD_SECONDS = 10;
 // read straight off the ledger. K!NG added 2026-09-27 (XRP-only, so its
 // whole market is off-site listings). Pigeons keeps its original keys;
 // every other collection's are suffixed ':<key>' (kvKeyFor).
-export const FLOOR_INDEX_COLLECTIONS = ['pigeons', 'king'];
+export const FLOOR_INDEX_COLLECTIONS = ['pigeons', 'king', 'seal', 'sealscrolls', 'fuzzy', 'yzzuf', 'fuzzybars'];
 export function hasFloorIndex(collectionKey) {
   return FLOOR_INDEX_COLLECTIONS.indexOf(collectionKey || 'pigeons') !== -1;
 }

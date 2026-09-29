@@ -275,6 +275,20 @@ const SWAP_HTML = `<!DOCTYPE html>
     --collection-accent-glow:rgba(122,66,26,0.4);
     --collection-accent-2-rgb:94,50,20;
   }
+  body.collection-sealscrolls{
+    --collection-accent:#2d8ca8;
+    --collection-accent-rgb:45,140,168;
+    --collection-accent-dim:rgba(45,140,168,0.4);
+    --collection-accent-glow:rgba(45,140,168,0.4);
+    --collection-accent-2-rgb:34,108,130;
+  }
+  body.collection-yzzuf, body.collection-fuzzybars{
+    --collection-accent:#7a421a;
+    --collection-accent-rgb:122,66,26;
+    --collection-accent-dim:rgba(122,66,26,0.4);
+    --collection-accent-glow:rgba(122,66,26,0.4);
+    --collection-accent-2-rgb:94,50,20;
+  }
   body.collection-conspiracy{
     --collection-accent:#f000e4;
     --collection-accent-rgb:240,0,228;
@@ -350,7 +364,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      own real numbering) — gated on collection-non-pigeons (every
      collection except $PIGEONS itself), not collection-browse-only
      (tradeable vs not), which is a different axis entirely. */
-  body.collection-non-pigeons .edition-toggle,
+  body.collection-non-pigeons .edition-toggle:not(.coll-group-toggle),
+  .coll-group-toggle[style*="none"],
   body.collection-non-pigeons .search-row{ display:none; }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -3914,6 +3929,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      shape as .wallet-box-sub. Kept close to the main label's own size
      (reported live: "make this text larger" — 0.8em of the old 15px read
      as an afterthought) rather than scaling down as sharply as before. */
+  #collGroupSelect.coll-group-toggle{ display:flex; width:min(100%, 640px); margin:0 auto 0.9rem; }
+  #collGroupSelect .edition-btn{ flex:1 1 0; width:auto; }
   .edition-btn-range{ display:inline-block; margin-top:0.25em; font-size:0.85em; opacity:0.8; }
   .edition-btn:last-child{ border-right:none; }
   .edition-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
@@ -13237,33 +13254,38 @@ const SWAP_HTML = `<!DOCTYPE html>
               <button type="button" class="mainframe-card-buy" data-collection="teddybg">SWAP $TEDDY</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-seal" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
+          <!-- SEAL + FUZZY — live DATABASES (2026-09-29), each with its own
+               collection switch inside (SEALS / SCR0LLS, FUZZYBEARS / YZZUF /
+               FUZZY BARS). -->
+          <div class="mainframe-card mainframe-card-seal" data-collection="seal" role="button" tabindex="0" style="--card-accent:45,140,168; --card-art:url('/assets/mainframe/seal.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexSeal" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
-              <div class="mainframe-card-lock-badge">&#128274;</div>
-              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
-              <div class="mainframe-card-label">$SEAL</div>
-              <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
+              <a class="mainframe-card-label-link" href="/seal">
+                <div class="mainframe-card-label">$SEAL</div>
+                <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
+                <div class="mainframe-card-stats" id="mainframeStatsSeal"></div>
+              </a>
               <button type="button" class="mainframe-card-buy" data-collection="seal">SWAP $SEAL</button>
             </div>
           </div>
-          <div class="mainframe-card mainframe-card-soon mainframe-card-fuzzy" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
+          <div class="mainframe-card mainframe-card-fuzzy" data-collection="fuzzy" role="button" tabindex="0" style="--card-accent:122,66,26; --card-art:url('/assets/mainframe/fuzzy.jpeg?v=2');">
             <div class="mainframe-card-art">
               <a class="mainframe-card-dex-link" id="mainframeDexFuzzy" href="#" target="_blank" rel="noopener" title="V!EW 0N DEXSCREENER" style="display:none;">
                 <img class="mainframe-card-dex-icon" src="https://dexscreener.com/favicon.ico" alt="">
                 <span>V!EW CHART</span>
               </a>
-              <div class="mainframe-card-lock-badge">&#128274;</div>
-              <div class="mainframe-card-soon-banner">C0M!NG S00N</div>
             </div>
             <div class="mainframe-card-body">
-              <div class="mainframe-card-label">$FUZZY</div>
-              <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
+              <a class="mainframe-card-label-link" href="/fuzzy">
+                <div class="mainframe-card-label">$FUZZY</div>
+                <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
+                <div class="mainframe-card-stats" id="mainframeStatsFuzzy"></div>
+              </a>
               <button type="button" class="mainframe-card-buy" data-collection="fuzzy">SWAP $FUZZY</button>
             </div>
           </div>
@@ -13471,6 +13493,9 @@ const SWAP_HTML = `<!DOCTYPE html>
             <span class="db-tools-toggle-label">&#128269; SEARCH &amp; F!LTERS</span>
             <span class="db-tools-toggle-arrow" aria-hidden="true">&#9662;</span>
           </button>
+          <!-- SEAL / FUZZY collection switch (2026-09-29) — same look as
+               the Pigeons editions, one button per collection, own row. -->
+          <div class="edition-toggle coll-group-toggle" id="collGroupSelect" style="display:none;"></div>
           <!-- One line: SEARCH (left), SORT BY (middle), VIEW (right). -->
           <div class="results-header-row">
             <div class="search-row">
@@ -15127,8 +15152,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248', thumb: '/assets/mainframe/pigeons-coin.webp' },
     phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: true, accent: '#ff5a1f', accentRgb: '255,90,31', thumb: '/assets/mainframe/phnix.jpeg?v=2' },
     teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: true, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
-    seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: false, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2' },
-    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZY', tradeable: false, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2' },
+    // SEAL (CTO) + FUZZY NFTs (2026-09-29): group = one database with a
+    // switch between its collections (collGroupSelect); groupLabel is the
+    // switch button. See TRADEABLE_COLLECTIONS in _shared.js.
+    seal: { label: 'SEAL', itemLabel: 'SEAL', tradeable: true, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', nftIssuer: 'rst9Sq8mVxK8b7BbgFs4VmnVtfm7N2qN4j', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2', group: 'seal', groupLabel: 'SEALS' },
+    sealscrolls: { label: 'SEAL SCR0LLS', itemLabel: 'SCR0LL', tradeable: true, tokenLabel: '$SEAL', tokenIssuer: 'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ', nftIssuer: 'rUSdvkwdGnU8qpfRR2sa1h7JExzBi7fUHr', hasAmm: true, accent: '#2d8ca8', accentRgb: '45,140,168', thumb: '/assets/mainframe/seal.jpeg?v=2', group: 'seal', groupLabel: 'SCR0LLS' },
+    fuzzy: { label: 'FUZZY', itemLabel: 'FUZZYBEAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', nftIssuer: 'rw1R8cfHGMySmbj7gJ1HkiCqTY1xhLGYAs', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'FUZZYBEARS' },
+    yzzuf: { label: 'YZZUF', itemLabel: 'RAEBYZZUF', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'r3NftTqH2hv3skuWAEDWKvqnxjtuqcFWYR', hasAmm: false, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'YZZUF' },
+    fuzzybars: { label: 'FUZZY BARS', itemLabel: 'FUZZY BAR', tradeable: true, tokenLabel: '$FUZZY', tokenIssuer: 'rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62', nftIssuer: 'rPK77tBNduykbofMU91uffeRSUvtEkadbx', hasAmm: true, accent: '#7a421a', accentRgb: '122,66,26', thumb: '/assets/mainframe/fuzzy.jpeg?v=2', group: 'fuzzy', groupLabel: 'FUZZY BARS' },
     conspiracy: { label: 'C0NSP!RACY AREA 589', itemLabel: 'C0NSP!RACY', tradeable: true, tokenLabel: '$CNS', tokenIssuer: 'r4tQnePn6NDdfcCYEbKhPu97jUQsyTSWBB', hasAmm: true, accent: '#f000e4', accentRgb: '240,0,228', thumb: '/assets/mainframe/conspiracy.jpeg?v=2' },
     // WH!TE RABB!T — Deeptide's second real C0NSP!RACY-brand shop, shares
     // C0NSP!RACY AREA 589's own $CNS token/accent deliberately (one shared
@@ -15203,7 +15234,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   var OFFERS_TRADEABLE_COLLECTIONS = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].tradeable; });
 
   var el = {};
-  ['searchInput','searchBtn','editionSelect','dbViewSelect','dbViewBtn','dbViewMenu','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
+  ['searchInput','searchBtn','editionSelect','collGroupSelect','dbViewSelect','dbViewBtn','dbViewMenu','resetDbBtn','sortDropWrap','sortDropLabel','sortRows','sortFlyout','sortFlyoutVals','sortScrollPrevBtn','sortScrollNextBtn',
    'dbControlsSticky','flyoutPopupBackdrop','sortFlyoutClose','traitsFlyoutClose','traitsFlyoutEyebrow','bottomControlsBar','bottomSortBtn','bottomTraitsBtn','backToTopBtn','bottomSatchelBtn','bottomSatchelCount','bottomMultiListBtn','bottomMultiListCount','bottomSweepBtn',
    'dbSelectWrap','dbSelectLabel','dbSelectArrow','dbSelectFlyout','copyIssuerBtn','copyIssuerLabel','setTrustlineLink','pigeonsLoginBtn','ciIssuerAddr','onboardLink','trustlineTitleLabel','salesCurrencyPigeonsBtn','tabDbWord',
    'pigeonsBarLoggedOut','pigeonsBarLoggedIn','pigeonsLoggedInTrustline','showMyPigeonsBtn','showCollectionWatchlistBtn','pigeonsBarDexBtn','pigeonsBarCoinOutBtn',
@@ -15804,6 +15835,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         document.body.classList.add('collection-' + state.collection);
         document.body.classList.toggle('collection-browse-only', !presetMeta.tradeable);
         document.body.classList.add('collection-non-pigeons');
+        renderCollGroupSelect();
         // state's own literal defaults (sort: 'SCYLLA_PRICE_ASC', scyllaListedOnly:
         // true) are P!GE0NS-specific — a P!GE0NS-denominated ONLY SH0W
         // L!STED filter against a collection with zero real Σκύλλα $CNS/
@@ -20063,7 +20095,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the same openMyNftsCollectionDatabase a manual click on the P!GE0NS
     // card in that picker already triggers — instead of leaving you on the
     // picker to click it yourself.
-    openMyNftsCollectionDatabase('pigeons');
+    // Whichever collection you're browsing (2026-09-29 — was always P!GE0NS).
+    openMyNftsCollectionDatabase(COLLECTION_META[state.collection] && COLLECTION_META[state.collection].tradeable ? state.collection : 'pigeons');
     scrollActiveTabPanelIntoView('mypigeons');
   }
   el.showMyPigeonsBtn.addEventListener('click', openMyNftsPage);
@@ -23836,6 +23869,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     el.pigeonsCalcPigeonsUnit.textContent = meta.tokenLabel;
     el.salesCurrencyPigeonsBtn.textContent = meta.tokenLabel;
     el.statScyllaListedLabel.textContent = meta.tokenLabel + ' FL00R';
+    var myBtnFull = el.showMyPigeonsBtn.querySelector('.lbl-full');
+    if (myBtnFull) myBtnFull.textContent = 'V!EW MY ' + meta.label;
     updateTrustlineThumb(collectionKey);
     // AMM-backed BUY-with-XRP + EXCHANGE CALCULAT0R only exist for
     // collections with real pool/DEX data (see COLLECTION_META's own
@@ -23887,13 +23922,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // once PHN!X flipped to tradeable: meta.tradeable became true, so this
     // class never got added and the trustline banner stayed purple instead
     // of PHN!X's own real orange/red (#ff5a1f) — confirmed live.
-    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki', 'collection-king');
+    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki', 'collection-king', 'collection-sealscrolls', 'collection-yzzuf', 'collection-fuzzybars');
     if (newCollection !== 'pigeons') document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
     // ED!T!ON/# 0R WALLET search (see their own CSS comment) are
     // $PIGEONS-only infrastructure, unrelated to whether a collection is
     // tradeable — every OTHER collection hides both, PHN!X included.
     document.body.classList.toggle('collection-non-pigeons', newCollection !== 'pigeons');
+    renderCollGroupSelect();
     // FL00R (real Scylla listings sorted by real price) only makes sense
     // as the DEFAULT landing view for P!GE0NS specifically — it has an
     // established market with real listings to actually show. A newly
@@ -24271,8 +24307,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // nothing useful against a null slug) but still get their real
     // marketcap/liquidity below.
     { collection: 'teddybg', target: 'mainframeStatsTeddybg', dexTarget: 'mainframeDexTeddybg', hasShopSlug: true },
-    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', hasShopSlug: false },
-    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', hasShopSlug: false },
+    { collection: 'seal', target: 'mainframeStatsSeal', dexTarget: 'mainframeDexSeal', hasShopSlug: true },
+    { collection: 'fuzzy', target: 'mainframeStatsFuzzy', dexTarget: 'mainframeDexFuzzy', hasShopSlug: true },
     { collection: 'conspiracy', target: 'mainframeStatsConspiracy', dexTarget: 'mainframeDexConspiracy', hasShopSlug: true },
     // BEAR/CULT have a real confirmed Deeptide shop slug (see COLLECTIONS
     // in pigeons.js), same reasoning as TEDDY above — real holders.
@@ -26332,6 +26368,25 @@ const SWAP_HTML = `<!DOCTYPE html>
       // closed again in the same click, same story as above).
       goBackFromDetail();
     }
+  });
+  // SEAL / FUZZY: one button per collection in the group; tapping one
+  // switches the database to it.
+  function renderCollGroupSelect(){
+    var meta = COLLECTION_META[state.collection] || {};
+    if (!meta.group){ el.collGroupSelect.style.display = 'none'; el.collGroupSelect.innerHTML = ''; return; }
+    var keys = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].group === meta.group; });
+    el.collGroupSelect.innerHTML = keys.map(function(k){
+      return '<button type="button" class="edition-btn' + (k === state.collection ? ' active' : '') + '" data-coll="' + k + '">' + escapeHtml(COLLECTION_META[k].groupLabel || COLLECTION_META[k].label) + '</button>';
+    }).join('');
+    el.collGroupSelect.style.display = '';
+  }
+  el.collGroupSelect.addEventListener('click', function(e){
+    var btn = e.target.closest('.edition-btn[data-coll]');
+    if (!btn) return;
+    var key = btn.getAttribute('data-coll');
+    if (key === state.collection) return;
+    switchCollection(key);
+    try { history.replaceState({ skyllaNav: true }, '', '/' + key); } catch (err){}
   });
   el.editionSelect.addEventListener('click', function(e){
     var btn = e.target.closest('.edition-btn');

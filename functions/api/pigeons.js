@@ -78,8 +78,13 @@ const COLLECTIONS = {
   // shop slug for any of these yet, so shopSlug/vanitySlug/xrpCafeUrl/
   // sizeApprox stay null — nothing that needs them (browse/traits/stats)
   // is ever called for these three, only the BUY-with-XRP swap endpoints.
-  seal: { key: 'seal', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
-  fuzzy: { key: 'fuzzy', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: null, tradeable: true },
+  // SEAL (CTO) + FUZZY NFTs, 2026-09-29 — real Deeptide shops + xrp.cafe
+  // collections (sizes = xrp.cafe nft_count). See TRADEABLE_COLLECTIONS.
+  seal: { key: 'seal', shopSlug: 'seal-on-xrpl-cto', vanitySlug: 'seal-on-xrpl-cto', xrpCafeUrl: 'https://xrp.cafe/collection/seal-on-xrpl-cto', sizeApprox: 906, tradeable: true },
+  sealscrolls: { key: 'sealscrolls', shopSlug: 'seal-cto-scrolls', vanitySlug: 'seal-cto-scrolls', xrpCafeUrl: 'https://xrp.cafe/collection/seal-cto-scrolls', sizeApprox: 906, tradeable: true },
+  fuzzy: { key: 'fuzzy', shopSlug: 'fuzzybears', vanitySlug: 'fuzzybears', xrpCafeUrl: 'https://xrp.cafe/collection/fuzzybears', sizeApprox: 3210, tradeable: true },
+  yzzuf: { key: 'yzzuf', shopSlug: 'sraebyzzuf', vanitySlug: 'sraebyzzuf', xrpCafeUrl: 'https://xrp.cafe/collection/sraebyzzuf', sizeApprox: 1220, tradeable: true },
+  fuzzybars: { key: 'fuzzybars', shopSlug: 'fuzzy-bars', vanitySlug: 'fuzzy-bars', xrpCafeUrl: 'https://xrp.cafe/collection/fuzzy-bars', sizeApprox: 3688, tradeable: true },
   // C0NSP!RACY AREA 589/WH!TE RABB!T — both real, live Deeptide shops now
   // (see TRADEABLE_COLLECTIONS in _shared.js for the matching NFT issuer/
   // taxon/token config), confirmed real shopSlug + xrp.cafe collection URL
