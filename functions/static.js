@@ -17135,13 +17135,13 @@ const SWAP_HTML = `<!DOCTYPE html>
   // percent/count, so those are filled in from state.traitCategories
   // first (they drive both the % line and the rarest-first order).
   function boxedTraitsHtml(p){
-    var attrs = (p.attributes || []).map(function(a){
+    var attrs = traitAttrsForView(p.attributes, p.collectionKey || state.collection).map(function(a){
       if (a.percent !== null && a.percent !== undefined) return a;
       var catValues = state.traitCategories && state.traitCategories[a.trait_type];
       var match = catValues ? catValues.filter(function(v){ return v.value === a.value; })[0] : null;
       return match ? { trait_type: a.trait_type, value: a.value, percent: match.percent, count: match.count } : a;
     });
-    var split = detailTraitCells(attrs);
+    var split = detailTraitCells(attrs, p.collectionKey || state.collection);
     return {
       top: '<div class="trait-grid card-detail-traits bc-traits">' + split.rest.map(function(c){ return traitCellHtml(c, 'card-trait-link'); }).join('') + '</div>',
       bg: '<div class="card-detail-traits bc-bg">' + (split.bg ? traitCellHtml(split.bg, 'card-trait-link') : '') + '</div>'
@@ -18058,8 +18058,10 @@ const SWAP_HTML = `<!DOCTYPE html>
   // sampled) — no more lazy per-category round trips needed. ----
   function ensureTraitsLoaded(){
     if (state.traitCategories) return Promise.resolve(state.traitCategories);
+    var forKey = state.collection;
     return api({ traits: 1 }).then(function(data){
       state.traitCategories = data.categories || {};
+      state.traitCategoriesFor = forKey;
       state.traitExamples = data.examples || {};
       state.traitNoTraitCounts = data.noTraitCounts || {};
       state.collectionSizeApprox = data.collectionSizeApprox || state.collectionSizeApprox;
@@ -18925,6 +18927,19 @@ const SWAP_HTML = `<!DOCTYPE html>
   // links keep the real published text.
   var traitsFlipped = (function(){ try { return localStorage.getItem('skyllaFlipTraits') === '1'; } catch (e){ return false; } })();
   function flipsTraits(key){ var m = COLLECTION_META[key || state.collection]; return !!(m && m.reversedTraits); }
+  // Whose trait list is loaded — in an ALL view (and a detail opened from
+  // one) that's the group's merged list, which has yzzuf's traits already
+  // read forwards.
+  function traitsViewKey(){ return (state.traitCategories && state.traitCategoriesFor) || state.collection; }
+  // A yzzuf bear shown against a forwards trait list (FUZZY ALL): read its
+  // traits forwards too, or every category shows twice ("seyE" plus a
+  // NO "Eyes" box).
+  function traitAttrsForView(attrs, itemKey){
+    attrs = attrs || [];
+    if (!flipsTraits(itemKey) || flipsTraits(traitsViewKey())) return attrs;
+    var r = function(t){ t = String(t === null || t === undefined ? '' : t); return t.indexOf('__') === 0 ? t : t.split('').reverse().join(''); };
+    return attrs.map(function(a){ var o = {}; for (var k in a) o[k] = a[k]; o.trait_type = r(a.trait_type); o.value = r(a.value); return o; });
+  }
   function tDisp(t, key){
     t = String(t === null || t === undefined ? '' : t);
     return traitsFlipped && flipsTraits(key) ? t.split('').reverse().join('') : t;
@@ -26584,8 +26599,8 @@ const SWAP_HTML = `<!DOCTYPE html>
   // came out 56 for Eyewear when only the 7 Ushankas really have none.
   // Every category's cell data for one Pigeon: "rest" rarest first, and
   // BACKGROUND on its own (it always goes last / along the bottom).
-  function detailTraitCells(attrs){
-    attrs = attrs || [];
+  function detailTraitCells(attrs, itemKey){
+    attrs = traitAttrsForView(attrs, itemKey || state.collection);
     var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
     attrs.forEach(function(a){ if (cats.indexOf(a.trait_type) === -1) cats.push(a.trait_type); });
     cats.sort(function(a, b){ return a.toLowerCase().localeCompare(b.toLowerCase()); });
@@ -26670,7 +26685,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       textOpen +
       // Value first, category second — "G0LDEN FEATHERS" reads as one
       // phrase describing the trait, not a label/value form field.
-      '<div class="tc-value">' + escapeHtml(tDisp(cellDisplayValue)) + '</div><div class="tc-label">' + escapeHtml(tDisp(a.trait_type)) + '</div>' + sub +
+      '<div class="tc-value">' + escapeHtml(tDisp(cellDisplayValue, traitsViewKey())) + '</div><div class="tc-label">' + escapeHtml(tDisp(a.trait_type, traitsViewKey())) + '</div>' + sub +
       textClose +
     '</div>';
   }
@@ -26683,6 +26698,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     var value = cell.getAttribute('data-value');
     if (!trait || !value) return;
     ensureTraitsLoaded().then(function(){
+      // Opened from an ALL view: the cell's trait is from ALL's list, so
+      // filter back in ALL (same as BACK).
+      if (state.groupAllReturn){ state.collection = state.groupAllReturn; state.groupAllReturn = null; syncTraitFlipButtons(); }
       state.traitFilters = [{ id: state.nextTraitRowId++, category: trait, value: value }];
       renderTraitRows();
       el.searchInput.value = '';
