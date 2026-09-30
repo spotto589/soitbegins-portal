@@ -1,4 +1,5 @@
 import { BOARD_COOKIE_NAME, getCookie, verifyToken, TRADEABLE_COLLECTIONS } from './_shared.js';
+import { LEGAL_LINKS_HTML } from './_legal.js';
 
 // Σκύλλα://HELP — the beginners guide (2026-09-28), reached from the
 // trustline banner's "NEW HERE? START HERE". Written so a 12-year-old can
@@ -204,6 +205,9 @@ function renderHelp(wallet) {
   .end{ margin-top:3.6rem; text-align:center; border:1px solid rgba(var(--green),0.7); border-radius:18px; padding:1.8rem 1rem; background:#000; box-shadow:0 0 18px rgba(var(--green),0.2); }
   .end h2{ margin-bottom:0.4rem; }
   .end p{ color:var(--dim); margin-bottom:1rem; }
+  .legal-links{ display:flex; justify-content:center; gap:1.4rem; margin-top:1rem; font-size:12px; letter-spacing:0.14em; }
+  .legal-links a{ color:var(--faint); text-decoration:none; }
+  .legal-links a:hover{ color:#fff; text-decoration:underline; }
   .fine{ margin-top:1.6rem; font-size:12.5px; color:var(--faint); text-align:center; }
 
   @media (max-width:640px){
@@ -539,6 +543,7 @@ function renderHelp(wallet) {
     <a class="btn btn-go" href="/static">ENTER Σκύλλα →</a>
   </div>
   <p class="fine">Nobody from Σκύλλα will ever message you first or ask for your secret numbers.</p>
+  <nav class="legal-links" aria-label="Site information">${LEGAL_LINKS_HTML}</nav>
 </main>
 
 <script>

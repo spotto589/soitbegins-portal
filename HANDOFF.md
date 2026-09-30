@@ -40,20 +40,27 @@ There's also a second real service in this repo: **`xaman-proxy/`**
 (see its own section below). Both untouched this session except
 `cron-worker/`'s own initial build.
 
-## ⚠️ Cloudflare KV free-tier write quota — still a live constraint
+## Cloudflare KV write quota — NOT a 1,000/day limit (corrected 2026-09-30)
 
-The KV namespace backing `env.coin` is on Cloudflare's free tier: 1,000
-writes/day, account-wide. `safeKvPut` in `_shared.js` swallows quota
-failures silently — every write (listings, offers, sales log, signals)
-fails silently once exhausted, with nothing in the logs beyond a generic
-catch. If "my real on-ledger action isn't showing up" and the XRPL data
-checks out, check the quota before assuming a code bug (`wrangler kv key
-put ... --remote` failing the same way confirms it). This was discussed at
-length with the user this session (see "D1 migration" conversation) but
-**nothing was changed** — the whole listings/sales/offers KV architecture
-is still exactly as fragile as before. If a future session picks up the D1
-migration, start with `listings` (the one with the proven concurrent-write
-data-loss bug, already documented below in gotcha 5a).
+Earlier versions of this note said the KV namespace behind `env.coin` was
+on the free tier's 1,000 writes/day. **That's wrong** — the user is on the
+$5/month Workers Paid plan (1M KV writes/month included, then pay-as-you-go),
+so don't treat write volume as a hard constraint or design around it.
+`safeKvPut` in `_shared.js` still swallows write failures silently, so if a
+real on-ledger action isn't showing up and the XRPL data checks out, check
+the logs/dashboard rather than assuming. The concurrent-write data-loss bug
+in `listings` (gotcha 5a below) is a separate, real issue either way.
+
+## Xaman push-notification review (2026-09-30)
+
+Xaman asked for Support / Privacy Policy / Terms of Service links, a working
+X link in the Developer Console, and no front-page wording that could read
+as "enter your secret key". Done: `/support`, `/privacy`, `/terms`
+(`functions/_legal.js` + three route files), linked from `/`, `/board` and
+`/help`; the front page button now says C0NNECT W!TH XAMAN with a
+never-share-your-seed note. The X account doesn't exist yet — set
+`SUPPORT_X_HANDLE` in `_legal.js` once it does (empty = no X link shown),
+and use the same handle in the Xaman Developer Console.
 
 ## ⚠️ Messaging feature added — needs a dashboard binding before it works in prod
 

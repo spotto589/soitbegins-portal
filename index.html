@@ -460,11 +460,38 @@
   body.page-transition .illusion-flag,
   body.page-transition .enter-btn,
   body.page-transition .access-status,
-  body.page-transition .board-btn{
+  body.page-transition .board-btn,
+  body.page-transition .seed-note,
+  body.page-transition .legal-links{
     opacity:0;
     pointer-events:none;
     transition:opacity 0.35s ease;
   }
+
+  /* Never-share-your-seed note under the Xaman button + Support/Privacy/
+     Terms links (both asked for by Xaman's push-notification review). */
+  .seed-note{
+    margin:0.9rem auto 0;
+    max-width:34em;
+    font-size:12px;
+    letter-spacing:0.06em;
+    line-height:1.5;
+    color:#9a9a9a;
+  }
+  .legal-links{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:20;
+    display:flex;
+    justify-content:center;
+    gap:1.4rem;
+    padding:0.7rem 16px calc(0.7rem + env(safe-area-inset-bottom));
+    font-size:12px;
+    letter-spacing:0.14em;
+  }
+  .legal-links a{ color:#9a9a9a; text-decoration:none; }
+  .legal-links a:hover, .legal-links a:focus-visible{ color:var(--cyan); text-decoration:underline; }
+  body.blackout .legal-links{ opacity:0; }
 
   @media (prefers-reduced-motion: reduce){
     .scanlines, .glitch-word, .glitch-word::before, .glitch-word::after, .sub .cursor, .eyebrow .cursor, .eyebrow.err-flash, .ebs-overlay.hit{
@@ -487,10 +514,13 @@
     <h1 class="msg">STΔTUS: <span class="glitch-word" data-text="GL!TCH!NG">GL!TCH!NG</span></h1>
     <div class="sub">🚨 S!RΞN_0NLINE 🚨 :: SYS//UNSTΔBLΞ<span class="cursor"></span></div>
     <div class="illusion-flag">!LLUS!0N_LΔYER = ΞNΔBLΞD :: S!GNΔL_ASSESSMΞNT = 0FFL!NE</div>
-    <button class="enter-btn" id="enterBtn">ENTER KEY TO BEGIN ASSESSMENT</button>
+    <button class="enter-btn" id="enterBtn">C0NNECT W!TH XAMAN</button>
+    <div class="seed-note">Sign-in happens in the Xaman app. Σκύλλα will never ask for your secret key, family seed or recovery words.</div>
     <div class="access-status" id="accessStatus"></div>
     <a class="board-btn" href="/board"><span class="bb-label">S!GNAL_NODE:://P!GΞON_RELAY</span><span class="bb-binary" aria-hidden="true">01010011 01001001 01000111 01001110 01000001 01001100</span></a>
   </div>
+
+  <nav class="legal-links" aria-label="Site information"><a href="/support">SUPP0RT</a><a href="/privacy">PR!VACY</a><a href="/terms">TERMS</a></nav>
 
   <div class="shutdown-msg" id="shutdownMsg">CONNECTION TERMINATED</div>
 
@@ -649,7 +679,7 @@
     const lines = [
       'ATTEMPT!NG TO ACCESS Σκύλλα...',
       'ESTABL!SH!NG S!GNAL...',
-      'SCANN!NG F0R KEYS...'
+      'CHECK!NG WALLET F0R STAT!C NFT...'
     ];
     return lines.reduce((chain, line, i) => {
       return chain.then(() => new Promise(resolve => {
@@ -706,10 +736,10 @@
           await runAccessSequence();
           const result = await verifyAccess(jwt);
           if(result.granted){
-            setStatus('STAT!C KEY DETECTED :: ΔCCESS GRΔNTED — ENTERING...', 'granted');
+            setStatus('STAT!C NFT F0UND :: ΔCCESS GRΔNTED — ENTERING...', 'granted');
             setTimeout(()=>{ window.location.href = '/redeem'; }, 1200);
           } else {
-            setStatus('STAT!C KEY DEN!ED — N0 S!GNATURE F0UND', 'denied');
+            setStatus('N0 STAT!C NFT !N TH!S WALLET', 'denied');
             enterBtn.disabled = false;
           }
         } catch(e){
@@ -730,7 +760,7 @@
   enterBtn.addEventListener('click', ()=>{
     if(!ENTRY_ENABLED) return;
     enterBtn.disabled = true;
-    setStatus('ATTEMPT!NG TO ACCESS Σκύλλα :: AUTHENTICAT!NG KΣY...', 'checking');
+    setStatus('OPEN!NG XAMAN S!GN-!N...', 'checking');
     getAuth().authorize();
   });
 
