@@ -40,27 +40,19 @@ There's also a second real service in this repo: **`xaman-proxy/`**
 (see its own section below). Both untouched this session except
 `cron-worker/`'s own initial build.
 
-## ⚠️ Cloudflare KV free-tier write quota — still a live constraint
+## Note: KV writes fail silently
 
-The KV namespace backing `env.coin` is on Cloudflare's free tier: 1,000
-writes/day, account-wide. `safeKvPut` in `_shared.js` swallows quota
-failures silently — every write (listings, offers, sales log, signals)
-fails silently once exhausted, with nothing in the logs beyond a generic
-catch. If "my real on-ledger action isn't showing up" and the XRPL data
-checks out, check the quota before assuming a code bug (`wrangler kv key
-put ... --remote` failing the same way confirms it). This was discussed at
-length with the user this session (see "D1 migration" conversation) but
-**nothing was changed** — the whole listings/sales/offers KV architecture
-is still exactly as fragile as before. If a future session picks up the D1
-migration, start with `listings` (the one with the proven concurrent-write
-data-loss bug, already documented below in gotcha 5a).
+`safeKvPut` in `_shared.js` swallows write failures silently — if "my real
+on-ledger action isn't showing up" and the XRPL data checks out, look at
+the KV write path before assuming the ledger read is wrong. The `listings`
+key also has a known concurrent-write data-loss risk (two writers doing
+read-modify-write on the same key); moving it to D1 would fix that.
 
 ## ⚠️ Messaging feature added — needs a dashboard binding before it works in prod
 
 Wallet-to-wallet messaging (`/messages`, `functions/api/messages-*.js`) was
-added this session, deliberately on **D1** instead of KV — the free tier's
-1,000 writes/day KV cap (see above) would've made a chat feature the first
-thing to break under real use. A new D1 database (`soitbegins-messages`,
+added this session, deliberately on **D1** instead of KV (a chat feature is a
+relational, write-heavy workload that suits D1 better). A new D1 database (`soitbegins-messages`,
 id `88b39184-015a-40dd-9841-14928d800bf4`) was created and the schema
 (`d1/schema.sql`, one `messages` table) applied to it via `wrangler d1
 execute --remote`.
@@ -449,8 +441,6 @@ above); the items below are new or newly-reinforced.
    arithmetic before adding any new per-item enrichment call.
 5. KV cache keys are versioned — bump the suffix if a cached shape
    changes.
-5a. **Cloudflare's free-tier KV cap is 1,000 writes/day, account-wide** —
-    still true, still not fixed (see its own section above).
 6. `NEVER trust a txjson the client sends back` — every `*-prepare.js`/
    `*-payload.js` endpoint re-derives it server-side.
 7. `swap-offers-received.js`/`swap-listing-owned.js` blind-scan bounded
@@ -503,7 +493,7 @@ this to verify UI changes live before pushing — this session verified
 essentially everything through it (real Deeptide API calls for PHN!X/
 TEDDY, real DOM measurements for every CSS fix). Note: this local KV
 binding is the SAME production namespace — writes made while testing
-locally are real and count against the same daily quota.
+locally are real production writes.
 
 `xaman-proxy` deploys separately on **Render** — untouched this session.
 
