@@ -39,6 +39,21 @@ function xrplToHeaders(apiKey) {
   return apiKey ? Object.assign({ 'X-Api-Key': apiKey }, XRPLTO_HEADERS) : XRPLTO_HEADERS;
 }
 
+// The key's secret name: XRPLTO_API_KEY, or 'xrpl.to key' as it was first
+// saved (the dashboard form won't save a rename while the Σκύλλα binding
+// sits on the same page — its Greek name fails the form's newer name
+// check, and that binding must keep its name, the code reads env.Σκύλλα).
+// Last resort: any string secret shaped like an xrpl.to key.
+const XRPLTO_KEY_NAMES = ['XRPLTO_API_KEY', 'xrpl.to key', 'XRPL_TO_API_KEY', 'XRPLTO_KEY'];
+function xrplToKey(env) {
+  for (const n of XRPLTO_KEY_NAMES) if (typeof env[n] === 'string' && env[n].trim()) return { name: n, key: env[n].trim() };
+  for (const n of Object.keys(env || {})) {
+    const v = env[n];
+    if (typeof v === 'string' && /^xrpl_[A-Za-z0-9_-]{16,}$/.test(v.trim())) return { name: n, key: v.trim() };
+  }
+  return { name: null, key: null };
+}
+
 async function fetchXrplTo(path, apiKey, retried) {
   try {
     const res = await fetch(XRPLTO + path, { headers: xrplToHeaders(apiKey), signal: AbortSignal.timeout(8000) });
@@ -123,7 +138,7 @@ async function buildOverview(env) {
   const popular = {};
   try { ((JSON.parse(popularRaw || 'null') || {}).coins || []).forEach(c => { if (c.md5) popular[c.md5] = true; }); } catch (e) {}
 
-  const key = env.XRPLTO_API_KEY || null;
+  const key = xrplToKey(env).key;
   const memeList = sortBy => fetchXrplTo('/tokens?start=0&limit=10&sortBy=' + sortBy + '&sortType=desc&tag=memes', key);
   const nftList = range => fetchXrplTo('/nft/collections?limit=10&sort=' + NFT_RANGES[range].sort + '&order=desc&skip_metrics=true' + (NFT_RANGES[range].lightweight ? '&lightweight=true' : ''), key);
   const [nftGlobal, memeVol24, memeVol7, memeMcap, n24, n7, n30, nAll] = await Promise.all([
@@ -299,9 +314,11 @@ export async function onRequestGet(context) {
   // Upstream reachability check: status + first bytes of one xrpl.to call.
   if (params.get('probe') === '1') {
     try {
-      const res = await fetch(XRPLTO + '/nft/stats/global', { headers: xrplToHeaders(env.XRPLTO_API_KEY), signal: AbortSignal.timeout(8000) });
+      const found = xrplToKey(env);
+      const res = await fetch(XRPLTO + '/nft/stats/global', { headers: xrplToHeaders(found.key), signal: AbortSignal.timeout(8000) });
       const text = await res.text();
-      return json({ status: res.status, keySet: !!env.XRPLTO_API_KEY, body: text.slice(0, 300) });
+      // Names only, never values.
+      return json({ status: res.status, keySet: !!found.key, keyName: found.name, envNames: Object.keys(env || {}).sort(), body: text.slice(0, 300) });
     } catch (e) {
       return json({ error: String(e && e.message || e) });
     }
