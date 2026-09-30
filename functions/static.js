@@ -565,6 +565,9 @@ const SWAP_HTML = `<!DOCTYPE html>
      -grid all cap at 1300px on their own), so this reads as a targeted
      THUMBNAILS change in practice, not a site-wide relayout. */
   .page{ max-width:1700px; width:100%; position:relative; z-index:1; }
+  .legal-links{ display:flex; justify-content:center; gap:1.4rem; margin:2.5rem 0 1.5rem; font-size:12px; letter-spacing:0.14em; }
+  .legal-links a{ color:rgba(255,255,255,0.5); text-decoration:none; }
+  .legal-links a:hover{ color:#fff; text-decoration:underline; }
   /* Fit-to-one-screen (see body.paws-view above) has to account for
      #myPigeonsPanel too, not just #profilePanelWrap — confirmed live: a
      logged-out visitor sees BOTH the CONNECT prompt (#myPigeonsPanel,
@@ -14740,6 +14743,9 @@ const SWAP_HTML = `<!DOCTYPE html>
       </div>
     </div>
   </div>
+
+  <!-- Support / Privacy / Terms (2026-09-30, for Xaman's push-notification review; pages in _legal.js). -->
+  <nav class="legal-links" aria-label="Site information"><a href="/support">SUPP0RT</a><a href="/privacy">PR!VACY</a><a href="/terms">TERMS</a></nav>
 
   <div class="target-bar" id="targetBar" style="display:none;">
     <span class="tb-label" id="targetBarLabel">TARGET ASSETS :: 0</span>

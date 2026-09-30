@@ -56,8 +56,8 @@ in `listings` (gotcha 5a below) is a separate, real issue either way.
 Xaman asked for Support / Privacy Policy / Terms of Service links, a working
 X link in the Developer Console, and no front-page wording that could read
 as "enter your secret key". Done: `/support`, `/privacy`, `/terms`
-(`functions/_legal.js` + three route files), linked from `/`, `/board` and
-`/help`; the front page button now says C0NNECT W!TH XAMAN with a
+(`functions/_legal.js` + three route files), linked from `/static`, `/`
+and `/help` (kept short on purpose — only what the site does today); the front page button now says C0NNECT W!TH XAMAN with a
 never-share-your-seed note. The X account doesn't exist yet — set
 `SUPPORT_X_HANDLE` in `_legal.js` once it does (empty = no X link shown),
 and use the same handle in the Xaman Developer Console.
