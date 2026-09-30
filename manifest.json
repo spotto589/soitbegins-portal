@@ -2,7 +2,7 @@
   "id": "/static",
   "name": "Σκύλλα",
   "short_name": "Σκύλλα",
-  "start_url": "/static",
+  "start_url": "/home",
   "scope": "/",
   "display": "standalone",
   "background_color": "#000000",

@@ -40,6 +40,28 @@ There's also a second real service in this repo: **`xaman-proxy/`**
 (see its own section below). Both untouched this session except
 `cron-worker/`'s own initial build.
 
+## STAT!C://H0ME — the front page (`/home`)
+
+`functions/home.js` (page) + `functions/api/home.js` (data). Its own page:
+DATABASE (`static.js`) is untouched and every card/row just links into it.
+The installed app (`manifest.json` start_url) opens here.
+
+- Whole-XRPL figures (NFT volume/sales/mints/burns for 24h/7d/30d/all,
+  meme coin totals, ledger-wide 24h activity, top 10 collections/coins)
+  come from xrpl.to (`/nft/stats/global`, `/nft/collections`,
+  `/tokens?tag=memes`). Its terms need the visible "Data by xrpl.to" link
+  in the page footer — keep it.
+- "Our collections" cards reuse `/api/pigeons?stats=1` and `pigeonsRate=1`,
+  exactly like MAINFRAME. The live feed merges the ledger watcher's
+  per-collection events (`pswap:events:v1:*`). No KV writes anywhere;
+  everything is edge-cached stale-while-revalidate.
+- Non-Σκύλλα collection/coin pictures: `/api/home?img=nft|token` 302s to
+  xrp.cafe's collection image / xrplmeta's token icon (fallback: initials).
+- The latest-ledger box is a browser WebSocket straight to xrplcluster.com
+  (falls back to s1/s2.ripple.com).
+- Live DATABASE vs C0M!NG S00N on the cards mirrors MAINFRAME by hand
+  (`CARDS` in home.js) — update both when a collection goes live.
+
 ## Note: KV writes fail silently
 
 `safeKvPut` in `_shared.js` swallows write failures silently — if "my real
