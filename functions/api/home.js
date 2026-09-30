@@ -286,6 +286,16 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const params = new URL(request.url).searchParams;
   if (params.get('img')) return imageRedirect(context, params);
+  // Upstream reachability check: status + first bytes of one xrpl.to call.
+  if (params.get('probe') === '1') {
+    try {
+      const res = await fetch(XRPLTO + '/nft/stats/global', { headers: XRPLTO_HEADERS, signal: AbortSignal.timeout(8000) });
+      const text = await res.text();
+      return json({ status: res.status, server: res.headers.get('server'), body: text.slice(0, 300) });
+    } catch (e) {
+      return json({ error: String(e && e.message || e) });
+    }
+  }
   if (params.get('feed') === '1') return cachedJson(context, 'feed', FEED_FRESH_S, () => buildFeed(env));
   return cachedJson(context, 'overview', OVERVIEW_FRESH_S, () => buildOverview(env),
     b => !b.nft || !b.meme || !b.ledger || Object.values(b.topNfts).some(v => !v) || Object.values(b.topCoins).some(v => !v));
