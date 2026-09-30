@@ -317,8 +317,7 @@ export async function onRequestGet(context) {
       const found = xrplToKey(env);
       const res = await fetch(XRPLTO + '/nft/stats/global', { headers: xrplToHeaders(found.key), signal: AbortSignal.timeout(8000) });
       const text = await res.text();
-      // Names only, never values.
-      return json({ status: res.status, keySet: !!found.key, keyName: found.name, envNames: Object.keys(env || {}).sort(), body: text.slice(0, 300) });
+      return json({ status: res.status, keySet: !!found.key, body: text.slice(0, 300) });
     } catch (e) {
       return json({ error: String(e && e.message || e) });
     }
