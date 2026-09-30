@@ -31,14 +31,23 @@ function json(body, status) {
   return new Response(JSON.stringify(body), { status: status || 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 }
 
-async function fetchXrplTo(path, retried) {
+// Anonymous calls share one daily allowance across everyone calling from
+// Cloudflare, which runs out (429 "Daily limit exceeded") — so production
+// needs its own free key, set as the XRPLTO_API_KEY secret on the Pages
+// project. 429 isn't retried: a second call would only burn more quota.
+function xrplToHeaders(apiKey) {
+  return apiKey ? Object.assign({ 'X-Api-Key': apiKey }, XRPLTO_HEADERS) : XRPLTO_HEADERS;
+}
+
+async function fetchXrplTo(path, apiKey, retried) {
   try {
-    const res = await fetch(XRPLTO + path, { headers: XRPLTO_HEADERS, signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return retried ? null : fetchXrplTo(path, true);
+    const res = await fetch(XRPLTO + path, { headers: xrplToHeaders(apiKey), signal: AbortSignal.timeout(8000) });
+    if (res.status === 429) return null;
+    if (!res.ok) return retried ? null : fetchXrplTo(path, apiKey, true);
     const d = await res.json();
     return d && d.success !== false ? d : null;
   } catch (e) {
-    return retried ? null : fetchXrplTo(path, true);
+    return retried ? null : fetchXrplTo(path, apiKey, true);
   }
 }
 
@@ -114,10 +123,11 @@ async function buildOverview(env) {
   const popular = {};
   try { ((JSON.parse(popularRaw || 'null') || {}).coins || []).forEach(c => { if (c.md5) popular[c.md5] = true; }); } catch (e) {}
 
-  const memeList = sortBy => fetchXrplTo('/tokens?start=0&limit=10&sortBy=' + sortBy + '&sortType=desc&tag=memes');
-  const nftList = range => fetchXrplTo('/nft/collections?limit=10&sort=' + NFT_RANGES[range].sort + '&order=desc&skip_metrics=true' + (NFT_RANGES[range].lightweight ? '&lightweight=true' : ''));
+  const key = env.XRPLTO_API_KEY || null;
+  const memeList = sortBy => fetchXrplTo('/tokens?start=0&limit=10&sortBy=' + sortBy + '&sortType=desc&tag=memes', key);
+  const nftList = range => fetchXrplTo('/nft/collections?limit=10&sort=' + NFT_RANGES[range].sort + '&order=desc&skip_metrics=true' + (NFT_RANGES[range].lightweight ? '&lightweight=true' : ''), key);
   const [nftGlobal, memeVol24, memeVol7, memeMcap, n24, n7, n30, nAll] = await Promise.all([
-    fetchXrplTo('/nft/stats/global'),
+    fetchXrplTo('/nft/stats/global', key),
     memeList('vol24hxrp'), memeList('vol7dxrp'), memeList('marketcap'),
     nftList('24h'), nftList('7d'), nftList('30d'), nftList('all')
   ]);
@@ -289,9 +299,9 @@ export async function onRequestGet(context) {
   // Upstream reachability check: status + first bytes of one xrpl.to call.
   if (params.get('probe') === '1') {
     try {
-      const res = await fetch(XRPLTO + '/nft/stats/global', { headers: XRPLTO_HEADERS, signal: AbortSignal.timeout(8000) });
+      const res = await fetch(XRPLTO + '/nft/stats/global', { headers: xrplToHeaders(env.XRPLTO_API_KEY), signal: AbortSignal.timeout(8000) });
       const text = await res.text();
-      return json({ status: res.status, server: res.headers.get('server'), body: text.slice(0, 300) });
+      return json({ status: res.status, keySet: !!env.XRPLTO_API_KEY, body: text.slice(0, 300) });
     } catch (e) {
       return json({ error: String(e && e.message || e) });
     }

@@ -51,6 +51,15 @@ The installed app (`manifest.json` start_url) opens here.
   come from xrpl.to (`/nft/stats/global`, `/nft/collections`,
   `/tokens?tag=memes`). Its terms need the visible "Data by xrpl.to" link
   in the page footer — keep it.
+- ⚠️ **Needs an xrpl.to API key in production.** Anonymous xrpl.to calls
+  from Cloudflare hit "429 Daily limit exceeded" (the anonymous allowance
+  is shared by everyone on Cloudflare's IPs), so every XRPL-wide panel
+  comes back empty without one. Free key from https://xrpl.to/docs, then
+  Pages project > Settings > Variables and Secrets > add secret
+  `XRPLTO_API_KEY`, then redeploy. `/api/home?probe=1` shows xrpl.to's
+  status as seen from production and whether the key is set. The C0!NS
+  popular-coins list (`_coins.js`, run by `cron-worker/`) hits the same
+  limit and doesn't send a key yet.
 - "Our collections" cards reuse `/api/pigeons?stats=1` and `pigeonsRate=1`,
   exactly like MAINFRAME. The live feed merges the ledger watcher's
   per-collection events (`pswap:events:v1:*`). No KV writes anywhere;
