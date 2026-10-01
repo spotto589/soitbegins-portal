@@ -11453,7 +11453,7 @@ const SWAP_HTML = `<!DOCTYPE html>
        the page is removed from the layout while it's open, and the list
        sits in the normal page flow, so the phone scrolls the page itself
        and there is nothing above or behind it. */
-    body.mainframe-open{ padding:40px 0 0 !important; display:block !important; }
+    body.mainframe-open{ padding:var(--top-bar-h, 40px) 0 0 !important; display:block !important; }
     body.mainframe-open .page{ width:100% !important; max-width:none !important; margin:0 !important; padding:0 !important; }
     body.mainframe-open .page > *:not(#screenMainframe):not(#notifyToasts):not([id$="Modal"]){ display:none !important; }
     /* Top bar: the S!GNAL :: 0NL!NE / N0T F0UND words go on phones — the
@@ -11820,6 +11820,55 @@ const SWAP_HTML = `<!DOCTYPE html>
     /* SWAP now shows signed out too, so keep the trustline title on one line. */
     #pigeonsBarLoggedOut .pigeons-bar-left-lines .pigeons-bar-text-lg{ white-space:nowrap; }
   }
+  .flock-tab-wallet-chip{ display:contents; }
+  .flock-tab-wallet-dot{ display:none; }
+  /* ================= PHONE TOP BAR (2026-10-01) =================
+     Reported live: on phones the bar never said Σκύλλα at all (the
+     heading was hidden to make room) and the wallet was just loose text.
+     Now two rows:
+       1. lock + Σκύλλα (big, obvious) on the left, and a wallet chip on
+          the right — green dot + short address + ▾, the whole chip opens
+          the wallet switcher (L0G !N in the same spot when signed out).
+       2. DATABASE :: <collection> ▾, a slim strip underneath.
+     Total height stays near the desktop --global-ticker-h (66px); the
+     real height goes into --top-bar-h (see its sync() in the JS) for
+     everything that sits under the bar. Kept last so it wins. */
+  @media (max-width:700px){
+    #topTabs{ display:flex !important; flex-wrap:wrap !important; gap:0 !important; padding:0 !important; overflow:visible !important; }
+    #globalTopBar .top-tabs-wrap::before, #globalTopBar .top-tabs-wrap::after{ display:none !important; }
+
+    /* Row 1 — brand + wallet. */
+    #topTabs .global-top-scylla-btn{ order:-1; flex:1 1 100% !important; display:flex !important; align-items:center; justify-content:flex-start; gap:0.5rem !important; padding:0.45rem 0.75rem !important; min-height:42px; box-sizing:border-box; }
+    #topTabs .global-top-scylla-btn.active{ background:none !important; border:none !important; }
+    #globalTopBarLogo{ width:22px !important; height:28px !important; }
+    #topTabs .global-top-scylla-text,
+    #topTabs .global-top-scylla-text.global-top-scylla-text-loggedout{ display:flex !important; flex:1 1 auto; flex-direction:row !important; align-items:center; justify-content:space-between; gap:0.6rem; min-width:0; }
+    #globalTopBarHeading{ display:block !important; font-size:21px !important; line-height:1 !important; letter-spacing:0.06em !important; color:var(--white); text-shadow:-1px 0 var(--cyan-dim), 1px 0 var(--magenta-dim) !important; animation:topbar-terminal-glitch 7s infinite !important; overflow:visible; }
+    #globalTopBarHeading .gtb-signal{ display:none !important; }
+    /* Underline Σκύλλα itself when you're on its tab, same idea as
+       DATABASE's own .tab-db-word-active. */
+    #topTabs .global-top-scylla-btn.active #globalTopBarHeading{ text-decoration:underline; text-underline-offset:0.2em; text-decoration-thickness:2px; }
+
+    #flockTabLabel{ display:inline-flex !important; align-items:center; gap:0.35rem; margin:0 !important; flex:0 1 auto; min-width:0; }
+    .flock-tab-wallet-chip{ display:inline-flex; align-items:center; gap:0.4rem; min-width:0; padding:0.38em 0.55em 0.38em 0.65em; border:1px solid var(--wallet-blue); border-radius:999px; background:rgba(61,243,236,0.08); box-shadow:0 0 10px rgba(61,243,236,0.15); cursor:pointer; }
+    .flock-tab-wallet-dot{ display:block; flex:0 0 auto; width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green-glow); }
+    #flockTabLabel .flock-tab-wallet{ font-size:12px !important; letter-spacing:0.02em; text-shadow:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #flockTabLabel .flock-tab-switch-arrow{ font-size:12px !important; margin:0 !important; padding:0 !important; color:var(--wallet-blue); }
+    #flockTabLabel .flock-tab-switch-arrow.wallet-dropdown-open{ color:var(--wallet-blue); }
+    .flock-tab-wallet-chip:has(.wallet-dropdown-open){ background:var(--cyan-faint); }
+    #flockTabLabel .flock-tab-offer-dot{ margin-left:0 !important; }
+    .flock-tab-login-btn{ font-size:12px !important; padding:0.5em 1em !important; border-radius:999px; letter-spacing:0.08em; }
+
+    /* Row 2 — DATABASE :: <collection> ▾. */
+    #topTabs .tab-btn-database{ order:0; flex:1 1 auto !important; display:flex !important; align-items:center; justify-content:flex-start; gap:0.4rem; padding:0.2rem 0.75rem !important; min-height:30px; box-sizing:border-box; border-top:1px solid var(--border-dim) !important; }
+    #topTabs #swapOffersTabBtn{ order:1; flex:0 0 auto !important; padding:0.2rem 0.75rem !important; font-size:11px !important; border-top:1px solid var(--border-dim) !important; }
+    #topTabs .tab-db-heading{ font-size:0 !important; }
+    #topTabs .tab-db-heading #tabDbWord{ font-size:11px !important; letter-spacing:0.08em; color:var(--grey-dim); }
+    #topTabs .tab-db-heading #tabDbWord.tab-db-word-active{ color:var(--white); }
+    #topTabs .tab-db-heading::after{ content:' ::'; font-size:11px; color:var(--grey-dim); }
+    #dbSelectLabel{ font-size:12px !important; padding:0.2em 0 !important; }
+    #dbSelectArrow{ font-size:11px !important; padding:0.15em 0.45em !important; margin-left:0.3em !important; }
+  }
 </style>
 </head>
 <body>
@@ -11880,7 +11929,7 @@ const SWAP_HTML = `<!DOCTYPE html>
           <rect x="29" y="50" width="6" height="13" rx="2" fill="#0b0b09"/>
         </svg>
         <span class="global-top-scylla-text" id="scyllaWalletWrap">
-          <span id="globalTopBarHeading">Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span></span>
+          <span id="globalTopBarHeading">Σκύλλα<span class="gtb-signal">://S!GNAL :: <span class="title-online">0NL!NE</span></span></span>
           <span id="flockTabLabel" class="global-top-scylla-status"></span>
           <div class="wallet-switch-dropdown" id="walletSwitchDropdown" style="display:none;"></div>
         </span>
@@ -19948,12 +19997,12 @@ const SWAP_HTML = `<!DOCTYPE html>
       // class below. Clicking it still just bubbles up to the same real
       // topTabs 'mypigeons' + !MY_WALLET handler every other click on
       // this whole bar already goes through — no separate wiring needed.
-      el.globalTopBarHeading.innerHTML = 'Σκύλλα://S!GNAL :: <span class="title-notfound">N0T F0UND</span>';
+      el.globalTopBarHeading.innerHTML = 'Σκύλλα<span class="gtb-signal">://S!GNAL :: <span class="title-notfound">N0T F0UND</span></span>';
       el.scyllaWalletWrap.classList.add('global-top-scylla-text-loggedout');
       el.flockTabLabel.innerHTML = '<span class="flock-tab-login-btn">L0G !N</span>';
       return;
     }
-    el.globalTopBarHeading.innerHTML = 'Σκύλλα://S!GNAL :: <span class="title-online">0NL!NE</span>';
+    el.globalTopBarHeading.innerHTML = 'Σκύλλα<span class="gtb-signal">://S!GNAL :: <span class="title-online">0NL!NE</span></span>';
     el.scyllaWalletWrap.classList.remove('global-top-scylla-text-loggedout');
     // Was three separate " :: "-joined text segments ("Σκύλλα :: 60
     // P!GE0NS :: 3 0FFERS") — confirmed live this wrapped to 2-3 broken
@@ -19977,8 +20026,12 @@ const SWAP_HTML = `<!DOCTYPE html>
     // the SAME line (reported live — was its own line underneath with
     // nothing else on it), not a separate line of its own.
     var offersDot = offersReceivedTotal > 0 ? '<span class="flock-tab-offer-dot" title="' + offersReceivedTotal + ' 0FFER' + (offersReceivedTotal === 1 ? '' : 'S') + ' RECE!VED">' + offersReceivedTotal + '</span>' : '';
-    el.flockTabLabel.innerHTML = '<span class="flock-tab-wallet">' + shortAddr(MY_WALLET) + '</span>' +
-      '<span class="flock-tab-switch-arrow" title="SW!TCH WALLET">▾</span>' + offersDot;
+    // Wrapped in .flock-tab-wallet-chip: on phones the whole chip (green
+    // signal dot + address + ▾) is one pill that opens the switcher (see
+    // the PHONE TOP BAR CSS); on desktop the wrapper has no look of its own.
+    el.flockTabLabel.innerHTML = '<span class="flock-tab-wallet-chip"><span class="flock-tab-wallet-dot"></span>' +
+      '<span class="flock-tab-wallet">' + shortAddr(MY_WALLET) + '</span>' +
+      '<span class="flock-tab-switch-arrow" title="SW!TCH WALLET">▾</span></span>' + offersDot;
   }
   // ---- Wallet-switch dropdown — remembers every address this browser has
   // signed in as (address only, never the session token — the token stays
@@ -20033,7 +20086,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     // Right-edge aware: right-aligning a 240px box under an arrow
     // sitting near the viewport's own right edge would push it off-
     // screen, so this clamps to the viewport's own right edge instead.
-    var arrowForPos = el.flockTabLabel.querySelector('.flock-tab-switch-arrow');
+    var arrowForPos = (window.matchMedia('(max-width:700px)').matches && el.flockTabLabel.querySelector('.flock-tab-wallet-chip')) ||
+      el.flockTabLabel.querySelector('.flock-tab-switch-arrow');
     var anchorRect = (arrowForPos || el.scyllaWalletWrap).getBoundingClientRect();
     var ddWidth = Math.max(240, el.walletSwitchDropdown.offsetWidth || 240);
     var left = Math.min(anchorRect.right - ddWidth, window.innerWidth - ddWidth - 8);
@@ -20044,7 +20098,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (arrow) arrow.classList.add('wallet-dropdown-open');
   }
   el.flockTabLabel.addEventListener('click', function(e){
-    var arrow = e.target.closest('.flock-tab-switch-arrow');
+    // Phones: anywhere on the wallet chip opens it, not just the ▾.
+    var arrow = e.target.closest('.flock-tab-switch-arrow') ||
+      (window.matchMedia('(max-width:700px)').matches && e.target.closest('.flock-tab-wallet-chip'));
     if (!arrow) return;
     // Stops this from also bubbling into el.topTabs' own delegated click
     // handler, which would otherwise treat it as a normal tap on the
