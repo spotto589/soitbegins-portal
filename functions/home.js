@@ -400,6 +400,7 @@ const HOME_HTML = `<!DOCTYPE html>
   var CARDS = [
     { key:'pigeons', href:'/pigeons', label:'$P!GE0NS', art:'/assets/mainframe/pigeons.jpeg?v=2', accent:'136,72,248', y:'48%', live:true, stats:true },
     { key:'king', href:'/king', label:'K!NG', art:'/assets/cards/king.png', accent:'242,183,5', y:'48%', live:true, stats:true },
+    { key:'panther', href:'/panther', label:'SH!TTY PANTHERS', art:'/assets/mainframe/panther.webp?v=1', accent:'255,45,155', y:'35%', live:true, stats:true },
     { key:'phnixs', label:'$PHN!X', art:'/assets/mainframe/phnix.jpeg?v=2', accent:'255,90,31', y:'12%', live:false, stats:true },
     { key:'teddybg', label:'$TEDDY', art:'/assets/mainframe/teddy.jpeg?v=2', accent:'166,99,46', y:'30%', live:false, stats:true },
     { key:'sealall', href:'/sealall', label:'$SEAL', art:'/assets/mainframe/seal.jpeg?v=2', accent:'45,140,168', y:'40%', live:true, stats:true },
@@ -415,6 +416,7 @@ const HOME_HTML = `<!DOCTYPE html>
   var OURS = {
     pigeons:{ label:'P!GE0NS', item:'P!GE0N', art:'/assets/mainframe/pigeons.jpeg?v=2', href:'/pigeons', token:'$P!GE0NS', issuer:'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf' },
     king:{ label:'K!NG', item:'K!NG', art:'/assets/cards/king.png', href:'/king' },
+    panther:{ label:'SH!TTY PANTHERS', item:'PANTHER', art:'/assets/mainframe/panther.webp?v=1', href:'/panther' },
     phnixs:{ label:'PHN!X', item:'PHN!X', art:'/assets/mainframe/phnix.jpeg?v=2', href:null, token:'$PHN!X', issuer:'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN' },
     teddybg:{ label:'TEDDY', item:'TEDDY', art:'/assets/mainframe/teddy.jpeg?v=2', href:null, token:'$TEDDY', issuer:'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd' },
     seal:{ label:'SEAL', item:'SEAL', art:'/assets/mainframe/seal.jpeg?v=2', href:'/seal', token:'$SEAL', issuer:'r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ' },
@@ -430,7 +432,7 @@ const HOME_HTML = `<!DOCTYPE html>
     smoki:{ label:'SM0K!', item:'SM0K!', art:'/assets/mainframe/smoki.webp?v=1', href:null, token:'$SM0K!', issuer:'rpHyEYhaL9edeXWr7spsGUbo8n13ivzzty' }
   };
   // Collections with a per-item page (functions/<key>/[number].js).
-  var ITEM_ROUTES = { pigeons:1, king:1, seal:1, sealscrolls:1, fuzzy:1, yzzuf:1, fuzzybars:1, conspiracy:1, whiterabbit:1 };
+  var ITEM_ROUTES = { pigeons:1, king:1, panther:1, seal:1, sealscrolls:1, fuzzy:1, yzzuf:1, fuzzybars:1, conspiracy:1, whiterabbit:1 };
   var TOKEN_LABEL_BY_ISSUER = {};
   Object.keys(OURS).forEach(function(k){ if (OURS[k].issuer) TOKEN_LABEL_BY_ISSUER[OURS[k].issuer] = OURS[k].token; });
 

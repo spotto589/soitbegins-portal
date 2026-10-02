@@ -64,6 +64,8 @@ const COLLECTIONS = {
   whiterabbit: { issuer: 'rLTjw8JXWZfVAXwAWy1SvvDTSjh2iG3icj', taxon: 1 },
   bear: { issuer: 'rBEARbo4Prn33894evmvYcAf9yAQjp4VJF', taxon: 0 },
   cult: { issuer: 'rwXtqbb49G4eDyikLv77JEHCx25eH3pCsx', taxon: 69 },
+  // SHITTY PANTHER CLUB (2026-10-02). Names "Shitty Panther #123".
+  panther: { issuer: 'rGnivxmi1yAu15Kou1nqt91ZxtXhkWB2iM', taxon: 0 },
 };
 // Default: the first run of digits in the NFT's own name ("SEAL 657").
 for (const c of Object.values(COLLECTIONS)) {
