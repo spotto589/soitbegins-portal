@@ -5525,6 +5525,46 @@ const SWAP_HTML = `<!DOCTYPE html>
   :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-row.boxed-card{ grid-template-columns:528px minmax(0, 1fr); grid-template-rows:48px 302px auto; }
   :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-img{ width:528px; height:302px; }
   :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-traits{ height:302px; }
+  /* H0NEYP0T's NFT page (2026-10-03, owner: "expanded view needs to show
+     it way different and bigger... special collection"): the picture runs
+     the full width as a hero (title row above it full width too), then
+     OWNED BY, then B0RN / AGE / STAGE and THE CHA!N, then
+     the usual rarity + listing (left) and a 4-across trait grid (right).
+     .detail-col-left is display:contents so the picture and the box under
+     it can sit in different rows. */
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #screenDetail .detail-two-col{ max-width:1280px; margin:0 auto; grid-template-columns:minmax(320px, 440px) minmax(0, 1fr); grid-template-areas:"num num" "hero hero" "owner owner" "honey honey" "left right"; }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #screenDetail .detail-col-left{ display:contents; }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #screenDetail #detailImgBox{ grid-area:hero; width:100%; max-width:none; max-height:74vh; margin:0.3rem 0 0; border:1px solid rgba(var(--collection-accent-rgb), 0.85); border-radius:8px; box-shadow:0 0 28px rgba(var(--collection-accent-rgb), 0.35); }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #screenDetail .detail-under-pic-box{ grid-area:left; margin-top:0; }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #screenDetail .detail-num-row .detail-num{ font-size:34px; letter-spacing:0.04em; text-shadow:0 0 14px rgba(var(--collection-accent-rgb), 0.55); }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #screenDetail .trait-grid{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+  .detail-honey{ grid-area:honey; margin:0.2rem 0 0.4rem; }
+  .dh-life{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.5rem; }
+  .dh-cell{ background:#000; border:1px solid rgba(var(--collection-accent-rgb), 0.6); border-radius:6px; box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.18); padding:0.55rem 0.5rem; text-align:center; }
+  .dh-k{ display:block; font-size:11px; letter-spacing:0.2em; color:var(--grey-dim); }
+  .dh-v{ display:block; font-size:22px; font-weight:700; color:#fff; letter-spacing:0.04em; }
+  .dh-chain-title{ margin:0.8rem 0 0.4rem; font-size:11px; letter-spacing:0.25em; color:rgb(var(--collection-accent-rgb)); text-align:center; }
+  .dh-chain{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:0.4rem; }
+  .dh-stage{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; padding:0.5rem 0.4rem; background:#000; color:#fff; text-decoration:none; text-align:center; border:1px solid rgba(255,255,255,0.22); border-radius:6px; min-width:0; }
+  a.dh-stage:hover{ background:rgba(255,255,255,0.06); }
+  .dh-st{ font-size:10px; letter-spacing:0.16em; color:var(--grey-dim); }
+  .dh-label{ font-size:14px; font-weight:700; overflow-wrap:anywhere; }
+  .dh-pill{ font-size:10px; letter-spacing:0.12em; border:1px solid rgba(255,255,255,0.3); border-radius:999px; padding:0.05em 0.6em; color:var(--grey-dim); white-space:nowrap; }
+  .dh-stage.dh-burned{ border-color:rgba(255,63,208,0.7); }
+  .dh-stage.dh-burned .dh-pill{ border-color:#ff3fd0; color:#ff3fd0; }
+  .dh-stage.dh-live{ border-color:rgba(52,255,133,0.7); }
+  .dh-stage.dh-live .dh-pill{ border-color:#34ff85; color:#34ff85; }
+  .dh-stage.dh-owed{ border-color:rgb(var(--collection-accent-rgb)); }
+  .dh-stage.dh-owed .dh-pill{ background:rgb(var(--collection-accent-rgb)); border-color:rgb(var(--collection-accent-rgb)); color:#000; }
+  .dh-stage.dh-here{ outline:2px solid #fff; outline-offset:1px; box-shadow:0 0 16px rgba(var(--collection-accent-rgb), 0.5); }
+  .dh-stage.dh-here .dh-pill{ border-color:#fff; color:#fff; }
+  @media (max-width:760px){
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #screenDetail .detail-two-col{ grid-template-columns:minmax(0, 1fr); grid-template-areas:"num" "owner" "hero" "honey" "left" "right"; }
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #screenDetail .trait-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #screenDetail .detail-num-row .detail-num{ font-size:24px; }
+    .dh-v{ font-size:16px; }
+    .dh-chain{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  }
   @media (max-width:1100px){
     :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-list.view-thumbnails{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
     /* Tablet: picture + buttons down the left, the trait grid (as tall as
@@ -13822,6 +13862,18 @@ const SWAP_HTML = `<!DOCTYPE html>
           <button class="detail-share-btn" id="detailShareBtn" title="C0PY A SHAREABLE L!NK T0 TH!S P!GE0N">SHARE</button>
         </div>
         <div class="detail-owner-top" id="detailOwner"></div>
+        <!-- H0NEYP0T only (2026-10-03): B0RN / AGE / STAGE and THE CHA!N
+             (Honeypot -> Ash -> Phoenix -> Phase 2 -> Phase 3), from
+             /api/honeypot-burns?nft= — see loadHoneyExtras. -->
+        <div class="detail-honey" id="detailHoney" style="display:none;">
+          <div class="dh-life">
+            <div class="dh-cell"><span class="dh-k">B0RN</span><span class="dh-v" id="detailHoneyBorn">…</span></div>
+            <div class="dh-cell"><span class="dh-k">AGE</span><span class="dh-v" id="detailHoneyAge">…</span></div>
+            <div class="dh-cell"><span class="dh-k">STAGE</span><span class="dh-v" id="detailHoneyStage">…</span></div>
+          </div>
+          <div class="dh-chain-title">THE CHA!N</div>
+          <div class="dh-chain" id="detailHoneyChain"></div>
+        </div>
         <div class="detail-col-left">
           <div class="detail-img-large pigeon-img-box" id="detailImgBox" title="VIEW FULLSCREEN">IMAGE</div>
           <div class="detail-under-pic-box">
@@ -15458,6 +15510,7 @@ const SWAP_HTML = `<!DOCTYPE html>
    'screenSwapAcceptConfirm','acceptConfTxType','acceptConfAccount','acceptConfOfferId','acceptConfFromWallet','acceptConfNftId','acceptConfirmStatus','swapAcceptConfirmBackBtn','swapAcceptOpenXamanBtn',
    'screenSwapAcceptResult','acceptResultNftId','acceptResultStatus','acceptResultTxLink','acceptResultDoneBtn',
    'collectionDetailsPanel','screenBrowse','screenDetail','screenSummary','screenHistory','detailPrevBtn','detailNextBtn','detailPrevBtnBottom','detailNextBtnBottom','backToBrowseBtnTop',
+   'detailHoney','detailHoneyBorn','detailHoneyAge','detailHoneyStage','detailHoneyChain',
    'detailNum','detailShareBtn','detailImgBox','detailOwner','detailOwnerBanner','detailRarityRow','detailRarity','detailRarityScore','detailRarityScoreCell','detailRarityExpandBtn','detailDescription','detailDescriptionText','detailDataBtn','nftDataModal','nftDataTitle','nftDataCloseBtn','nftDataList','detailRarityBreakdown','rarityModal','rarityModalTitle','rarityModalBadges','rarityCloseBtn','detailPriceRow','detailPrice','detailMarkets','detailHighSaleRow','detailHighSale','detailRecentSaleRow','detailRecentSale','detailAvgSaleRow','detailAvgSale','detailTraits',
    'detailScyllaPrice','detailScyllaBuyBtn','detailScyllaDelistBtn','detailScyllaOwnedRow','detailScyllaListBtn','detailScyllaTransferBtn','detailScyllaCountdown','detailScyllaListingRow','detailMakeOfferRow','detailMakeOfferInput','detailMakeOfferSend','detailMakeOfferDuration','detailOffersReceived','detailLightbox','detailLightboxImg','lightboxPrevBtn','lightboxNextBtn',
    'detailHistoryToggle','detailBackBtnBottom','detailHistoryList','historyNum','historyModal','historyModalClose','historyThumb','historyVolume','historySaleCount','historyMintDate','historyMintBy',
@@ -27514,6 +27567,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     showScreen('detail');
     refreshCardSelectionStates();
     loadDetailHistory(nftId);
+    loadHoneyExtras(nftId);
     updateDetailNavButtons();
 
     api({ detail: nftId }).then(function(data){
@@ -32412,6 +32466,50 @@ const SWAP_HTML = `<!DOCTYPE html>
   // active collection when a specific item doesn't carry its own
   // collectionKey (most in-DATABASE cards don't need one — they're already
   // all the same collection).
+  // H0NEYP0T's own detail extras: when it was born, how many days old it
+  // is, and its place in the burn chain. Hidden for every other collection.
+  var HONEY_STAGE_NAMES = { honeypot: 'H0NEYP0T', ash: 'ASH', phoenix: 'PH0EN!X', phase2: 'PHASE 2', phase3: 'PHASE 3', special: 'SWEET H0NEY' };
+  var HONEY_STATUS_NAMES = { live: 'L!VE', burned: 'BURNED', owed: 'T0 M!NT', waiting: 'N0T YET', unknown: '?' };
+  function loadHoneyExtras(nftId){
+    var box = el.detailHoney;
+    if (!box) return;
+    var meta = COLLECTION_META[state.collection] || {};
+    if (meta.group !== 'honeypot'){ box.style.display = 'none'; return; }
+    box.style.display = '';
+    box.setAttribute('data-nft', nftId);
+    el.detailHoneyBorn.textContent = '…';
+    el.detailHoneyAge.textContent = '…';
+    el.detailHoneyStage.textContent = '…';
+    el.detailHoneyChain.innerHTML = '';
+    fetch('/api/honeypot-burns?nft=' + encodeURIComponent(nftId)).then(function(r){ return r.json(); }).then(function(d){
+      if (box.getAttribute('data-nft') !== nftId) return;
+      if (d && d.born){
+        var born = new Date(d.born * 1000);
+        var days = Math.max(0, Math.floor((Date.now() - born.getTime()) / 86400000));
+        el.detailHoneyBorn.textContent = born.getUTCDate() + ' ' + ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','0CT','N0V','DEC'][born.getUTCMonth()] + ' ' + born.getUTCFullYear();
+        el.detailHoneyAge.textContent = days + (days === 1 ? ' DAY' : ' DAYS');
+      } else {
+        el.detailHoneyBorn.textContent = '—';
+        el.detailHoneyAge.textContent = '—';
+      }
+      var stages = (d && d.chain) || [];
+      var mine = d ? (d.kind === 'other' ? 'special' : d.kind) : null;
+      el.detailHoneyStage.textContent = (HONEY_STAGE_NAMES[mine] || '—') + (mine === 'phoenix' ? ' · PHASE 1' : '');
+      el.detailHoneyChain.innerHTML = stages.map(function(st){
+        var here = st.stage === mine;
+        var inner = '<span class="dh-st">' + (HONEY_STAGE_NAMES[st.stage] || '') + '</span>' +
+          '<span class="dh-label">' + escapeHtml(st.label || '') + '</span>' +
+          '<span class="dh-pill">' + (here ? 'TH!S 0NE' : (HONEY_STATUS_NAMES[st.status] || '')) + '</span>';
+        var cls = 'dh-stage dh-' + (st.status || 'waiting') + (here ? ' dh-here' : '');
+        return st.href && !here ? '<a class="' + cls + '" href="' + escapeHtml(st.href) + '">' + inner + '</a>' : '<div class="' + cls + '">' + inner + '</div>';
+      }).join('');
+    }).catch(function(){
+      if (box.getAttribute('data-nft') !== nftId) return;
+      el.detailHoneyBorn.textContent = '—';
+      el.detailHoneyAge.textContent = '—';
+      el.detailHoneyStage.textContent = '—';
+    });
+  }
   function nftHrefFor(p){
     if (!p || p.number === null || p.number === undefined) return null;
     var key = p.collectionKey || state.collection;

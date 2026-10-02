@@ -1,3 +1,5 @@
+// GET /api/honeypot-burns?nft=<id> — one NFT's chain + when it was born,
+// for its page in the H0NEYP0T database (THE CHA!N, BORN / AGE).
 // GET /api/honeypot-burns — every H0NEYP0T-taxon burn, oldest first, with
 // each burned NFT's name/traits/image and where it sits in the
 // Honeypot -> Ash -> Phoenix -> Phase 2 -> Phase 3 chain, plus what's still
@@ -6,7 +8,7 @@
 // and reads only the issuer's ledger history after snapshot.lastLedger, so
 // new mints and burns show up within a minute without any KV writes.
 import { fetchXrplClusterJson, fetchIpfs } from '../_shared.js';
-import { imageUrl } from '../_ledgershop.js';
+import { imageUrl, ledgerMintTime } from '../_ledgershop.js';
 import { HONEYPOT_ISSUER, HONEYPOT_ISSUER_HEX, HONEYPOT_TAXON, HONEYPOT_TO_ASH, HONEYPOT_SPECIAL, ASH_TO_HONEYPOT, toRoman, honeypotKind, canonicalIpfs } from '../_honeypot.js';
 
 const RIPPLE_EPOCH = 946684800;
@@ -95,6 +97,16 @@ async function buildBurns(context) {
     if (k.kind !== 'other') byKey[k.kind + ':' + k.num] = { id, name: m.name, burned: burnedIds.has(id) };
   }
   const state = (key) => byKey[key] ? (byKey[key].burned ? 'burned' : 'live') : null;
+  const burnNo = {};
+  burns.forEach((b, i) => { burnNo[b.id] = i + 1; });
+  // Where a stage links: a live NFT's own database page, a burned one's
+  // entry on the burns list, nothing for one not minted yet.
+  const PAGE = { honeypot: '/honeypot/', ash: '/honeyash/', phoenix: '/honeyphoenix/' };
+  function hrefFor(stage, num) {
+    const e = num != null ? byKey[stage + ':' + num] : null;
+    if (!e) return null;
+    return e.burned ? '/honeypot/burns#burn-' + burnNo[e.id] : PAGE[stage] + num;
+  }
 
   // The whole chain an NFT belongs to, as a list of stages.
   function chainFor(kind, num) {
@@ -106,13 +118,13 @@ async function buildBurns(context) {
     const ashState = ash != null ? state('ash:' + ash) : null;
     const phxState = hp != null ? state('phoenix:' + hp) : null;
     const stages = [];
-    stages.push({ stage: 'honeypot', label: hp != null ? 'Honeypot #' + hp : 'Honeypot (not on the list)', num: hp, status: hpState || 'unknown' });
+    stages.push({ stage: 'honeypot', label: hp != null ? 'Honeypot #' + hp : 'Honeypot (not on the list)', num: hp, status: hpState || 'unknown', href: hrefFor('honeypot', hp) });
     if (special) {
       stages.push({ stage: 'special', label: special, status: 'live' });
       return stages;
     }
-    stages.push({ stage: 'ash', label: ash != null ? 'Ash #' + ash : 'Ash', num: ash, status: ashState || (hpState === 'burned' ? 'owed' : 'waiting') });
-    stages.push({ stage: 'phoenix', label: hp != null ? 'Phoenix | ' + toRoman(hp) : 'Phoenix', num: hp, status: phxState || (ashState === 'burned' ? 'owed' : 'waiting') });
+    stages.push({ stage: 'ash', label: ash != null ? 'Ash #' + ash : 'Ash', num: ash, status: ashState || (hpState === 'burned' ? 'owed' : 'waiting'), href: hrefFor('ash', ash) });
+    stages.push({ stage: 'phoenix', label: hp != null ? 'Phoenix | ' + toRoman(hp) : 'Phoenix', num: hp, status: phxState || (ashState === 'burned' ? 'owed' : 'waiting'), href: hrefFor('phoenix', hp) });
     stages.push({ stage: 'phase2', label: 'Phase 2 Phoenix', status: phxState === 'burned' ? 'owed' : 'waiting' });
     stages.push({ stage: 'phase3', label: 'Phase 3 Phoenix', status: 'waiting' });
     return stages;
@@ -149,17 +161,44 @@ async function buildBurns(context) {
   const counts = { total: items.length, honeypot: 0, ash: 0, phoenix: 0, other: 0 };
   for (const it of items) counts[it.kind in counts ? it.kind : 'other']++;
 
-  return { updatedLedger: Math.max(snap.lastLedger, fresh.lastLedger), issuer: HONEYPOT_ISSUER, taxon: HONEYPOT_TAXON, counts, owed, items };
+  const body = { updatedLedger: Math.max(snap.lastLedger, fresh.lastLedger), issuer: HONEYPOT_ISSUER, taxon: HONEYPOT_TAXON, counts, owed, items };
+  // One NFT, live or burned.
+  const one = (id) => {
+    const m = meta[nfts[id] || ''];
+    if (!m) return null;
+    const k = honeypotKind(m.name);
+    return { id, name: m.name, kind: k.kind, num: k.num, burned: burnedIds.has(id), burnNo: burnNo[id] || null, chain: chainFor(k.kind, k.num) };
+  };
+  return { body, one };
 }
 
 export async function onRequestGet(context) {
   const cache = caches.default;
+  const nftId = (new URL(context.request.url).searchParams.get('nft') || '').toUpperCase();
+  if (nftId) {
+    if (!/^[0-9A-F]{64}$/.test(nftId)) return new Response(JSON.stringify({ error: 'bad_nft' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    const key = new Request(new URL('/api/honeypot-burns?v=1&nft=' + nftId, context.request.url).toString());
+    const cached = await cache.match(key);
+    if (cached) return cached;
+    let out;
+    try {
+      const [built, born] = await Promise.all([buildBurns(context), ledgerMintTime(nftId).catch(() => null)]);
+      const one = built.one(nftId);
+      if (!one) return new Response(JSON.stringify({ error: 'not_honeypot' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+      out = { ...one, born };
+    } catch (e) {
+      return new Response(JSON.stringify({ error: "C0ULDN'T READ THE LEDGER RIGHT N0W" }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+    }
+    const res = new Response(JSON.stringify(out), { headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${CACHE_SECONDS}` } });
+    context.waitUntil(cache.put(key, res.clone()));
+    return res;
+  }
   const cacheKey = new Request(new URL('/api/honeypot-burns?v=1', context.request.url).toString());
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
   let body;
   try {
-    body = await buildBurns(context);
+    body = (await buildBurns(context)).body;
   } catch (e) {
     return new Response(JSON.stringify({ error: 'C0ULDN\'T READ THE BURNS RIGHT N0W' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
   }

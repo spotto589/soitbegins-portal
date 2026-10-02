@@ -298,6 +298,15 @@ export async function ledgerOwned(address) {
   return out;
 }
 
+// When an NFT was minted (unix seconds), from its first nft_history entry —
+// the H0NEYP0T page's BORN / AGE. null if Clio can't say.
+export async function ledgerMintTime(nftId) {
+  const res = await clio('nft_history', { nft_id: nftId, limit: 1, forward: true });
+  const t = res && res.transactions && res.transactions[0];
+  const tx = t && (t.tx || t.tx_json);
+  return tx && tx.date ? tx.date + 946684800 : null;
+}
+
 // /api/mint/nft/<id>/history, from Clio's nft_history: mint, sale (XRP
 // price when the offer was in XRP), transfer, oldest-last like Deeptide.
 export async function ledgerNftHistory(nftId) {
