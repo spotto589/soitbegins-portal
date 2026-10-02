@@ -5509,8 +5509,39 @@ const SWAP_HTML = `<!DOCTYPE html>
      art (P!GE0NS, TEDDY) already fills the box exactly with cover and
      shouldn't switch to contain and gain pointless letterboxing. */
   body.collection-phnixs .pigeon-img-box img{ object-fit:contain; }
-  /* H0NEYP0T art is landscape (2688x1536) — show it whole. */
+  /* H0NEYP0T art is wide (2688x1536, Phoenixes 16:9) — small square boxes
+     (offers, satchel, lists) show it whole... */
   body.collection-honeypotall .pigeon-img-box img, body.collection-honeypot .pigeon-img-box img, body.collection-honeyash .pigeon-img-box img, body.collection-honeyphoenix .pigeon-img-box img{ object-fit:contain; }
+  /* ...and the DATABASE gives it room (2026-10-03, owner: "make the nfts
+     2x wide... it needs to be displayed correctly"): cards twice as wide
+     (half the columns) with a 7:4 picture that fills edge to edge, in
+     THUMBNAILS, BOXED and the NFT's own page. */
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-list.view-thumbnails{ grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1rem; }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-list .pigeon-img-box,
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #detailImgBox{ aspect-ratio:7 / 4; }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-list .pigeon-img-box img,
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) #detailImgBox img{ object-fit:cover; }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-list:not(.view-thumbnails){ grid-template-columns:minmax(0, 1fr); }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-row.boxed-card{ grid-template-columns:528px minmax(0, 1fr); grid-template-rows:48px 302px auto; }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-img{ width:528px; height:302px; }
+  :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-traits{ height:302px; }
+  @media (max-width:1100px){
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-list.view-thumbnails{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    /* Tablet: picture + buttons down the left, the trait grid (as tall as
+       it needs) down the right. */
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-row.boxed-card{ grid-template-columns:350px minmax(0, 1fr); grid-template-rows:minmax(48px, auto) 200px auto auto; }
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-img{ width:350px; height:200px; }
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-traits{ grid-row:2 / span 2; height:auto; grid-auto-rows:86px; align-self:start; }
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-actions{ grid-row:3; align-self:start; }
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-bg{ grid-row:4; }
+  }
+  @media (max-width:700px){
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-list.view-thumbnails{ grid-template-columns:minmax(0, 1fr); }
+    /* BOXED on phones: stacked like every collection, picture full width. */
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .result-row.boxed-card{ grid-template-columns:minmax(0, 1fr); grid-template-rows:none; }
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-img{ width:100%; height:auto; }
+    :is(body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix) .boxed-card .bc-traits{ height:auto; }
+  }
   /* Hidden for now, not removed — the multi-select/TARGET BAR feature
      this "+" belongs to is coming back later; CSS-only so the JS
      wiring (card-select-toggle click handler, state.target, etc.) stays
@@ -15264,7 +15295,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // PH0EN!X (one issuer + taxon split by kind, see TRADEABLE_COLLECTIONS
     // in _shared.js). Honeypots + Ash trade in XRP only; Phoenixes also in
     // $PHN!X (same token as PHN!X).
-    honeypotall: { label: 'H0NEYP0T', itemLabel: 'H0NEYP0T', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'ALL', groupAll: true },
+    honeypotall: { label: 'H0NEYP0T', itemLabel: 'H0NEYP0T', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'ALL', groupAll: true, separateTraits: true },
     honeypot: { label: 'H0NEYP0T', itemLabel: 'H0NEYP0T', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'H0NEYP0TS' },
     honeyash: { label: 'ASH', itemLabel: 'ASH', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'ASH' },
     honeyphoenix: { label: 'PH0EN!X', itemLabel: 'PH0EN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: true, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'PH0EN!X', romanNumbers: true },
@@ -26780,7 +26811,11 @@ const SWAP_HTML = `<!DOCTYPE html>
   // BACKGROUND on its own (it always goes last / along the bottom).
   function detailTraitCells(attrs, itemKey){
     attrs = traitAttrsForView(attrs, itemKey || state.collection);
-    var cats = state.traitCategories ? Object.keys(state.traitCategories) : [];
+    // An ALL view over collections with different trait sets (H0NEYP0T:
+    // a Honeypot has no Eyes) shows each card's own traits only, not a NO
+    // box for every other collection's categories.
+    var viewMeta = COLLECTION_META[traitsViewKey()] || {};
+    var cats = (state.traitCategories && !(viewMeta.groupAll && viewMeta.separateTraits)) ? Object.keys(state.traitCategories) : [];
     attrs.forEach(function(a){ if (cats.indexOf(a.trait_type) === -1) cats.push(a.trait_type); });
     cats.sort(function(a, b){ return a.toLowerCase().localeCompare(b.toLowerCase()); });
     var cells = cats.map(function(cat){
