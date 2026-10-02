@@ -110,6 +110,9 @@ const COLLECTIONS = {
   // 3147 items (Deeptide's own total, 2026-09-27). XRP only (no token,
   // see TRADEABLE_COLLECTIONS.king in _shared.js).
   king: { key: 'king', shopSlug: 'king-thwncy', vanitySlug: 'king', xrpCafeUrl: 'https://xrp.cafe/collection/king', sizeApprox: 3147, tradeable: true },
+  // SH!TTY PANTHER CLUB — Deeptide shop + xrp.cafe collection
+  // shitty-panther-club, 6969 items (2026-10-02). XRP only, like K!NG.
+  panther: { key: 'panther', shopSlug: 'shitty-panther-club', vanitySlug: 'shitty-panther-club', xrpCafeUrl: 'https://xrp.cafe/collection/shitty-panther-club', sizeApprox: 6969, tradeable: true },
   // SEAL / FUZZY "ALL" views (2026-09-29): no shop of their own — every
   // request is answered by its member collections and merged (see
   // groupResponse). tokenMember answers token questions ($SEAL/$FUZZY).

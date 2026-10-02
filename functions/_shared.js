@@ -602,6 +602,19 @@ export const TRADEABLE_COLLECTIONS = {
     xrpOnly: true,
     deeptideShopSlug: 'king-thwncy',
     tradeable: true
+  },
+  // SH!TTY PANTHER CLUB (2026-10-02) — Deeptide shop + xrp.cafe collection
+  // shitty-panther-club, 6969 items, minted for XRP. No token, so it
+  // trades in XRP only, same as K!NG above.
+  panther: {
+    key: 'panther',
+    label: 'SH!TTY PANTHERS',
+    nftIssuer: 'rGnivxmi1yAu15Kou1nqt91ZxtXhkWB2iM',
+    nftTaxon: 0,
+    tokenConfig: { currency: null, issuer: null, configured: false },
+    xrpOnly: true,
+    deeptideShopSlug: 'shitty-panther-club',
+    tradeable: true
   }
 };
 // Does this collection have a real token of its own? (K!NG doesn't.)
@@ -5193,6 +5206,7 @@ const RARITY_SNAPSHOT_FILES = {
   teddybg: '/assets/rarity-data/teddybg-traits.json',
   fuzzybars: '/assets/rarity-data/fuzzybars-traits.json',
   conspiracy: '/assets/rarity-data/conspiracy-traits.json',
+  panther: '/assets/rarity-data/panther-traits.json',
   // Bear: a few of its IPFS files can't be fetched from any gateway that
   // still serves scripts (2026-09-29), so it stays on the crawl.
 };
@@ -6102,7 +6116,7 @@ const FLOOR_INDEX_CONCURRENT_GUARD_SECONDS = 10;
 // read straight off the ledger. K!NG added 2026-09-27 (XRP-only, so its
 // whole market is off-site listings). Pigeons keeps its original keys;
 // every other collection's are suffixed ':<key>' (kvKeyFor).
-export const FLOOR_INDEX_COLLECTIONS = ['pigeons', 'king', 'seal', 'sealscrolls', 'fuzzy', 'yzzuf', 'fuzzybars'];
+export const FLOOR_INDEX_COLLECTIONS = ['pigeons', 'king', 'seal', 'sealscrolls', 'fuzzy', 'yzzuf', 'fuzzybars', 'panther'];
 export function hasFloorIndex(collectionKey) {
   return FLOOR_INDEX_COLLECTIONS.indexOf(collectionKey || 'pigeons') !== -1;
 }

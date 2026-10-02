@@ -348,6 +348,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     --collection-accent-glow:rgba(242,183,5,0.4);
     --collection-accent-2-rgb:184,139,4;
   }
+  /* SH!TTY PANTHERS — the panthers' own hot-pink tongue. */
+  body.collection-panther{
+    --collection-accent:#ff2d9b;
+    --collection-accent-rgb:255,45,155;
+    --collection-accent-dim:rgba(255,45,155,0.4);
+    --collection-accent-glow:rgba(255,45,155,0.4);
+    --collection-accent-2-rgb:184,32,112;
+  }
   /* XRP-only collections (K!NG): nothing token-related to show — no
      token FL00R tile, no token tab in SALES H!ST0RY, no token balance
      SWAP. The banner shows the wallet's XRP balance instead. */
@@ -11093,6 +11101,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-cult .mainframe-card-art,
   .mainframe-card-smoki .mainframe-card-art{ background-position:center center; }
   .mainframe-card-king .mainframe-card-art{ background-position:center 48%; }
+  .mainframe-card-panther .mainframe-card-art{ background-position:center 35%; }
   .mainframe-card-enter{ display:block; text-align:center; text-decoration:none; }
   /* BEAR's badge specifically is a small circle with a lot of flat empty
      margin around it (unlike 3RD EYE/CULT/SM0K!'s own logos, which are
@@ -13266,6 +13275,18 @@ const SWAP_HTML = `<!DOCTYPE html>
               <a class="mainframe-card-buy mainframe-card-enter" href="/king">TRADES !N XRP</a>
             </div>
           </div>
+          <!-- SH!TTY PANTHERS — live, walk-in DATABASE, XRP only (same as K!NG). -->
+          <div class="mainframe-card mainframe-card-panther" data-collection="panther" role="button" tabindex="0" style="--card-accent:255,45,155; --card-art:url('/assets/mainframe/panther.webp?v=1');">
+            <div class="mainframe-card-art"></div>
+            <div class="mainframe-card-body">
+              <a class="mainframe-card-label-link" href="/panther">
+                <div class="mainframe-card-label">SH!TTY PANTHERS</div>
+                <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
+                <div class="mainframe-card-stats" id="mainframeStatsPanther"></div>
+              </a>
+              <a class="mainframe-card-buy mainframe-card-enter" href="/panther">TRADES !N XRP</a>
+            </div>
+          </div>
           <!-- $P!GE0NS is the only card you can click into for now (reported
                live) — PHN!X/TEDDY/SEAL/FUZZY/C0NSP!RACY all get the same
                greyed-out, C0M!NG S00N tape treatment and no
@@ -15214,6 +15235,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // _shared.js). tokenLabel 'XRP' so every label that names "the
     // currency" reads right; xrpOnly hides the token-only controls.
     king: { label: 'K!NG', itemLabel: 'K!NG', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'rKingAa11yp4eCuxVraesW2UAvz5THWNCy', hasAmm: false, accent: '#f2b705', accentRgb: '242,183,5', thumb: '/assets/cards/king.png' },
+    panther: { label: 'SH!TTY PANTHERS', itemLabel: 'PANTHER', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'rGnivxmi1yAu15Kou1nqt91ZxtXhkWB2iM', hasAmm: false, accent: '#ff2d9b', accentRgb: '255,45,155', thumb: '/assets/mainframe/panther.webp?v=1' },
     pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248', thumb: '/assets/mainframe/pigeons-coin.webp' },
     phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: true, accent: '#ff5a1f', accentRgb: '255,90,31', thumb: '/assets/mainframe/phnix.jpeg?v=2' },
     teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: true, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
@@ -24083,7 +24105,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // once PHN!X flipped to tradeable: meta.tradeable became true, so this
     // class never got added and the trustline banner stayed purple instead
     // of PHN!X's own real orange/red (#ff5a1f) — confirmed live.
-    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki', 'collection-king', 'collection-sealscrolls', 'collection-yzzuf', 'collection-fuzzybars', 'collection-sealall', 'collection-fuzzyall');
+    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki', 'collection-king', 'collection-panther', 'collection-sealscrolls', 'collection-yzzuf', 'collection-fuzzybars', 'collection-sealall', 'collection-fuzzyall');
     document.body.classList.toggle('collection-group-all', !!meta.groupAll);
     if (newCollection !== 'pigeons') document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
@@ -24480,7 +24502,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     { collection: 'bear', target: 'mainframeStatsBear', dexTarget: 'mainframeDexBear', hasShopSlug: true },
     { collection: 'cult', target: 'mainframeStatsCult', dexTarget: 'mainframeDexCult', hasShopSlug: true },
     { collection: 'smoki', target: 'mainframeStatsSmoki', dexTarget: 'mainframeDexSmoki', hasShopSlug: false },
-    { collection: 'king', target: 'mainframeStatsKing', dexTarget: null, hasShopSlug: true }
+    { collection: 'king', target: 'mainframeStatsKing', dexTarget: null, hasShopSlug: true },
+    { collection: 'panther', target: 'mainframeStatsPanther', dexTarget: null, hasShopSlug: true }
   ].forEach(function(cfg){
     Promise.all([
       cfg.hasShopSlug ? api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }) : Promise.resolve({}),
