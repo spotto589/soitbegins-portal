@@ -5,7 +5,8 @@
 // Starts from assets/honeypot/snapshot.json (scripts/honeypot-snapshot.mjs)
 // and reads only the issuer's ledger history after snapshot.lastLedger, so
 // new mints and burns show up within a minute without any KV writes.
-import { fetchXrplClusterJson, fetchIpfs, proxyIpfsImage } from '../_shared.js';
+import { fetchXrplClusterJson, fetchIpfs } from '../_shared.js';
+import { imageUrl } from '../_ledgershop.js';
 import { HONEYPOT_ISSUER, HONEYPOT_ISSUER_HEX, HONEYPOT_TAXON, HONEYPOT_TO_ASH, HONEYPOT_SPECIAL, ASH_TO_HONEYPOT, toRoman, honeypotKind, canonicalIpfs } from '../_honeypot.js';
 
 const RIPPLE_EPOCH = 946684800;
@@ -132,7 +133,7 @@ async function buildBurns(context) {
       kind: m ? k.kind : 'unknown',
       num: k.num,
       traits: m ? m.attributes : [],
-      image: m && m.image ? proxyIpfsImage(m.image) : null,
+      image: m && m.image ? imageUrl(m.image) : null,
       chain: m ? chainFor(k.kind, k.num) : null
     };
   });

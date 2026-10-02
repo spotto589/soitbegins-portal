@@ -12,6 +12,9 @@
 // into three "shops" by name: Honeypots (plus one-offs like Sweet Honey),
 // Ashes and Phoenixes. Burned NFTs are left out — they're on /honeypot/burns.
 import snapshot from '../assets/honeypot/snapshot.json';
+// Web-sized copies of every picture (scripts/honeypot-images.py) —
+// Phoenix originals are 3844px / up to 10 MB, too heavy to proxy per card.
+import siteImages from '../assets/honeypot/images.json';
 import { HONEYPOT_ISSUER, HONEYPOT_ISSUER_HEX, HONEYPOT_TAXON, honeypotKind, canonicalIpfs } from './_honeypot.js';
 
 // shop slug -> which kinds it holds
@@ -129,8 +132,11 @@ function hexToUtf8(hex) {
   return new TextDecoder().decode(bytes);
 }
 
-function imageUrl(ipfsUrl) {
-  return ipfsUrl ? IMAGE_PROXY + encodeURIComponent(ipfsUrl) : null;
+// The site's own copy when there is one, else the IPFS proxy (a mint
+// newer than the last images run).
+export function imageUrl(ipfsUrl) {
+  if (!ipfsUrl) return null;
+  return siteImages[ipfsUrl] ? 'https://soitbegins.xyz' + siteImages[ipfsUrl] : IMAGE_PROXY + encodeURIComponent(ipfsUrl);
 }
 
 // One shop's live items, with rarity: each item's score is the sum of

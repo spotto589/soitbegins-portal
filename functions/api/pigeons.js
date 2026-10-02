@@ -9,6 +9,7 @@ import { marketListingsFromOffers, marketMeta,
   getCachedCrownHolder, getCollectionHolders, maybeRefreshCollectionHolders, RARITY_GROUPS, REVERSED_TRAIT_COLLECTIONS, reverseTraitText, rarityGroupOf, maybeRescoreGroupRarity, loadGroupPool, poolItemMatches, noTraitFilterLabel, traitCategoryKey, mapWithConcurrency, getProfilesMap, safeKvPut, getTraitIndexMap,
   fetchRecentAccountTxCached, fetchTopTokenHolders, fetchCoinStats, getCoinHistory, fetchGeckoCoinHistory, fetchXrpUsdDailyCloses, fetchTokenSupply, fetchNftDetails, COLLECTION_DESCRIPTIONS
 } from '../_shared.js';
+import { imageUrl as honeypotImageUrl } from '../_ledgershop.js';
 
 // Deeptide's own item page — the real place to buy a listed Pigeon.
 function deeptideBuyUrl(nftId) {
@@ -137,6 +138,10 @@ function resolveCollection(params) {
 // scope IPFS fallback) need the same-origin proxy (see ipfs-image.js).
 function displayImage(url) {
   if (!url) return null;
+  // H0NEYP0T links cached before the site had its own web-sized copies
+  // (crawl maps last 6h) -> the copy (see imageUrl in _ledgershop.js).
+  const proxied = /^https:\/\/soitbegins\.xyz\/api\/ipfs-image\?src=(.+)$/.exec(url);
+  if (proxied) return honeypotImageUrl(decodeURIComponent(proxied[1]));
   return url.startsWith('https://ipfs.io/') ? proxyIpfsImage(url) : url;
 }
 
