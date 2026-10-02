@@ -1,5 +1,9 @@
-// soitbegins.xyz/honeypot — nothing to browse here yet, so it goes straight
-// to the burn list. See ./honeypot/burns.js.
+// Pretty link: soitbegins.xyz/honeypot — the H0NEYP0T database (ALL view:
+// Honeypots, Ash and Phoenixes together; switch to one kind at the top).
+// /honeypot/burns is the burn list (./honeypot/burns.js). See renderSwap in
+// ./static.js.
+import { renderSwap } from './static.js';
+
 export async function onRequestGet(context) {
-  return Response.redirect(new URL('/honeypot/burns', context.request.url).toString(), 302);
+  return renderSwap(context, 'honeypotall');
 }

@@ -142,7 +142,7 @@ function renderBurnsPage() {
 <body>
 <canvas id="staticCanvas"></canvas>
 <div class="topbar"><div class="topbar-in">
-  <a class="back" href="/static">← Σκύλλα</a>
+  <a class="back" href="/honeypot">← H0NEYP0T</a>
   <span class="topbar-title">B U R N S</span>
   <span class="topbar-live" id="liveNote">READ!NG THE LEDGER…</span>
 </div></div>

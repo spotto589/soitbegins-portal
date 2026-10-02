@@ -356,6 +356,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     --collection-accent-glow:rgba(255,45,155,0.4);
     --collection-accent-2-rgb:184,32,112;
   }
+  /* H0NEYP0T — honey gold, for the whole database (Honeypots, Ash, Phoenixes). */
+  body.collection-honeypotall, body.collection-honeypot, body.collection-honeyash, body.collection-honeyphoenix{
+    --collection-accent:#ffb000;
+    --collection-accent-rgb:255,176,0;
+    --collection-accent-dim:rgba(255,176,0,0.4);
+    --collection-accent-glow:rgba(255,176,0,0.4);
+    --collection-accent-2-rgb:196,120,0;
+  }
   /* XRP-only collections (K!NG): nothing token-related to show — no
      token FL00R tile, no token tab in SALES H!ST0RY, no token balance
      SWAP. The banner shows the wallet's XRP balance instead. */
@@ -5501,6 +5509,8 @@ const SWAP_HTML = `<!DOCTYPE html>
      art (P!GE0NS, TEDDY) already fills the box exactly with cover and
      shouldn't switch to contain and gain pointless letterboxing. */
   body.collection-phnixs .pigeon-img-box img{ object-fit:contain; }
+  /* H0NEYP0T art is landscape (2688x1536) — show it whole. */
+  body.collection-honeypotall .pigeon-img-box img, body.collection-honeypot .pigeon-img-box img, body.collection-honeyash .pigeon-img-box img, body.collection-honeyphoenix .pigeon-img-box img{ object-fit:contain; }
   /* Hidden for now, not removed — the multi-select/TARGET BAR feature
      this "+" belongs to is coming back later; CSS-only so the JS
      wiring (card-select-toggle click handler, state.target, etc.) stays
@@ -11102,6 +11112,7 @@ const SWAP_HTML = `<!DOCTYPE html>
   .mainframe-card-smoki .mainframe-card-art{ background-position:center center; }
   .mainframe-card-king .mainframe-card-art{ background-position:center 48%; }
   .mainframe-card-panther .mainframe-card-art{ background-position:center 35%; }
+  .mainframe-card-honeypot .mainframe-card-art{ background-position:42% 58%; }
   .mainframe-card-enter{ display:block; text-align:center; text-decoration:none; }
   /* BEAR's badge specifically is a small circle with a lot of flat empty
      margin around it (unlike 3RD EYE/CULT/SM0K!'s own logos, which are
@@ -13287,6 +13298,19 @@ const SWAP_HTML = `<!DOCTYPE html>
               <a class="mainframe-card-buy mainframe-card-enter" href="/panther">TRADES !N XRP</a>
             </div>
           </div>
+          <!-- H0NEYP0T — live, walk-in DATABASE: ALL / H0NEYP0TS / ASH / PH0EN!X.
+               Honeypots + Ash trade in XRP; Phoenixes in XRP or $PHN!X. -->
+          <div class="mainframe-card mainframe-card-honeypot" data-collection="honeypotall" role="button" tabindex="0" style="--card-accent:255,176,0; --card-art:url('/assets/mainframe/honeypot.webp?v=1');">
+            <div class="mainframe-card-art"></div>
+            <div class="mainframe-card-body">
+              <a class="mainframe-card-label-link" href="/honeypot">
+                <div class="mainframe-card-label">H0NEYP0T</div>
+                <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
+                <div class="mainframe-card-stats" id="mainframeStatsHoneypot"></div>
+              </a>
+              <a class="mainframe-card-buy mainframe-card-enter mainframe-card-out" href="/honeypot/burns">S33 THE BURNS</a>
+            </div>
+          </div>
           <!-- $P!GE0NS is the only card you can click into for now (reported
                live) — PHN!X/TEDDY/SEAL/FUZZY/C0NSP!RACY all get the same
                greyed-out, C0M!NG S00N tape treatment and no
@@ -15236,6 +15260,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // currency" reads right; xrpOnly hides the token-only controls.
     king: { label: 'K!NG', itemLabel: 'K!NG', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'rKingAa11yp4eCuxVraesW2UAvz5THWNCy', hasAmm: false, accent: '#f2b705', accentRgb: '242,183,5', thumb: '/assets/cards/king.png' },
     panther: { label: 'SH!TTY PANTHERS', itemLabel: 'PANTHER', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'rGnivxmi1yAu15Kou1nqt91ZxtXhkWB2iM', hasAmm: false, accent: '#ff2d9b', accentRgb: '255,45,155', thumb: '/assets/mainframe/panther.webp?v=1' },
+    // H0NEYP0T (2026-10-02) — one database, switch ALL / H0NEYP0TS / ASH /
+    // PH0EN!X (one issuer + taxon split by kind, see TRADEABLE_COLLECTIONS
+    // in _shared.js). Honeypots + Ash trade in XRP only; Phoenixes also in
+    // $PHN!X (same token as PHN!X).
+    honeypotall: { label: 'H0NEYP0T', itemLabel: 'H0NEYP0T', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'ALL', groupAll: true },
+    honeypot: { label: 'H0NEYP0T', itemLabel: 'H0NEYP0T', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'H0NEYP0TS' },
+    honeyash: { label: 'ASH', itemLabel: 'ASH', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'ASH' },
+    honeyphoenix: { label: 'PH0EN!X', itemLabel: 'PH0EN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: true, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'PH0EN!X', romanNumbers: true },
     pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248', thumb: '/assets/mainframe/pigeons-coin.webp' },
     phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: true, accent: '#ff5a1f', accentRgb: '255,90,31', thumb: '/assets/mainframe/phnix.jpeg?v=2' },
     teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: true, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
@@ -16946,7 +16978,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     if (targetPigeon){
       el.targetPigeonCard.style.display = '';
       el.targetPigeonImg.innerHTML = targetPigeon.image ? '<img src="' + escapeHtml(targetPigeon.image) + '" alt="">' : 'IMAGE';
-      el.targetPigeonNum.innerHTML = targetPigeon.number !== null ? collectionItemLabel() + ' #' +greenNum(targetPigeon.number) : (targetPigeon.name ? collectionItemLabel() + ' ' + escapeHtml(targetPigeon.name) : collectionItemLabel() + ' ...');
+      el.targetPigeonNum.innerHTML = targetPigeon.number !== null ? collectionItemLabel() + ' ' + itemNumberLabel(targetPigeon) : (targetPigeon.name ? collectionItemLabel() + ' ' + escapeHtml(targetPigeon.name) : collectionItemLabel() + ' ...');
       el.targetPigeonOwner.textContent = state.scope.ownerShort;
     } else {
       el.targetPigeonCard.style.display = 'none';
@@ -24078,8 +24110,18 @@ const SWAP_HTML = `<!DOCTYPE html>
   // meaningless "#????". withHash controls whether a resolved number
   // gets a leading "#" (every card/label site wants it) since a bare name
   // like "GOLDEN PHN!X" shouldn't get one glued on the front.
+  // H0NEYP0T Phoenixes are named in Roman numerals (Phoenix | CCCXL =
+  // Honeypot #340) — shown that way, still searched/linked by number.
+  function romanNumeral(n){
+    var r = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+    var out = '';
+    for (var i = 0; i < r.length; i++){ while (n >= r[i][0]){ out += r[i][1]; n -= r[i][0]; } }
+    return out;
+  }
   function itemNumberLabel(p, withHash){
     if (withHash === undefined) withHash = true;
+    var rkey = (p && p.collectionKey) || state.collection;
+    if (p && p.number > 0 && COLLECTION_META[rkey] && COLLECTION_META[rkey].romanNumbers) return (withHash ? '| ' : '') + greenNum(romanNumeral(p.number));
     if (p && p.number !== null && p.number !== undefined) return (withHash ? '#' : '') + greenNum(p.number);
     if (p && p.name) return escapeHtml(p.name);
     return withHash ? '#????' : '????';
@@ -24105,7 +24147,7 @@ const SWAP_HTML = `<!DOCTYPE html>
     // once PHN!X flipped to tradeable: meta.tradeable became true, so this
     // class never got added and the trustline banner stayed purple instead
     // of PHN!X's own real orange/red (#ff5a1f) — confirmed live.
-    document.body.classList.remove('collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki', 'collection-king', 'collection-panther', 'collection-sealscrolls', 'collection-yzzuf', 'collection-fuzzybars', 'collection-sealall', 'collection-fuzzyall');
+    document.body.classList.remove('collection-honeypotall', 'collection-honeypot', 'collection-honeyash', 'collection-honeyphoenix', 'collection-phnixs', 'collection-teddybg', 'collection-seal', 'collection-fuzzy', 'collection-conspiracy', 'collection-whiterabbit', 'collection-thirdeye', 'collection-bear', 'collection-cult', 'collection-smoki', 'collection-king', 'collection-panther', 'collection-sealscrolls', 'collection-yzzuf', 'collection-fuzzybars', 'collection-sealall', 'collection-fuzzyall');
     document.body.classList.toggle('collection-group-all', !!meta.groupAll);
     if (newCollection !== 'pigeons') document.body.classList.add('collection-' + newCollection);
     document.body.classList.toggle('collection-browse-only', !meta.tradeable);
@@ -24254,7 +24296,9 @@ const SWAP_HTML = `<!DOCTYPE html>
     // already happens on click; just stop it from ALSO bubbling into the
     // card's own enterMainframeCollection below (same double-fire issue
     // BUY has, see its own comment above).
-    if (e.target.closest('.mainframe-card-dex-link')){
+    // .mainframe-card-out: a card's own outbound link (H0NEYP0T's BURNS) —
+    // a real page of its own, not this card's database.
+    if (e.target.closest('.mainframe-card-dex-link, .mainframe-card-out')){
       e.stopPropagation();
       return;
     }
@@ -24503,7 +24547,8 @@ const SWAP_HTML = `<!DOCTYPE html>
     { collection: 'cult', target: 'mainframeStatsCult', dexTarget: 'mainframeDexCult', hasShopSlug: true },
     { collection: 'smoki', target: 'mainframeStatsSmoki', dexTarget: 'mainframeDexSmoki', hasShopSlug: false },
     { collection: 'king', target: 'mainframeStatsKing', dexTarget: null, hasShopSlug: true },
-    { collection: 'panther', target: 'mainframeStatsPanther', dexTarget: null, hasShopSlug: true }
+    { collection: 'panther', target: 'mainframeStatsPanther', dexTarget: null, hasShopSlug: true },
+    { collection: 'honeypotall', target: 'mainframeStatsHoneypot', dexTarget: null, hasShopSlug: true }
   ].forEach(function(cfg){
     Promise.all([
       cfg.hasShopSlug ? api({ stats: 1, collection: cfg.collection }).catch(function(){ return {}; }) : Promise.resolve({}),
@@ -27398,7 +27443,7 @@ const SWAP_HTML = `<!DOCTYPE html>
       if (state.groupAllReturn) state.collection = known.collectionKey;
     }
     syncTraitFlipButtons();
-    el.detailNum.innerHTML = known && known.number !== null ? collectionItemLabel() + ' #' +greenNum(known.number) : (known && known.name ? collectionItemLabel() + ' ' + escapeHtml(known.name) : collectionItemLabel() + ' ...');
+    el.detailNum.innerHTML = known && known.number !== null ? collectionItemLabel() + ' ' + itemNumberLabel(known) : (known && known.name ? collectionItemLabel() + ' ' + escapeHtml(known.name) : collectionItemLabel() + ' ...');
     el.detailImgBox.innerHTML = known && known.image ? '<img src="' + escapeHtml(known.image) + '" alt="">' : 'IMAGE';
     // Keep the fullscreen lightbox's own picture in sync when PREV/NEXT is
     // used from inside it (see navigateDetail's lightbox branch below) —
@@ -27451,7 +27496,7 @@ const SWAP_HTML = `<!DOCTYPE html>
         var lateHref = nftHrefFor(p);
         if (lateHref) history.replaceState({ skyllaNav: true }, '', lateHref);
       }
-      el.detailNum.innerHTML = p.number !== null ? collectionItemLabel() + ' #' +greenNum(p.number) : (p.name ? collectionItemLabel() + ' ' + escapeHtml(p.name) : collectionItemLabel() + ' ...');
+      el.detailNum.innerHTML = p.number !== null ? collectionItemLabel() + ' ' + itemNumberLabel(p) : (p.name ? collectionItemLabel() + ' ' + escapeHtml(p.name) : collectionItemLabel() + ' ...');
       el.detailImgBox.innerHTML = p.image ? '<img src="' + escapeHtml(p.image) + '" alt="">' : 'IMAGE';
       el.detailTraits.innerHTML = detailTraitsHtml(p.attributes);
       updateDetailRarity(p);

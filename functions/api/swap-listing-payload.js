@@ -5,7 +5,8 @@ import {
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds,
   computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET, recordPendingListing, signToken,
   normalizeOfferCurrency, isValidXrpValue, buildOfferAmount, feeBasisPointsFor,
-  fetchNftSellOffersOrNull, findCollectionOffer
+  fetchNftSellOffersOrNull, findCollectionOffer,
+  nftInCollection
 } from '../_shared.js';
 
 // Σκύλλα SWAP — first real listing test. Re-derives and re-validates the
@@ -86,7 +87,7 @@ export async function onRequestPost(context) {
   if (!nft) {
     return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
   }
-  if (nft.Issuer !== cfg.nftIssuer || nft.NFTokenTaxon !== cfg.nftTaxon) {
+  if (!nftInCollection(cfg, nft)) {
     return new Response(JSON.stringify({ error: 'not_a_pigeon' }), { status: 400 });
   }
   if (!isTransferable(nft)) {

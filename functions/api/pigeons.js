@@ -113,6 +113,15 @@ const COLLECTIONS = {
   // SH!TTY PANTHER CLUB — Deeptide shop + xrp.cafe collection
   // shitty-panther-club, 6969 items (2026-10-02). XRP only, like K!NG.
   panther: { key: 'panther', shopSlug: 'shitty-panther-club', vanitySlug: 'shitty-panther-club', xrpCafeUrl: 'https://xrp.cafe/collection/shitty-panther-club', sizeApprox: 6969, tradeable: true },
+  // H0NEYP0T (2026-10-02) — Honeypots / Ashes / Phoenixes, one issuer and
+  // taxon split by kind. Shop slugs are ledger shops (_ledgershop.js), not
+  // Deeptide. Sizes = live (unburned) counts on 2026-10-02. No vanitySlug:
+  // xrp.cafe only has stats for all three kinds together, so holders come
+  // from our own per-kind holder scan and the floor from the floor index.
+  honeypot: { key: 'honeypot', shopSlug: 'scylla-honeypot', vanitySlug: null, xrpCafeUrl: 'https://xrp.cafe/collection/soitbegins', sizeApprox: 358, tradeable: true },
+  honeyash: { key: 'honeyash', shopSlug: 'scylla-honeypot-ash', vanitySlug: null, xrpCafeUrl: 'https://xrp.cafe/collection/soitbegins', sizeApprox: 58, tradeable: true },
+  honeyphoenix: { key: 'honeyphoenix', shopSlug: 'scylla-honeypot-phoenix', vanitySlug: null, xrpCafeUrl: 'https://xrp.cafe/collection/soitbegins', sizeApprox: 27, tradeable: true },
+  honeypotall: { key: 'honeypotall', members: ['honeypot', 'honeyash', 'honeyphoenix'], tokenMember: 'honeypot', shopSlug: null, vanitySlug: null, xrpCafeUrl: null, sizeApprox: 443, tradeable: true },
   // SEAL / FUZZY "ALL" views (2026-09-29): no shop of their own — every
   // request is answered by its member collections and merged (see
   // groupResponse). tokenMember answers token questions ($SEAL/$FUZZY).
@@ -992,7 +1001,7 @@ async function handleGet(context) {
     // $PIGEONS' own holder count on a different collection's tile.
     const [deeptideFloor, xrpCafeStats, crownSnapshot, recentSales, floorIndexForStats] = await Promise.all([
       fetchDeeptideRealFloor(coll.shopSlug, env.coin),
-      fetchXrpCafeCollectionStats(env.coin, coll.vanitySlug),
+      coll.vanitySlug ? fetchXrpCafeCollectionStats(env.coin, coll.vanitySlug) : Promise.resolve(null),
       // Crown is a $PIGEONS-only feature (its own holder-tracking crawl is
       // keyed to PIGEON_ISSUER/PIGEON_TAXON specifically, see its own
       // comment above) — fetching it for any other collection was
@@ -1004,6 +1013,8 @@ async function handleGet(context) {
       // index the L0WEST (XRP) sort reads) — Pigeons-only, like the index.
       hasFloorIndex(coll.key) && env.coin ? getFloorIndex(env.coin, coll.key).catch(() => null) : Promise.resolve(null)
     ]);
+    // H0NEYP0T kinds: holders from our own ledger scan (see above).
+    const ownHolders = (!coll.vanitySlug && env.coin) ? await getCollectionHolders(env.coin, coll.key).catch(() => null) : null;
     // XRP FL00R (banner, 2026-09-25): the lowest XRP listing anywhere.
     const xrpFloorCandidates = [
       deeptideFloor ? deeptideFloor.priceDrops / 1000000 : null,
@@ -1030,7 +1041,7 @@ async function handleGet(context) {
       // Crown hasn't computed a snapshot yet.
       holders: coll.key === 'pigeons'
         ? (crownSnapshot ? crownSnapshot.holderCount : (xrpCafeStats ? xrpCafeStats.holders : null))
-        : (xrpCafeStats ? xrpCafeStats.holders : null),
+        : (xrpCafeStats ? xrpCafeStats.holders : (ownHolders ? ownHolders.holderCount : null)),
       xrpFloorXrp,
       deeptideFloorXrp: deeptideFloor ? deeptideFloor.priceDrops / 1000000 : null,
       deeptideBuyUrl: deeptideFloor ? deeptideBuyUrl(deeptideFloor.nftId) : null,

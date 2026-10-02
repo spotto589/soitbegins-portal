@@ -4,7 +4,8 @@ import {
   encodeCurrencyCode, swapOfferSourceMemo, computeMarketplaceMarkup, MARKETPLACE_BROKER_WALLET,
   LISTING_DURATION_DAYS_ALLOWED, DEFAULT_LISTING_DURATION_DAYS, listingExpirationRippleSeconds,
   fetchNftSellOffersOrNull, findCollectionOffer,
-  normalizeOfferCurrency, isValidXrpValue, buildOfferAmount, feeBasisPointsFor
+  normalizeOfferCurrency, isValidXrpValue, buildOfferAmount, feeBasisPointsFor,
+  nftInCollection
 } from '../_shared.js';
 
 // Σκύλλα SWAP — LIST. This endpoint only builds and returns the exact
@@ -89,7 +90,7 @@ export async function onRequestPost(context) {
   if (!nft) {
     return new Response(JSON.stringify({ error: 'not_owned' }), { status: 403 });
   }
-  if (nft.Issuer !== cfg.nftIssuer || nft.NFTokenTaxon !== cfg.nftTaxon) {
+  if (!nftInCollection(cfg, nft)) {
     return new Response(JSON.stringify({ error: 'not_a_pigeon' }), { status: 400 });
   }
   if (!isTransferable(nft)) {

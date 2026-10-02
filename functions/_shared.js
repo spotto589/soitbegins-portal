@@ -1,3 +1,5 @@
+import { isLedgerShop, isHoneypotNftId, honeypotKindOfId, ledgerListings, ledgerTraitCards, ledgerNftDetail, ledgerNftHistory, ledgerOwned } from './_ledgershop.js';
+
 export const COOKIE_NAME = 'glitch_access';
 export const BOARD_COOKIE_NAME = 'pigeon_session';
 export const KINGDOM_COOKIE_NAME = 'kingdom_session';
@@ -376,7 +378,13 @@ export function findAllPigeons(nfts) {
 export function findAllCollectionNfts(nfts, collectionKey) {
   const cfg = getTradeConfig(collectionKey);
   if (!cfg) return [];
-  return nfts.filter(n => n.Issuer === cfg.nftIssuer && n.NFTokenTaxon === cfg.nftTaxon);
+  return nfts.filter(n => nftInCollection(cfg, n));
+}
+// Issuer + taxon, plus — for H0NEYP0T, whose Honeypots, Ashes and
+// Phoenixes share one issuer/taxon — the right kind (see _ledgershop.js).
+export function nftInCollection(cfg, nft) {
+  if (!cfg || !nft || nft.Issuer !== cfg.nftIssuer || nft.NFTokenTaxon !== cfg.nftTaxon) return false;
+  return !cfg.ledgerKinds || cfg.ledgerKinds.includes(honeypotKindOfId(nft.NFTokenID));
 }
 
 // ── Σκύλλα SWAP: first real listing test ──────────────────────────────────
@@ -615,6 +623,44 @@ export const TRADEABLE_COLLECTIONS = {
     xrpOnly: true,
     deeptideShopSlug: 'shitty-panther-club',
     tradeable: true
+  },
+  // H0NEYP0T (2026-10-02) — the owner's own collection. Honeypots, Ashes and
+  // Phoenixes share one issuer + taxon (a Honeypot burns into an Ash, an Ash
+  // into a Phoenix, see _honeypot.js), split here by kind (ledgerKinds) into
+  // three collections under one H0NEYP0T database. Not on Deeptide, so the
+  // shop slugs are ledger shops answered by _ledgershop.js. Honeypots and
+  // Ashes trade in XRP only; Phoenixes also in $PHN!X.
+  honeypot: {
+    key: 'honeypot',
+    label: 'H0NEYP0TS',
+    nftIssuer: HONEYPOT_ISSUER,
+    nftTaxon: HONEYPOT_TAXON,
+    ledgerKinds: ['honeypot', 'other'],
+    tokenConfig: { currency: null, issuer: null, configured: false },
+    xrpOnly: true,
+    deeptideShopSlug: 'scylla-honeypot',
+    tradeable: true
+  },
+  honeyash: {
+    key: 'honeyash',
+    label: 'ASH',
+    nftIssuer: HONEYPOT_ISSUER,
+    nftTaxon: HONEYPOT_TAXON,
+    ledgerKinds: ['ash'],
+    tokenConfig: { currency: null, issuer: null, configured: false },
+    xrpOnly: true,
+    deeptideShopSlug: 'scylla-honeypot-ash',
+    tradeable: true
+  },
+  honeyphoenix: {
+    key: 'honeyphoenix',
+    label: 'PH0EN!X',
+    nftIssuer: HONEYPOT_ISSUER,
+    nftTaxon: HONEYPOT_TAXON,
+    ledgerKinds: ['phoenix'],
+    tokenConfig: { currency: 'PHNIX', issuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', configured: true },
+    deeptideShopSlug: 'scylla-honeypot-phoenix',
+    tradeable: true
   }
 };
 // Does this collection have a real token of its own? (K!NG doesn't.)
@@ -699,11 +745,13 @@ function txHasScyllaMemo(tx) {
 // Matches a mint's own real Issuer(-or-Account)+NFTokenTaxon fields — the
 // exact same issuer/taxon pair findAllCollectionNfts already filters live
 // holdings by — against every configured collection.
-function collectionKeyForIssuerTaxon(issuer, taxon) {
+function collectionKeyForIssuerTaxon(issuer, taxon, nftId) {
   if (!issuer || taxon === undefined || taxon === null) return null;
   for (const key of Object.keys(TRADEABLE_COLLECTIONS)) {
     const cfg = TRADEABLE_COLLECTIONS[key];
-    if (cfg.nftIssuer === issuer && cfg.nftTaxon === taxon) return key;
+    if (cfg.nftIssuer !== issuer || cfg.nftTaxon !== taxon) continue;
+    if (cfg.ledgerKinds && nftId && !cfg.ledgerKinds.includes(honeypotKindOfId(nftId))) continue;
+    return key;
   }
   return null;
 }
@@ -2779,7 +2827,7 @@ async function fetchAllPigeonOwners() {
 const COLLECTION_HOLDERS_KEY = 'pswap:holders:v1';
 const COLLECTION_HOLDERS_LOCK_KEY = 'pswap:holderslock:v1';
 const COLLECTION_HOLDERS_STALE_SECONDS = 1800;
-async function fetchAllCollectionOwners(issuer, taxon) {
+async function fetchAllCollectionOwners(issuer, taxon, ledgerKinds) {
   const counts = new Map();
   let marker;
   do {
@@ -2796,6 +2844,7 @@ async function fetchAllCollectionOwners(issuer, taxon) {
     for (const nft of result.nfts || []) {
       // The issuer's own unsold stock isn't a holder.
       if (nft.is_burned || !nft.owner || nft.owner === issuer) continue;
+      if (ledgerKinds && !ledgerKinds.includes(honeypotKindOfId(nft.nft_id))) continue;
       counts.set(nft.owner, (counts.get(nft.owner) || 0) + 1);
     }
     marker = result.marker;
@@ -2817,7 +2866,7 @@ export async function maybeRefreshCollectionHolders(kv, collectionKey) {
   if (lock && now - Number(lock) < 300) return existing;
   await safeKvPut(kv, lockKey, String(now), { expirationTtl: 300 });
   try {
-    const counts = await fetchAllCollectionOwners(cfg.nftIssuer, cfg.nftTaxon);
+    const counts = await fetchAllCollectionOwners(cfg.nftIssuer, cfg.nftTaxon, cfg.ledgerKinds);
     const topHolders = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 123).map(([wallet, count]) => ({ wallet, count }));
     // Rarest-held picture for the top 15 (same as the Crown scan's).
     await Promise.all(topHolders.slice(0, 15).map(async (h) => {
@@ -3594,9 +3643,10 @@ function deeptideListingsUrl(shopSlug) {
 
 async function fetchDeeptideOwnedPigeons(address, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
   try {
-    const res = await fetch(`${DEEPTIDE_API_BASE}/api/mint/owned?address=${encodeURIComponent(address)}`);
-    if (!res.ok) return [];
-    const items = await res.json();
+    // H0NEYP0T isn't on Deeptide — its holdings come off the ledger.
+    const res = isLedgerShop(shopSlug) ? null : await fetch(`${DEEPTIDE_API_BASE}/api/mint/owned?address=${encodeURIComponent(address)}`);
+    if (res && !res.ok) return [];
+    const items = res ? await res.json() : await ledgerOwned(address);
     if (!Array.isArray(items)) return [];
     return items
       .filter(it => it.shopSlug === shopSlug)
@@ -3604,7 +3654,7 @@ async function fetchDeeptideOwnedPigeons(address, shopSlug = DEEPTIDE_PIGEON_SHO
         const match = it.name ? String(it.name).match(/(\d+)/) : null;
         return {
           nftId: it.nftTokenId,
-          number: match ? parseInt(match[1], 10) : null,
+          number: 'number' in it ? it.number : match ? parseInt(match[1], 10) : null,
           // See deeptideListingToPigeon's own comment on the uniquely-
           // named-item fallback — same reasoning for a wallet's own
           // holdings (SH0W MY NFTs/FL0CK).
@@ -3690,7 +3740,9 @@ function deeptideListingToPigeon(it) {
   const match = it.name ? String(it.name).match(/(\d+)/) : null;
   return {
     nftId: it.nftTokenId,
-    number: match ? parseInt(match[1], 10) : null,
+    // A ledger shop (H0NEYP0T) says its number outright — Phoenix names
+    // carry it in Roman numerals, which the digits match can't read.
+    number: 'number' in it ? it.number : match ? parseInt(match[1], 10) : null,
     // Deeptide's own raw display name — kept alongside `number` (not just
     // the regex-extracted digits) for collections with a handful of
     // uniquely-named items mixed into an otherwise "COLLECTION123"-named
@@ -3728,9 +3780,9 @@ export async function fetchDeeptideListings({ skip = 0, limit = 36, sort = 'rari
     params.set('traits', JSON.stringify(traits.map(f => ({ trait_type: f.trait, value: f.value }))));
   }
   try {
-    const res = await fetch(`${deeptideListingsUrl(shopSlug)}?${params.toString()}`);
-    if (!res.ok) return { items: [], total: 0, hasMore: false };
-    const data = await res.json();
+    const res = isLedgerShop(shopSlug) ? null : await fetch(`${deeptideListingsUrl(shopSlug)}?${params.toString()}`);
+    if (res && !res.ok) return { items: [], total: 0, hasMore: false };
+    const data = res ? await res.json() : await ledgerListings(shopSlug, { skip: Math.max(0, skip), limit: Math.min(Math.max(1, limit), DEEPTIDE_LISTINGS_MAX_LIMIT), sort, traits });
     return {
       items: (data.items || []).map(deeptideListingToPigeon),
       total: typeof data.total === 'number' ? data.total : 0,
@@ -3747,9 +3799,11 @@ export async function fetchDeeptideListings({ skip = 0, limit = 36, sort = 'rari
 // and for resolving a number-search hit to current data.
 export async function fetchDeeptideNftDetail(nftId) {
   try {
-    const res = await fetch(`${DEEPTIDE_API_BASE}/api/mint/nft/${encodeURIComponent(nftId)}`);
-    if (!res.ok) return null;
-    const d = await res.json();
+    const ledger = isHoneypotNftId(nftId);
+    const res = ledger ? null : await fetch(`${DEEPTIDE_API_BASE}/api/mint/nft/${encodeURIComponent(nftId)}`);
+    if (res && !res.ok) return null;
+    const d = res ? await res.json() : await ledgerNftDetail(nftId);
+    if (!d) return null;
     const listing = d.listing || {};
     const match = listing.name ? String(listing.name).match(/(\d+)/) : null;
     // `destination` on a sell offer is NOT a private targeted-buyer offer
@@ -3764,7 +3818,7 @@ export async function fetchDeeptideNftDetail(nftId) {
       .filter(n => !isNaN(n));
     return {
       nftId: d.tokenId || nftId,
-      number: match ? parseInt(match[1], 10) : null,
+      number: 'number' in listing ? listing.number : match ? parseInt(match[1], 10) : null,
       // See deeptideListingToPigeon's own comment — same real-name
       // fallback for a uniquely-named item (no digits for `number` to
       // match), kept here too since INSPECT/number-search both resolve
@@ -3880,9 +3934,9 @@ export async function fetchDeeptideRealFloor(shopSlug = DEEPTIDE_PIGEON_SHOP_SLU
 // per-Pigeon sales history.
 export async function fetchDeeptideNftHistory(nftId) {
   try {
-    const res = await fetch(`${DEEPTIDE_API_BASE}/api/mint/nft/${encodeURIComponent(nftId)}/history`);
-    if (!res.ok) return [];
-    const d = await res.json();
+    const res = isHoneypotNftId(nftId) ? null : await fetch(`${DEEPTIDE_API_BASE}/api/mint/nft/${encodeURIComponent(nftId)}/history`);
+    if (res && !res.ok) return [];
+    const d = res ? await res.json() : await ledgerNftHistory(nftId);
     return (d.events || []).map(e => ({
       type: e.type,
       priceDrops: e.priceDrops !== undefined ? parseInt(e.priceDrops, 10) : null,
@@ -3902,6 +3956,10 @@ export async function fetchDeeptideNftHistory(nftId) {
 // panel's category/value/percentage display.
 async function fetchDeeptideTraitCards(skip, limit, shopSlug = DEEPTIDE_PIGEON_SHOP_SLUG) {
   try {
+    if (isLedgerShop(shopSlug)) {
+      const all = await ledgerTraitCards(shopSlug);
+      return { traits: all.traits.slice(skip, skip + limit), total: all.total, hasMore: skip + limit < all.total };
+    }
     const res = await fetch(`${deeptideListingsUrl(shopSlug)}/trait-cards?skip=${skip}&limit=${limit}&sort=rarest`);
     if (!res.ok) return { traits: [], total: 0 };
     return await res.json();
@@ -4077,6 +4135,8 @@ export async function fetchDeeptideSalesHistory({ skip = 0, limit = 20, sort = '
     shopSlug,
   });
   if (wallet) params.set('address', wallet);
+  // H0NEYP0T has no Deeptide sales feed.
+  if (isLedgerShop(shopSlug)) return { items: [], total: 0, hasMore: false };
   try {
     const res = await fetch(`${DEEPTIDE_API_BASE}/api/sales/recent?${params.toString()}`);
     if (!res.ok) return { items: [], total: 0, hasMore: false };
@@ -6116,7 +6176,7 @@ const FLOOR_INDEX_CONCURRENT_GUARD_SECONDS = 10;
 // read straight off the ledger. K!NG added 2026-09-27 (XRP-only, so its
 // whole market is off-site listings). Pigeons keeps its original keys;
 // every other collection's are suffixed ':<key>' (kvKeyFor).
-export const FLOOR_INDEX_COLLECTIONS = ['pigeons', 'king', 'seal', 'sealscrolls', 'fuzzy', 'yzzuf', 'fuzzybars', 'panther'];
+export const FLOOR_INDEX_COLLECTIONS = ['pigeons', 'king', 'seal', 'sealscrolls', 'fuzzy', 'yzzuf', 'fuzzybars', 'panther', 'honeypot', 'honeyash', 'honeyphoenix'];
 export function hasFloorIndex(collectionKey) {
   return FLOOR_INDEX_COLLECTIONS.indexOf(collectionKey || 'pigeons') !== -1;
 }
