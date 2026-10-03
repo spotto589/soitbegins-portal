@@ -1,4 +1,4 @@
-// Σκύλλα://BURNS — every H0NEYP0T-collection burn in order (2026-10-02).
+// Σκύλλα://BURNS — every S0 !T BEG!NS (Honeypot) burn in order (2026-10-02).
 // Filter by Honeypot / Ash / Phoenix, search by number, tap any burn to see
 // its picture, traits, burn transaction and where it sits in the
 // Honeypot -> Ash -> Phoenix -> Phase 2 -> Phase 3 chain. Data comes from
@@ -13,7 +13,7 @@ function renderBurnsPage() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Σκύλλα://BURNS</title>
-<meta name="description" content="Every burn in the Honeypot collection, in order: Honeypots, Ashes and Phoenixes, read straight off the XRP Ledger.">
+<meta name="description" content="Every burn in the So It Begins collection, in order: Honeypots, Ashes and Phoenixes, read straight off the XRP Ledger.">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');
   :root{
@@ -142,15 +142,15 @@ function renderBurnsPage() {
 <body>
 <canvas id="staticCanvas"></canvas>
 <div class="topbar"><div class="topbar-in">
-  <a class="back" href="/honeypot">← H0NEYP0T</a>
+  <a class="back" href="/honeypot">← S0 !T BEG!NS</a>
   <span class="topbar-title">B U R N S</span>
   <span class="topbar-live" id="liveNote">READ!NG THE LEDGER…</span>
 </div></div>
 
 <main class="page">
   <div class="eyebrow">Σκύλλα://BURNS</div>
-  <h1>H0NEYP0T BURNS</h1>
-  <p class="lead">Every burn in the Honeypot collection, oldest first, read straight off the XRP Ledger. Tap any burn to see what it was and where it is in the chain.</p>
+  <h1>S0 !T BEG!NS BURNS</h1>
+  <p class="lead">Every burn in the So It Begins collection, oldest first, read straight off the XRP Ledger. Tap any burn to see what it was and where it is in the chain.</p>
   <div class="flow"><span>H0NEYP0T</span><i>→</i><span>ASH</span><i>→</i><span>PH0EN!X</span><i>→</i><span>PHASE 2</span><i>→</i><span>PHASE 3</span></div>
 
   <div class="stats">

@@ -3948,6 +3948,10 @@ const SWAP_HTML = `<!DOCTYPE html>
      as an afterthought) rather than scaling down as sharply as before. */
   #collGroupSelect.coll-group-toggle{ display:flex; width:min(100%, 640px); margin:0 auto 0.9rem; }
   #collGroupSelect .edition-btn{ flex:1 1 0; width:auto; }
+  /* A group's own page (S0 !T BEG!NS: BURNS) — a real link, glowing in
+     the collection's colour so it reads as a way out, not another tab. */
+  #collGroupSelect .coll-group-link{ display:flex; align-items:center; justify-content:center; white-space:nowrap; text-decoration:none; color:#fff; border-color:rgb(var(--collection-accent-rgb)); box-shadow:0 0 10px rgba(var(--collection-accent-rgb), 0.45) inset; }
+  #collGroupSelect .coll-group-link:hover{ background:rgba(var(--collection-accent-rgb), 0.18); }
   .edition-btn-range{ display:inline-block; margin-top:0.25em; font-size:0.85em; opacity:0.8; }
   .edition-btn:last-child{ border-right:none; }
   .edition-btn:hover{ color:var(--cyan); background:var(--cyan-faint); }
@@ -13369,13 +13373,13 @@ const SWAP_HTML = `<!DOCTYPE html>
               <a class="mainframe-card-buy mainframe-card-enter" href="/panther">TRADES !N XRP</a>
             </div>
           </div>
-          <!-- H0NEYP0T — live, walk-in DATABASE: ALL / H0NEYP0TS / ASH / PH0EN!X.
+          <!-- S0 !T BEG!NS (Honeypots) — live, walk-in DATABASE: ALL / H0NEYP0TS / ASH / PH0EN!X.
                Honeypots + Ash trade in XRP; Phoenixes in XRP or $PHN!X. -->
           <div class="mainframe-card mainframe-card-honeypot" data-collection="honeypotall" role="button" tabindex="0" style="--card-accent:255,176,0; --card-art:url('/assets/mainframe/honeypot.webp?v=1');">
             <div class="mainframe-card-art"></div>
             <div class="mainframe-card-body">
               <a class="mainframe-card-label-link" href="/honeypot">
-                <div class="mainframe-card-label">H0NEYP0T</div>
+                <div class="mainframe-card-label">S0 !T BEG!NS</div>
                 <div class="mainframe-card-live-tag">● L!VE DATABASE</div>
                 <div class="mainframe-card-stats" id="mainframeStatsHoneypot"></div>
               </a>
@@ -15343,14 +15347,14 @@ const SWAP_HTML = `<!DOCTYPE html>
     // currency" reads right; xrpOnly hides the token-only controls.
     king: { label: 'K!NG', itemLabel: 'K!NG', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'rKingAa11yp4eCuxVraesW2UAvz5THWNCy', hasAmm: false, accent: '#f2b705', accentRgb: '242,183,5', thumb: '/assets/cards/king.png' },
     panther: { label: 'SH!TTY PANTHERS', itemLabel: 'PANTHER', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'rGnivxmi1yAu15Kou1nqt91ZxtXhkWB2iM', hasAmm: false, accent: '#ff2d9b', accentRgb: '255,45,155', thumb: '/assets/mainframe/panther.webp?v=1' },
-    // H0NEYP0T (2026-10-02) — one database, switch ALL / H0NEYP0TS / ASH /
+    // S0 !T BEG!NS (was H0NEYP0T, renamed 2026-10-03) — one database, switch ALL / H0NEYP0TS / ASH /
     // PH0EN!X (one issuer + taxon split by kind, see TRADEABLE_COLLECTIONS
     // in _shared.js). Honeypots + Ash trade in XRP only; Phoenixes also in
     // $PHN!X (same token as PHN!X).
-    honeypotall: { label: 'H0NEYP0T', itemLabel: 'H0NEYP0T', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'ALL', groupAll: true, separateTraits: true },
-    honeypot: { label: 'H0NEYP0T', itemLabel: 'H0NEYP0T', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'H0NEYP0TS' },
-    honeyash: { label: 'ASH', itemLabel: 'ASH', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'ASH' },
-    honeyphoenix: { label: 'PH0EN!X', itemLabel: 'PH0EN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: true, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'PH0EN!X', romanNumbers: true },
+    honeypotall: { label: 'S0 !T BEG!NS', itemLabel: 'H0NEYP0T', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'ALL', groupAll: true, separateTraits: true },
+    honeypot: { label: 'S0 !T BEG!NS', itemLabel: 'H0NEYP0T', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'H0NEYP0TS' },
+    honeyash: { label: 'S0 !T BEG!NS', itemLabel: 'ASH', tradeable: true, xrpOnly: true, tokenLabel: 'XRP', tokenIssuer: null, nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: false, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'ASH' },
+    honeyphoenix: { label: 'S0 !T BEG!NS', itemLabel: 'PH0EN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', nftIssuer: 'raNypRjrVu98Rp3AYLRhQBDUeJKyyRRV92', hasAmm: true, accent: '#ffb000', accentRgb: '255,176,0', thumb: '/assets/mainframe/honeypot.webp?v=1', group: 'honeypot', groupLabel: 'PH0EN!X', romanNumbers: true },
     pigeons: { label: 'P!GE0NS', itemLabel: 'P!GE0N', tradeable: true, tokenLabel: '$P!GE0NS', tokenIssuer: 'rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf', hasAmm: true, accent: '#8848f8', accentRgb: '136,72,248', thumb: '/assets/mainframe/pigeons-coin.webp' },
     phnixs: { label: 'PHN!X', itemLabel: 'PHN!X', tradeable: true, tokenLabel: '$PHN!X', tokenIssuer: 'rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN', hasAmm: true, accent: '#ff5a1f', accentRgb: '255,90,31', thumb: '/assets/mainframe/phnix.jpeg?v=2' },
     teddybg: { label: 'TEDDY', itemLabel: 'TEDDY', tradeable: false, tokenLabel: '$TEDDY', tokenIssuer: 'r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd', hasAmm: true, accent: '#a6632e', accentRgb: '166,99,46', thumb: '/assets/mainframe/teddy.jpeg?v=2' },
@@ -26726,13 +26730,16 @@ const SWAP_HTML = `<!DOCTYPE html>
   });
   // SEAL / FUZZY: one button per collection in the group; tapping one
   // switches the database to it.
+  // A group's own page beside its switch (S0 !T BEG!NS: the burn list).
+  var GROUP_LINKS = { honeypot: { href: '/honeypot/burns', label: '🔥 BURNS' } };
   function renderCollGroupSelect(){
     var meta = COLLECTION_META[state.collection] || {};
     if (!meta.group){ el.collGroupSelect.style.display = 'none'; el.collGroupSelect.innerHTML = ''; return; }
     var keys = Object.keys(COLLECTION_META).filter(function(k){ return COLLECTION_META[k].group === meta.group; });
+    var link = GROUP_LINKS[meta.group];
     el.collGroupSelect.innerHTML = keys.map(function(k){
       return '<button type="button" class="edition-btn' + (k === state.collection ? ' active' : '') + '" data-coll="' + k + '">' + escapeHtml(COLLECTION_META[k].groupLabel || COLLECTION_META[k].label) + '</button>';
-    }).join('');
+    }).join('') + (link ? '<a class="edition-btn coll-group-link" href="' + escapeHtml(link.href) + '">' + escapeHtml(link.label) + '</a>' : '');
     el.collGroupSelect.style.display = '';
   }
   el.collGroupSelect.addEventListener('click', function(e){

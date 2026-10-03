@@ -624,7 +624,7 @@ export const TRADEABLE_COLLECTIONS = {
     deeptideShopSlug: 'shitty-panther-club',
     tradeable: true
   },
-  // H0NEYP0T (2026-10-02) — the owner's own collection. Honeypots, Ashes and
+  // S0 !T BEG!NS (was H0NEYP0T; 2026-10-02) — the owner's own collection. Honeypots, Ashes and
   // Phoenixes share one issuer + taxon (a Honeypot burns into an Ash, an Ash
   // into a Phoenix, see _honeypot.js), split here by kind (ledgerKinds) into
   // three collections under one H0NEYP0T database. Not on Deeptide, so the
@@ -632,7 +632,7 @@ export const TRADEABLE_COLLECTIONS = {
   // Ashes trade in XRP only; Phoenixes also in $PHN!X.
   honeypot: {
     key: 'honeypot',
-    label: 'H0NEYP0TS',
+    label: 'S0 !T BEG!NS',
     nftIssuer: HONEYPOT_ISSUER,
     nftTaxon: HONEYPOT_TAXON,
     ledgerKinds: ['honeypot', 'other'],
@@ -643,7 +643,7 @@ export const TRADEABLE_COLLECTIONS = {
   },
   honeyash: {
     key: 'honeyash',
-    label: 'ASH',
+    label: 'S0 !T BEG!NS ASH',
     nftIssuer: HONEYPOT_ISSUER,
     nftTaxon: HONEYPOT_TAXON,
     ledgerKinds: ['ash'],
@@ -654,7 +654,7 @@ export const TRADEABLE_COLLECTIONS = {
   },
   honeyphoenix: {
     key: 'honeyphoenix',
-    label: 'PH0EN!X',
+    label: 'S0 !T BEG!NS PH0EN!X',
     nftIssuer: HONEYPOT_ISSUER,
     nftTaxon: HONEYPOT_TAXON,
     ledgerKinds: ['phoenix'],
