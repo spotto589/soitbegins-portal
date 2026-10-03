@@ -83,18 +83,26 @@ function isZero(a) { return a === '0' || (a && typeof a === 'object' && Number(a
 function nodesOf(meta, kind, type) {
   return ((meta && meta.AffectedNodes) || []).map(n => n[kind]).filter(n => n && n.LedgerEntryType === type);
 }
-// NFTs that appeared in an NFTokenPage (mints): FinalFields/NewFields minus PreviousFields.
-function nftsAddedToPages(meta) {
-  const out = [];
+// NFTs that appeared in an NFTokenPage (mints): every token in any page
+// after, minus every token in any page before — across ALL the pages the
+// transaction touched, not page by page. A mint can split a full page,
+// moving the minter's existing NFTs into a new page; compared page by
+// page those looked freshly minted (2026-10-03: a wallet holding 5 K!NGs
+// minting another collection fired 5 false "K!NG minted" alerts per mint).
+export function nftsAddedToPages(meta) {
+  const before = new Set();
+  const after = new Set();
+  const ids = list => (list || []).map(t => t.NFToken.NFTokenID);
   ((meta && meta.AffectedNodes) || []).forEach(n => {
-    const node = n.CreatedNode || n.ModifiedNode;
+    const node = n.CreatedNode || n.ModifiedNode || n.DeletedNode;
     if (!node || node.LedgerEntryType !== 'NFTokenPage') return;
-    const after = ((node.FinalFields || node.NewFields || {}).NFTokens || []).map(t => t.NFToken.NFTokenID);
-    const before = new Set(((node.PreviousFields || {}).NFTokens || []).map(t => t.NFToken.NFTokenID));
-    if (n.ModifiedNode && !node.PreviousFields) return; // page touched but token list unchanged
-    after.forEach(id => { if (!before.has(id)) out.push(id); });
+    if (n.CreatedNode) { ids((node.NewFields || {}).NFTokens).forEach(id => after.add(id)); return; }
+    if (n.DeletedNode) { ids((node.PreviousFields || node.FinalFields || {}).NFTokens).forEach(id => before.add(id)); return; }
+    if (!node.PreviousFields || !node.PreviousFields.NFTokens) return; // page touched but token list unchanged
+    ids(node.PreviousFields.NFTokens).forEach(id => before.add(id));
+    ids((node.FinalFields || {}).NFTokens).forEach(id => after.add(id));
   });
-  return out;
+  return Array.from(after).filter(id => !before.has(id));
 }
 
 // One transaction -> zero or more raw events (collection resolved later).
